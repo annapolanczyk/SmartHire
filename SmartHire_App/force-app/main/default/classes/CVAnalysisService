@@ -1,0 +1,252 @@
+/**
+ * Moduł analizy CV z wykorzystaniem AI i przetwarzania języka naturalnego (NLP)
+ * 
+ * Funkcjonalności:
+ * 1. Ekstrakcja strukturyzowanych danych z CV (doświadczenie, umiejętności, wykształcenie)
+ * 2. Ocena dopasowania do stanowiska na podstawie wymagań
+ * 3. Wykrywanie kluczowych słów i technologii
+ * 4. Rekomendacje dla rekruterów
+ */
+
+// 1. Klasa obsługująca analizę CV
+
+public with sharing class CVAnalysisService {
+    
+    /**
+     * Analizuje CV kandydata i zwraca strukturyzowane dane
+     * @param contentDocumentId ID dokumentu CV w ContentDocument
+     * @param positionId Optional ID stanowiska dla dopasowania
+     * @return Mapa zawierająca wyniki analizy
+     */
+    public static Map<String, Object> analyzeCandidateResume(Id contentDocumentId, Id positionId) {
+        try {
+            // Pobierz zawartość dokumentu CV
+            ContentVersion cv = [
+                SELECT VersionData, Title, FileType
+                FROM ContentVersion
+                WHERE ContentDocumentId = :contentDocumentId 
+                AND IsLatest = true
+                LIMIT 1
+            ];
+            
+            if (cv == null) {
+                throw new AuraHandledException('CV document not found');
+            }
+            
+            // Konwersja dokumentu do tekstu z wykorzystaniem odpowiednich parserów
+            // w zależności od typu pliku (PDF, DOCX, TXT)
+            String resumeText = convertToText(cv);
+            
+            // Pobierz dane stanowiska, jeśli podano ID
+            String jobDescription = '';
+            List<String> requiredSkills = new List<String>();
+            
+            if (positionId != null) {
+                Position__c position = [
+                    SELECT Description__c, Required_Skills__c
+                    FROM Position__c
+                    WHERE Id = :positionId
+                    LIMIT 1
+                ];
+                
+                jobDescription = position.Description__c;
+                if (String.isNotBlank(position.Required_Skills__c)) {
+                    requiredSkills = position.Required_Skills__c.split(',');
+                    for (Integer i = 0; i < requiredSkills.size(); i++) {
+                        requiredSkills[i] = requiredSkills[i].trim();
+                    }
+                }
+            }
+            
+            // Wywołaj API platformy Einstein dla analizy tekstu
+            Map<String, Object> analysisResults = callEinsteinAPI(resumeText, jobDescription, requiredSkills);
+            
+            return analysisResults;
+        } catch (Exception e) {
+            throw new AuraHandledException('Error analyzing CV: ' + e.getMessage());
+        }
+    }
+    
+    /**
+     * Konwertuje plik CV do tekstu
+     * @param cv ContentVersion z plikiem CV
+     * @return Wyekstrahowany tekst z dokumentu
+     */
+    private static String convertToText(ContentVersion cv) {
+        String fileContent = '';
+        
+        // Określ typ pliku i użyj odpowiedniego parsera
+        if (cv.FileType.equalsIgnoreCase('PDF')) {
+            fileContent = parsePDF(cv.VersionData);
+        } else if (cv.FileType.equalsIgnoreCase('DOCX') || cv.FileType.equalsIgnoreCase('DOC')) {
+            fileContent = parseWord(cv.VersionData);
+        } else if (cv.FileType.equalsIgnoreCase('TXT')) {
+            fileContent = cv.VersionData.toString();
+        } else {
+            throw new AuraHandledException('Unsupported file format: ' + cv.FileType);
+        }
+        
+        return fileContent;
+    }
+    
+    /**
+     * Parsuje plik PDF
+     * @param pdfData Dane binarne PDF
+     * @return Wyekstrahowany tekst
+     */
+    private static String parsePDF(Blob pdfData) {
+        // Wykorzystanie biblioteki PDF do ekstrakcji tekstu
+        // W rzeczywistej implementacji można użyć zewnętrznego API lub
+        // biblioteki zintegrowanej z Salesforce
+        
+        // To jest placeholder - w prawdziwej implementacji należy 
+        // użyć odpowiedniego API lub usługi
+        
+        // Przykład wywołania zewnętrznego API
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint('callout:PDF_Parser_Service');
+        req.setMethod('POST');
+        req.setHeader('Content-Type', 'application/pdf');
+        req.setBodyAsBlob(pdfData);
+        
+        Http http = new Http();
+        HttpResponse res = http.send(req);
+        
+        if (res.getStatusCode() == 200) {
+            return res.getBody();
+        } else {
+            throw new AuraHandledException('Error parsing PDF: ' + res.getStatusCode() + ' ' + res.getStatus());
+        }
+    }
+    
+    /**
+     * Parsuje plik Word
+     * @param wordData Dane binarne dokumentu Word
+     * @return Wyekstrahowany tekst
+     */
+    private static String parseWord(Blob wordData) {
+        // Analogicznie jak w przypadku PDF, tu potrzebna jest 
+        // integracja z odpowiednim API do parsowania DOCX/DOC
+        
+        // Placeholder dla rzeczywistej implementacji
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint('callout:DOCX_Parser_Service');
+        req.setMethod('POST');
+        req.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        req.setBodyAsBlob(wordData);
+        
+        Http http = new Http();
+        HttpResponse res = http.send(req);
+        
+        if (res.getStatusCode() == 200) {
+            return res.getBody();
+        } else {
+            throw new AuraHandledException('Error parsing Word document: ' + res.getStatusCode() + ' ' + res.getStatus());
+        }
+    }
+    
+    /**
+     * Wywołuje API Einstein dla analizy tekstu
+     * @param resumeText Tekst CV
+     * @param jobDescription Opis stanowiska
+     * @param requiredSkills Lista wymaganych umiejętności
+     * @return Wyniki analizy
+     */
+    private static Map<String, Object> callEinsteinAPI(String resumeText, String jobDescription, List<String> requiredSkills) {
+        Map<String, Object> results = new Map<String, Object>();
+        
+        // Przygotowanie zapytania do API Einstein
+        Map<String, Object> requestBody = new Map<String, Object>{
+            'document' => resumeText,
+            'jobDescription' => jobDescription,
+            'requiredSkills' => requiredSkills
+        };
+        
+        // Wywołanie API Einstein
+        // W rzeczywistej implementacji należy użyć odpowiedniego endpointu i autentykacji
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint('callout:Einstein_NLP_API/v2/language/analyze');
+        req.setMethod('POST');
+        req.setHeader('Content-Type', 'application/json');
+        req.setHeader('Authorization', 'Bearer ' + getEinsteinToken());
+        req.setBody(JSON.serialize(requestBody));
+        
+        Http http = new Http();
+        HttpResponse res = http.send(req);
+        
+        if (res.getStatusCode() == 200) {
+            // Parsowanie wyników z API Einstein
+            Map<String, Object> apiResponse = (Map<String, Object>)JSON.deserializeUntyped(res.getBody());
+            
+            // Ekstrakcja strukturyzowanych danych
+            extractStructuredData(apiResponse, results);
+            
+            // Obliczenie dopasowania do stanowiska, jeśli podano opis stanowiska
+            if (String.isNotBlank(jobDescription)) {
+                calculateJobMatch(apiResponse, results);
+            }
+            
+            return results;
+        } else {
+            throw new AuraHandledException('Error calling Einstein API: ' + res.getStatusCode() + ' ' + res.getStatus());
+        }
+    }
+    
+    /**
+     * Pobiera token dla API Einstein
+     * @return Token autoryzacyjny
+     */
+    private static String getEinsteinToken() {
+        // W rzeczywistej implementacji należy zaimplementować odpowiednią
+        // metodę autentykacji dla API Einstein
+        // To jest placeholder
+        
+        return 'sample_token';
+    }
+    
+    /**
+     * Ekstrahuje strukturyzowane dane z odpowiedzi API
+     * @param apiResponse Odpowiedź z API
+     * @param results Mapa wyników do wypełnienia
+     */
+    private static void extractStructuredData(Map<String, Object> apiResponse, Map<String, Object> results) {
+        // Przykładowa implementacja - w rzeczywistym scenariuszu
+        // należy dostosować do formatu odpowiedzi z wybranego API
+        
+        // Wykryte umiejętności
+        results.put('skills', apiResponse.get('skills'));
+        
+        // Doświadczenie zawodowe
+        results.put('experience', apiResponse.get('workExperience'));
+        
+        // Wykształcenie
+        results.put('education', apiResponse.get('education'));
+        
+        // Języki
+        results.put('languages', apiResponse.get('languages'));
+        
+        // Certyfikaty
+        results.put('certifications', apiResponse.get('certifications'));
+    }
+    
+    /**
+     * Oblicza dopasowanie do stanowiska
+     * @param apiResponse Odpowiedź z API
+     * @param results Mapa wyników do wypełnienia
+     */
+    private static void calculateJobMatch(Map<String, Object> apiResponse, Map<String, Object> results) {
+        // Przykładowa implementacja obliczania dopasowania
+        
+        // Ogólny wynik dopasowania (na podstawie algorytmu NLP)
+        results.put('overallMatch', apiResponse.get('matchScore'));
+        
+        // Dopasowanie umiejętności
+        results.put('skillsMatch', apiResponse.get('skillsMatchScore'));
+        
+        // Dopasowanie doświadczenia
+        results.put('experienceMatch', apiResponse.get('experienceMatchScore'));
+        
+        // Rekomendacje dla rekrutera
+        results.put('recommendations', apiResponse.get('recommendations'));
+    }
+}
