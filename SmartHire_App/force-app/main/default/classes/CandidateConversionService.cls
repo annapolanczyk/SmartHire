@@ -1,138 +1,205 @@
 /**
- * Service class to handle conversion of Candidates to Contacts/Users
+ * Service class for Candidate Conversion operations
  */
 public with sharing class CandidateConversionService {
     
     /**
-     * Convert a hired candidate to a Contact
-     * @param candidateId Candidate Id to convert
-     * @param accountId Optional Account Id to associate with Contact
-     * @return Id of created Contact
+     * Convert candidate to employee
+     * @param candidateId Candidate Id
+     * @param applicationId Application Id
+     * @param employeeData Employee data
+     * @return Id of the created employee
      */
-    public static Id convertCandidateToContact(Id candidateId, Id accountId) {
+    public static Id convertCandidateToEmployee(Id candidateId, Id applicationId, Map<String, Object> employeeData) {
+        // Check permissions
+        if (!Schema.SObjectType.Candidate__c.isAccessible() || 
+            !Schema.SObjectType.Application__c.isAccessible() ||
+            !Schema.SObjectType.Employee__c.isCreateable() ||
+            !Schema.SObjectType.Candidate__c.isUpdateable() ||
+            !Schema.SObjectType.Application__c.isUpdateable()) {
+            throw new SecurityException('Insufficient permissions for candidate conversion');
+        }
+        
+        // Validate conversion eligibility
+        if (!canConvertCandidate(candidateId, applicationId)) {
+            throw new AuraHandledException('Candidate is not eligible for conversion');
+        }
+        
+        // Start transaction
+        Savepoint sp = Database.setSavepoint();
+        
         try {
-            // Verify permissions
-            if (!Schema.sObjectType.Contact.isCreateable()) {
-                throw new AuraHandledException('You don\'t have permission to create contacts');
-            }
+            // Get candidate and application details
+            Candidate__c candidate = [SELECT Id, Name, Email__c, Phone__c, Status__c 
+                                     FROM Candidate__c 
+                                     WHERE Id = :candidateId];
             
-            // Get candidate details
-            Candidate__c candidate = [
-                SELECT Id, Name, Email__c, Phone__c, LinkedIn_URL__c, Skills__c
-                FROM Candidate__c
-                WHERE Id = :candidateId
-            ];
+            Application__c application = [SELECT Id, Position__c, Position__r.Name, Status__c 
+                                         FROM Application__c 
+                                         WHERE Id = :applicationId];
             
-            // Split name for first/last name (simple logic - can be improved)
-            List<String> nameParts = candidate.Name.split(' ', 2);
-            String firstName = nameParts[0];
-            String lastName = nameParts.size() > 1 ? nameParts[1] : '';
-            
-            // Create Contact record
-            Contact newContact = new Contact(
-                FirstName = firstName,
-                LastName = lastName,
-                Email = candidate.Email__c,
-                Phone = candidate.Phone__c,
-                Description = 'Skills: ' + candidate.Skills__c,
-                AccountId = accountId
+            // Create employee record
+            Employee__c employee = new Employee__c(
+                First_Name__c = (String)employeeData.get('firstName'),
+                Last_Name__c = (String)employeeData.get('lastName'),
+                Email__c = candidate.Email__c,
+                Phone__c = candidate.Phone__c,
+                Position__c = application.Position__c,
+                Department__c = (String)employeeData.get('department'),
+                Hire_Date__c = Date.valueOf((String)employeeData.get('hireDate')),
+                Salary__c = Decimal.valueOf((String)employeeData.get('salary')),
+                Manager__c = (Id)employeeData.get('managerId'),
+                Candidate__c = candidateId
             );
             
-            // Create custom field on Contact to store LinkedIn URL if needed
-            // For now, store in description
-            if (!String.isBlank(candidate.LinkedIn_URL__c)) {
-                newContact.Description += '\nLinkedIn: ' + candidate.LinkedIn_URL__c;
-            }
+            insert employee;
             
-            // Add source information to track conversion
-            newContact.Description += '\nConverted from Candidate: ' + candidate.Id;
-            
-            insert newContact;
-            
-            // Update candidate status to indicate conversion
-            candidate.Status__c = 'Converted';
+            // Update candidate status
+            candidate.Status__c = 'Hired';
             update candidate;
             
-            return newContact.Id;
+            // Update application status
+            application.Status__c = 'Hired';
+            update application;
+            
+            // Create conversion history record
+            createConversionHistoryRecord(candidateId, employee.Id, applicationId);
+            
+            return employee.Id;
         } catch (Exception e) {
-            throw new AuraHandledException('Error converting candidate: ' + e.getMessage());
+            // Rollback transaction on error
+            Database.rollback(sp);
+            throw new AuraHandledException('Error during conversion: ' + e.getMessage());
         }
     }
     
     /**
-     * Convert a hired candidate directly to a User record (for internal hires)
-     * @param candidateId Candidate Id to convert
-     * @param profileId Profile Id for new user
-     * @param roleId Role Id for new user
-     * @return Id of created User
+     * Get conversion details
+     * @param candidateId Candidate Id
+     * @param applicationId Application Id
+     * @return Map with conversion details
      */
-    public static Id convertCandidateToUser(Id candidateId, Id profileId, Id roleId) {
-        try {
-            // Verify permissions
-            if (!Schema.sObjectType.User.isCreateable()) {
-                throw new AuraHandledException('You don\'t have permission to create users');
-            }
-            
-            // First create Contact
-            Id contactId = convertCandidateToContact(candidateId, null);
-            
-            // Get contact details
-            Contact contact = [
-                SELECT Id, FirstName, LastName, Email
-                FROM Contact
-                WHERE Id = :contactId
-            ];
-            
-            // Create User record
-            User newUser = new User(
-                FirstName = contact.FirstName,
-                LastName = contact.LastName,
-                Email = contact.Email,
-                Username = contact.Email + '.company', // Adjust as needed
-                Alias = contact.FirstName.left(1) + contact.LastName.left(4),
-                CommunityNickname = contact.FirstName + contact.LastName.left(3) + String.valueOf(Crypto.getRandomInteger()).substring(0, 3),
-                ContactId = contactId,
-                ProfileId = profileId,
-                UserRoleId = roleId,
-                EmailEncodingKey = 'UTF-8',
-                LanguageLocaleKey = 'en_US',
-                LocaleSidKey = 'en_US',
-                TimeZoneSidKey = 'America/New_York'
-            );
-            
-            // Use a unique value for required fields
-            // In a real implementation, you'd collect this information through the UI
-            newUser.Username = contact.Email + '.' + System.currentTimeMillis() + '@yourdomain.com';
-            
-            insert newUser;
-            return newUser.Id;
-        } catch (Exception e) {
-            throw new AuraHandledException('Error converting candidate to user: ' + e.getMessage());
+    public static Map<String, Object> getConversionDetails(Id candidateId, Id applicationId) {
+        if (!Schema.SObjectType.Candidate__c.isAccessible() || 
+            !Schema.SObjectType.Application__c.isAccessible() ||
+            !Schema.SObjectType.Position__c.isAccessible()) {
+            throw new SecurityException('Insufficient permissions to access conversion details');
         }
+        
+        Map<String, Object> details = new Map<String, Object>();
+        
+        // Get candidate details
+        Candidate__c candidate = [SELECT Id, Name, Email__c, Phone__c 
+                                 FROM Candidate__c 
+                                 WHERE Id = :candidateId];
+        
+        // Get application and position details
+        Application__c application = [SELECT Id, Position__c, Position__r.Name, Position__r.Department__c,
+                                             Position__r.Salary_Range__c 
+                                     FROM Application__c 
+                                     WHERE Id = :applicationId];
+        
+        // Get available managers
+        List<User> managers = [SELECT Id, Name 
+                              FROM User 
+                              WHERE IsActive = true 
+                              AND Profile.Name = 'Manager' 
+                              ORDER BY Name];
+        
+        // Populate details map
+        details.put('candidate', candidate);
+        details.put('application', application);
+        details.put('managers', managers);
+        details.put('departments', getDepartmentPicklistValues());
+        
+        return details;
     }
     
     /**
-     * Get available profiles for user creation
-     * @return List of Profile options
+     * Check if candidate can be converted
+     * @param candidateId Candidate Id
+     * @param applicationId Application Id
+     * @return True if candidate can be converted
      */
-    public static List<Profile> getAvailableProfiles() {
-        return [
-            SELECT Id, Name 
-            FROM Profile 
-            WHERE UserType = 'Standard' 
-            ORDER BY Name
-        ];
+    public static Boolean canConvertCandidate(Id candidateId, Id applicationId) {
+        if (!Schema.SObjectType.Candidate__c.isAccessible() || 
+            !Schema.SObjectType.Application__c.isAccessible()) {
+            throw new SecurityException('Insufficient permissions to check conversion eligibility');
+        }
+        
+        // Check if application status is 'Offer Accepted'
+        List<Application__c> applications = [SELECT Id, Status__c 
+                                            FROM Application__c 
+                                            WHERE Id = :applicationId 
+                                            AND Candidate__c = :candidateId 
+                                            AND Status__c = 'Offer Accepted'];
+        
+        // Check if candidate is not already hired
+        List<Candidate__c> candidates = [SELECT Id 
+                                        FROM Candidate__c 
+                                        WHERE Id = :candidateId 
+                                        AND Status__c != 'Hired'];
+        
+        // Check if candidate is not already converted to employee
+        List<Employee__c> employees = [SELECT Id 
+                                      FROM Employee__c 
+                                      WHERE Candidate__c = :candidateId];
+        
+        return !applications.isEmpty() && !candidates.isEmpty() && employees.isEmpty();
     }
     
     /**
-     * Get available user roles for user creation
-     * @return List of UserRole options
+     * Create conversion history record
+     * @param candidateId Candidate Id
+     * @param employeeId Employee Id
+     * @param applicationId Application Id
      */
-    public static List<UserRole> getAvailableRoles() {
-        return [
-            SELECT Id, Name 
-            FROM UserRole 
-            ORDER BY Name
-        ];
+    private static void createConversionHistoryRecord(Id candidateId, Id employeeId, Id applicationId) {
+        if (!Schema.SObjectType.CandidateConversionHistory__c.isCreateable()) {
+            throw new SecurityException('Insufficient permissions to create conversion history');
+        }
+        
+        CandidateConversionHistory__c history = new CandidateConversionHistory__c(
+            Candidate__c = candidateId,
+            Employee__c = employeeId,
+            Application__c = applicationId,
+            Conversion_Date__c = DateTime.now()
+        );
+        
+        insert history;
+    }
+    
+    /**
+     * Get conversion history
+     * @param candidateId Candidate Id
+     * @return List of conversion history records
+     */
+    public static List<CandidateConversionHistory__c> getConversionHistory(Id candidateId) {
+        if (!Schema.SObjectType.CandidateConversionHistory__c.isAccessible()) {
+            throw new SecurityException('Insufficient permissions to access conversion history');
+        }
+        
+        return [SELECT Id, Candidate__c, Employee__c, Application__c, 
+                       Conversion_Date__c, CreatedBy.Name 
+                FROM CandidateConversionHistory__c 
+                WHERE Candidate__c = :candidateId 
+                ORDER BY Conversion_Date__c DESC];
+    }
+    
+    /**
+     * Get department picklist values
+     * @return List of department values
+     */
+    private static List<String> getDepartmentPicklistValues() {
+        List<String> departments = new List<String>();
+        
+        Schema.DescribeFieldResult fieldResult = Employee__c.Department__c.getDescribe();
+        List<Schema.PicklistEntry> entries = fieldResult.getPicklistValues();
+        
+        for (Schema.PicklistEntry entry : entries) {
+            departments.add(entry.getValue());
+        }
+        
+        return departments;
     }
 }

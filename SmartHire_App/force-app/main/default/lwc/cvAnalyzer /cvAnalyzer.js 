@@ -1,0 +1,109 @@
+import { LightningElement, api, track } from 'lwc';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import analyzeCandidateResume from '@salesforce/apex/RecruitmentController.analyzeCandidateResume';
+
+export default class CvAnalyzer extends LightningElement {
+    @api recordId; // ID aplikacji lub kandydata
+    @api objectApiName; // Do określenia kontekstu
+    
+    @track isLoading = false;
+    @track analysisResults;
+    @track error;
+    @track showResults = false;
+    
+    acceptedFormats = ['.pdf', '.doc', '.docx', '.txt'];
+    lastAnalyzedDocumentId = null; // Zmienna do przechowywania ID ostatniego pliku
+    
+    get isCandidate() {
+        return this.objectApiName === 'Candidate__c';
+    }
+    
+    get isJobApplication() {
+        return this.objectApiName === 'Job_Application__c';
+    }
+    
+    handleUpload(event) {
+        const uploadedFiles = event.detail.files;
+        if (uploadedFiles.length > 0) {
+            this.isLoading = true;
+            this.lastAnalyzedDocumentId = uploadedFiles[0].documentId;
+            this.analyzeCV(this.lastAnalyzedDocumentId, false);
+        }
+    }
+    
+    analyzeCV(contentDocumentId, bypassCache = false) {
+        let positionId = null;
+        
+        if (this.isJobApplication) {
+            positionId = this.recordId;
+        }
+        
+        analyzeCandidateResume({ 
+            contentDocumentId: contentDocumentId,
+            positionId: positionId,
+            bypassCache: bypassCache 
+        })
+        .then(result => {
+            this.analysisResults = result;
+            this.error = undefined;
+            this.isLoading = false;
+            this.showResults = true;
+            
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Sukces',
+                message: 'Analiza CV zakończona pomyślnie',
+                variant: 'success'
+            }));
+        })
+        .catch(error => {
+            this.error = error.body.message;
+            this.analysisResults = undefined;
+            this.isLoading = false;
+            this.showResults = false;
+            
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Błąd',
+                message: 'Błąd podczas analizy CV: ' + this.error,
+                variant: 'error'
+            }));
+        });
+    }
+    
+    handleForceAnalysis() {
+        if (!this.lastAnalyzedDocumentId) {
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Błąd',
+                message: 'Brak dostępnego pliku do ponownej analizy',
+                variant: 'error'
+            }));
+            return;
+        }
+        
+        this.isLoading = true;
+        let positionId = this.isJobApplication ? this.recordId : null;
+        
+        this.analyzeCV(this.lastAnalyzedDocumentId, true);
+    }
+    
+    handleResetAnalysis() {
+        this.showResults = false;
+        this.analysisResults = undefined;
+    }
+    
+    get hasSkills() {
+        return this.analysisResults && this.analysisResults.skills && this.analysisResults.skills.length > 0;
+    }
+    
+    get hasJobMatch() {
+        return this.analysisResults && this.analysisResults.overallMatch !== undefined;
+    }
+    
+    get matchColor() {
+        if (!this.hasJobMatch) return '';
+        
+        const matchScore = this.analysisResults.overallMatch;
+        if (matchScore >= 80) return 'slds-text-color_success';
+        if (matchScore >= 50) return 'slds-text-color_warning';
+        return 'slds-text-color_error';
+    }
+}

@@ -1,5 +1,5 @@
 /**
- * Service class to handle Position related operations
+ * Service class for Position-related operations
  */
 public with sharing class PositionService {
     
@@ -8,28 +8,31 @@ public with sharing class PositionService {
      * @return List of active positions
      */
     public static List<Position__c> getActivePositions() {
-        return [
-            SELECT Id, Name, Description__c, Location__c, Department__c, Status__c, 
-                   Hiring_Manager__c, Hiring_Manager__r.Name, Close_Date__c
-            FROM Position__c
-            WHERE Status__c = 'Open'
-            ORDER BY CreatedDate DESC
-        ];
+        if (!Schema.SObjectType.Position__c.isAccessible()) {
+            throw new SecurityException('Insufficient permissions to access Position__c');
+        }
+        
+        return [SELECT Id, Name, Department__c, Location__c, Status__c, 
+                       Job_Description__c, Required_Skills__c, Salary_Range__c 
+                FROM Position__c 
+                WHERE Status__c = 'Open' 
+                ORDER BY CreatedDate DESC];
     }
     
     /**
-     * Get position details by Id
+     * Get position by Id
      * @param positionId Position Id
      * @return Position details
      */
     public static Position__c getPositionById(Id positionId) {
-        List<Position__c> positions = [
-            SELECT Id, Name, Description__c, Location__c, Department__c, Status__c, 
-                   Hiring_Manager__c, Hiring_Manager__r.Name, Close_Date__c,
-                   (SELECT Id, Name, Status__c FROM Job_Applications__r)
-            FROM Position__c
-            WHERE Id = :positionId
-        ];
+        if (!Schema.SObjectType.Position__c.isAccessible()) {
+            throw new SecurityException('Insufficient permissions to access Position__c');
+        }
+        
+        List<Position__c> positions = [SELECT Id, Name, Department__c, Location__c, Status__c, 
+                                              Job_Description__c, Required_Skills__c, Salary_Range__c 
+                                       FROM Position__c 
+                                       WHERE Id = :positionId];
         
         if (positions.isEmpty()) {
             throw new AuraHandledException('Position not found');
@@ -41,77 +44,47 @@ public with sharing class PositionService {
     /**
      * Create a new position
      * @param position Position to create
-     * @return Created position Id
+     * @return Id of the created position
      */
     public static Id createPosition(Position__c position) {
-        try {
-            // Check CRUD permissions
-            if (!Schema.sObjectType.Position__c.isCreateable()) {
-                throw new AuraHandledException('You don\'t have permission to create positions');
-            }
-            
-            insert position;
-            return position.Id;
-        } catch (Exception e) {
-            throw new AuraHandledException('Error creating position: ' + e.getMessage());
+        if (!Schema.SObjectType.Position__c.isCreateable()) {
+            throw new SecurityException('Insufficient permissions to create Position__c');
         }
+        
+        insert position;
+        return position.Id;
     }
     
     /**
-     * Update a position
+     * Update an existing position
      * @param position Position to update
      */
     public static void updatePosition(Position__c position) {
-        try {
-            // Check CRUD permissions
-            if (!Schema.sObjectType.Position__c.isUpdateable()) {
-                throw new AuraHandledException('You don\'t have permission to update positions');
-            }
-            
-            update position;
-        } catch (Exception e) {
-            throw new AuraHandledException('Error updating position: ' + e.getMessage());
+        if (!Schema.SObjectType.Position__c.isUpdateable()) {
+            throw new SecurityException('Insufficient permissions to update Position__c');
         }
+        
+        update position;
     }
     
     /**
      * Get application statistics for a position
      * @param positionId Position Id
-     * @return Map with statistics
+     * @return Map of status to count
      */
     public static Map<String, Integer> getApplicationStatistics(Id positionId) {
-        Map<String, Integer> statistics = new Map<String, Integer>();
-        
-        // Query for applications by status
-        AggregateResult[] results = [
-            SELECT Status__c, COUNT(Id) total
-            FROM Job_Application__c 
-            WHERE Position__c = :positionId
-            GROUP BY Status__c
-        ];
-        
-        // Initialize with zero counts
-        statistics.put('Applied', 0);
-        statistics.put('Resume Review', 0);
-        statistics.put('Phone Screen', 0);
-        statistics.put('Interview', 0);
-        statistics.put('Evaluation', 0);
-        statistics.put('Offer Extended', 0);
-        statistics.put('Hired', 0);
-        statistics.put('Rejected', 0);
-        statistics.put('Total', 0);
-        
-        Integer total = 0;
-        
-        // Populate actual counts
-        for (AggregateResult ar : results) {
-            String status = (String)ar.get('Status__c');
-            Integer count = (Integer)ar.get('total');
-            statistics.put(status, count);
-            total += count;
+        if (!Schema.SObjectType.Application__c.isAccessible()) {
+            throw new SecurityException('Insufficient permissions to access Application__c');
         }
         
-        statistics.put('Total', total);
+        Map<String, Integer> statistics = new Map<String, Integer>();
+        
+        for (AggregateResult ar : [SELECT Status__c, COUNT(Id) countValue 
+                                  FROM Application__c 
+                                  WHERE Position__c = :positionId 
+                                  GROUP BY Status__c]) {
+            statistics.put((String)ar.get('Status__c'), (Integer)ar.get('countValue'));
+        }
         
         return statistics;
     }

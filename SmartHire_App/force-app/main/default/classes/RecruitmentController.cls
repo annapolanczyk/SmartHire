@@ -1,10 +1,12 @@
 /**
- * Controller to expose recruitment services to Lightning components
+ * Base controller class for recruitment functionality
+ * This class is now deprecated - use domain-specific controllers instead
  */
 public with sharing class RecruitmentController {
     
-    // Position related methods
-    
+    /**
+     * @deprecated Use PositionController.getActivePositions() instead
+     */
     @AuraEnabled(cacheable=true)
     public static List<Position__c> getActivePositions() {
         try {
@@ -14,6 +16,9 @@ public with sharing class RecruitmentController {
         }
     }
     
+    /**
+     * @deprecated Use PositionController.getPositionById() instead
+     */
     @AuraEnabled(cacheable=true)
     public static Position__c getPositionById(Id positionId) {
         try {
@@ -23,6 +28,9 @@ public with sharing class RecruitmentController {
         }
     }
     
+    /**
+     * @deprecated Use PositionController.createPosition() instead
+     */
     @AuraEnabled
     public static Id createPosition(Position__c position) {
         try {
@@ -32,6 +40,9 @@ public with sharing class RecruitmentController {
         }
     }
     
+    /**
+     * @deprecated Use PositionController.updatePosition() instead
+     */
     @AuraEnabled
     public static void updatePosition(Position__c position) {
         try {
@@ -41,6 +52,9 @@ public with sharing class RecruitmentController {
         }
     }
     
+    /**
+     * @deprecated Use PositionController.getApplicationStatistics() instead
+     */
     @AuraEnabled(cacheable=true)
     public static Map<String, Integer> getApplicationStatistics(Id positionId) {
         try {
@@ -50,8 +64,9 @@ public with sharing class RecruitmentController {
         }
     }
     
-    // Candidate related methods
-    
+    /**
+     * @deprecated Use CandidateController.getAllCandidates() instead
+     */
     @AuraEnabled(cacheable=true)
     public static List<Candidate__c> getAllCandidates() {
         try {
@@ -61,6 +76,9 @@ public with sharing class RecruitmentController {
         }
     }
     
+    /**
+     * @deprecated Use CandidateController.searchCandidates() instead
+     */
     @AuraEnabled(cacheable=true)
     public static List<Candidate__c> searchCandidates(String searchTerm) {
         try {
@@ -70,6 +88,9 @@ public with sharing class RecruitmentController {
         }
     }
     
+    /**
+     * @deprecated Use CandidateController.getCandidateById() instead
+     */
     @AuraEnabled(cacheable=true)
     public static Candidate__c getCandidateById(Id candidateId) {
         try {
@@ -79,6 +100,9 @@ public with sharing class RecruitmentController {
         }
     }
     
+    /**
+     * @deprecated Use CandidateController.createCandidate() instead
+     */
     @AuraEnabled
     public static Id createCandidate(Candidate__c candidate) {
         try {
@@ -88,6 +112,9 @@ public with sharing class RecruitmentController {
         }
     }
     
+    /**
+     * @deprecated Use CandidateController.updateCandidate() instead
+     */
     @AuraEnabled
     public static void updateCandidate(Candidate__c candidate) {
         try {
@@ -97,6 +124,9 @@ public with sharing class RecruitmentController {
         }
     }
     
+    /**
+     * @deprecated Use CandidateController.isEmailExist() instead
+     */
     @AuraEnabled
     public static Boolean isEmailExist(String email, Id candidateId) {
         try {
@@ -106,8 +136,9 @@ public with sharing class RecruitmentController {
         }
     }
     
-    // Job Application related methods
-    
+    /**
+     * @deprecated Use ApplicationController.getApplicationById() instead
+     */
     @AuraEnabled(cacheable=true)
     public static Job_Application__c getApplicationById(Id applicationId) {
         try {
@@ -117,6 +148,9 @@ public with sharing class RecruitmentController {
         }
     }
     
+    /**
+     * @deprecated Use ApplicationController.getApplicationsByPosition() instead
+     */
     @AuraEnabled(cacheable=true)
     public static List<Job_Application__c> getApplicationsByPosition(Id positionId) {
         try {
@@ -126,6 +160,9 @@ public with sharing class RecruitmentController {
         }
     }
     
+    /**
+     * @deprecated Use ApplicationController.createApplication() instead
+     */
     @AuraEnabled
     public static Id createApplication(Job_Application__c application) {
         try {
@@ -135,6 +172,9 @@ public with sharing class RecruitmentController {
         }
     }
     
+    /**
+     * @deprecated Use ApplicationController.updateApplicationStatus() instead
+     */
     @AuraEnabled
     public static void updateApplicationStatus(Id applicationId, String status, String notes) {
         try {
@@ -144,6 +184,9 @@ public with sharing class RecruitmentController {
         }
     }
     
+    /**
+     * @deprecated Use ApplicationController.assignReviewer() instead
+     */
     @AuraEnabled
     public static void assignReviewer(Id applicationId, Id reviewerId) {
         try {
@@ -153,8 +196,9 @@ public with sharing class RecruitmentController {
         }
     }
     
-    // Candidate Conversion methods
-    
+    /**
+     * @deprecated Use CandidateConversionController.convertCandidateToContact() instead
+     */
     @AuraEnabled
     public static Id convertCandidateToContact(Id candidateId, Id accountId) {
         try {
@@ -164,6 +208,9 @@ public with sharing class RecruitmentController {
         }
     }
     
+    /**
+     * @deprecated Use CandidateConversionController.convertCandidateToUser() instead
+     */
     @AuraEnabled
     public static Id convertCandidateToUser(Id candidateId, Id profileId, Id roleId) {
         try {
@@ -173,6 +220,9 @@ public with sharing class RecruitmentController {
         }
     }
     
+    /**
+     * @deprecated Use CandidateConversionController.getAvailableProfiles() instead
+     */
     @AuraEnabled(cacheable=true)
     public static List<Profile> getAvailableProfiles() {
         try {
@@ -182,6 +232,9 @@ public with sharing class RecruitmentController {
         }
     }
     
+    /**
+     * @deprecated Use CandidateConversionController.getAvailableRoles() instead
+     */
     @AuraEnabled(cacheable=true)
     public static List<UserRole> getAvailableRoles() {
         try {
@@ -190,3 +243,17 @@ public with sharing class RecruitmentController {
             throw new AuraHandledException(e.getMessage());
         }
     }
+    
+    /**
+     * @deprecated Use CVAnalysisController.analyzeCandidateResume() instead
+     */
+    @AuraEnabled
+    public static Map<String, Object> analyzeCandidateResume(Id contentDocumentId, Id positionId, Boolean bypassCache) {
+        try {
+            return CVAnalysisService.analyzeCandidateResume(contentDocumentId, positionId, bypassCache != null ? bypassCache : false);
+        } catch (Exception e) {
+            throw new AuraHandledException(e.getMessage());
+        }
+    }
+}
+    

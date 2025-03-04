@@ -1,5 +1,5 @@
 /**
- * Service class to handle Candidate related operations
+ * Service class for Candidate-related operations
  */
 public with sharing class CandidateService {
     
@@ -8,49 +8,31 @@ public with sharing class CandidateService {
      * @return List of candidates
      */
     public static List<Candidate__c> getAllCandidates() {
-        return [
-            SELECT Id, Name, Email__c, Phone__c, Status__c, LinkedIn_URL__c, Skills__c
-            FROM Candidate__c
-            ORDER BY Name ASC
-        ];
-    }
-    
-    /**
-     * Search candidates by name, email or skills
-     * @param searchTerm Search term
-     * @return List of matching candidates
-     */
-    public static List<Candidate__c> searchCandidates(String searchTerm) {
-        if (String.isBlank(searchTerm)) {
-            return getAllCandidates();
+        if (!Schema.SObjectType.Candidate__c.isAccessible()) {
+            throw new SecurityException('Insufficient permissions to access Candidate__c');
         }
         
-        String likeSearchTerm = '%' + searchTerm + '%';
-        
-        return [
-            SELECT Id, Name, Email__c, Phone__c, Status__c, LinkedIn_URL__c, Skills__c
-            FROM Candidate__c
-            WHERE Name LIKE :likeSearchTerm 
-               OR Email__c LIKE :likeSearchTerm 
-               OR Skills__c LIKE :likeSearchTerm
-            ORDER BY Name ASC
-        ];
+        return [SELECT Id, Name, Email__c, Phone__c, Status__c, 
+                       Current_Employer__c, Current_Position__c, LinkedIn_Profile__c 
+                FROM Candidate__c 
+                ORDER BY Name ASC];
     }
     
     /**
-     * Get candidate details by Id
+     * Get candidate by Id
      * @param candidateId Candidate Id
-     * @return Candidate details with related applications
+     * @return Candidate details
      */
     public static Candidate__c getCandidateById(Id candidateId) {
-        List<Candidate__c> candidates = [
-            SELECT Id, Name, Email__c, Phone__c, Status__c, LinkedIn_URL__c, Skills__c,
-                   (SELECT Id, Name, Position__c, Position__r.Name, Status__c, Application_Date__c 
-                    FROM Job_Applications__r
-                    ORDER BY Application_Date__c DESC)
-            FROM Candidate__c
-            WHERE Id = :candidateId
-        ];
+        if (!Schema.SObjectType.Candidate__c.isAccessible()) {
+            throw new SecurityException('Insufficient permissions to access Candidate__c');
+        }
+        
+        List<Candidate__c> candidates = [SELECT Id, Name, Email__c, Phone__c, Status__c, 
+                                                Current_Employer__c, Current_Position__c, LinkedIn_Profile__c,
+                                                Resume__c, Cover_Letter__c, Education__c, Experience__c 
+                                         FROM Candidate__c 
+                                         WHERE Id = :candidateId];
         
         if (candidates.isEmpty()) {
             throw new AuraHandledException('Candidate not found');
@@ -62,58 +44,64 @@ public with sharing class CandidateService {
     /**
      * Create a new candidate
      * @param candidate Candidate to create
-     * @return Created candidate Id
+     * @return Id of the created candidate
      */
     public static Id createCandidate(Candidate__c candidate) {
-        try {
-            // Check CRUD permissions
-            if (!Schema.sObjectType.Candidate__c.isCreateable()) {
-                throw new AuraHandledException('You don\'t have permission to create candidates');
-            }
-            
-            insert candidate;
-            return candidate.Id;
-        } catch (Exception e) {
-            throw new AuraHandledException('Error creating candidate: ' + e.getMessage());
+        if (!Schema.SObjectType.Candidate__c.isCreateable()) {
+            throw new SecurityException('Insufficient permissions to create Candidate__c');
         }
+        
+        insert candidate;
+        return candidate.Id;
     }
     
     /**
-     * Update a candidate
+     * Update an existing candidate
      * @param candidate Candidate to update
      */
     public static void updateCandidate(Candidate__c candidate) {
-        try {
-            // Check CRUD permissions
-            if (!Schema.sObjectType.Candidate__c.isUpdateable()) {
-                throw new AuraHandledException('You don\'t have permission to update candidates');
-            }
-            
-            update candidate;
-        } catch (Exception e) {
-            throw new AuraHandledException('Error updating candidate: ' + e.getMessage());
+        if (!Schema.SObjectType.Candidate__c.isUpdateable()) {
+            throw new SecurityException('Insufficient permissions to update Candidate__c');
         }
+        
+        update candidate;
     }
     
     /**
-     * Check if email already exists
-     * @param email Email to check
-     * @param candidateId Optional candidate Id to exclude from check (for updates)
-     * @return True if email exists
+     * Search candidates by keyword
+     * @param searchKey Search keyword
+     * @return List of matching candidates
      */
-    public static Boolean isEmailExist(String email, Id candidateId) {
-        if (String.isBlank(email)) {
-            return false;
+    public static List<Candidate__c> searchCandidates(String searchKey) {
+        if (!Schema.SObjectType.Candidate__c.isAccessible()) {
+            throw new SecurityException('Insufficient permissions to access Candidate__c');
         }
         
-        Integer count;
+        String searchTerm = '%' + searchKey + '%';
         
-        if (candidateId != null) {
-            count = [SELECT COUNT() FROM Candidate__c WHERE Email__c = :email AND Id != :candidateId];
-        } else {
-            count = [SELECT COUNT() FROM Candidate__c WHERE Email__c = :email];
+        return [SELECT Id, Name, Email__c, Phone__c, Status__c, 
+                       Current_Employer__c, Current_Position__c 
+                FROM Candidate__c 
+                WHERE Name LIKE :searchTerm 
+                   OR Email__c LIKE :searchTerm 
+                   OR Current_Employer__c LIKE :searchTerm 
+                   OR Current_Position__c LIKE :searchTerm 
+                ORDER BY Name ASC];
+    }
+    
+    /**
+     * Get candidate skills
+     * @param candidateId Candidate Id
+     * @return List of candidate skills
+     */
+    public static List<Skill__c> getCandidateSkills(Id candidateId) {
+        if (!Schema.SObjectType.Skill__c.isAccessible()) {
+            throw new SecurityException('Insufficient permissions to access Skill__c');
         }
         
-        return count > 0;
+        return [SELECT Id, Name, Category__c, Proficiency_Level__c 
+                FROM Skill__c 
+                WHERE Candidate__c = :candidateId 
+                ORDER BY Category__c, Name ASC];
     }
 }
