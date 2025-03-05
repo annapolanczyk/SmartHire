@@ -14,7 +14,7 @@
             <name>Account_Selected</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
-                <leftValueReference>Select_Account.selectedAccountId</leftValueReference>
+                <leftValueReference>selectedAccountId</leftValueReference>
                 <operator>IsNull</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
@@ -47,12 +47,6 @@
     </formulas>
     <interviewLabel>Konwersja Kandydata na Kontakt {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Konwersja Kandydata na Kontakt</label>
-    <processMetadataValues>
-        <name>BuilderType</name>
-        <value>
-            <stringValue>LightningFlowBuilder</stringValue>
-        </value>
-    </processMetadataValues>
     <processType>Flow</processType>
     <recordCreates>
         <name>Create_Contact</name>
@@ -65,7 +59,7 @@
         <inputAssignments>
             <field>AccountId</field>
             <value>
-                <elementReference>Select_Account.selectedAccountId</elementReference>
+                <elementReference>selectedAccountId</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
@@ -119,42 +113,5 @@
         <getFirstRecordOnly>true</getFirstRecordOnly>
         <object>Candidate__c</object>
     </recordLookups>
-    <recordUpdates>
-        <name>Update_Candidate_Status</name>
-        <label>Update Candidate Status</label>
-        <locationX>182</locationX>
-        <locationY>758</locationY>
-        <connector>
-            <targetReference>Success_Screen</targetReference>
-        </connector>
-        <filters>
-            <field>Id</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference>recordId</elementReference>
-            </value>
-        </filters>
-        <inputAssignments>
-            <field>Status__c</field>
-            <value>
-                <stringValue>Converted to Contact</stringValue>
-            </value>
-        </inputAssignments>
-        <object>Candidate__c</object>
-    </recordUpdates>
-    <start>
-        <locationX>56</locationX>
-        <locationY>0</locationY>
-        <connector>
-            <targetReference>Select_Account</targetReference>
-        </connector>
-    </start>
-    <status>Active</status>
-    <variables>
-        <name>recordId</name>
-        <dataType>String</dataType>
-        <isCollection>false</isCollection>
-        <isInput>true</isInput>
-        <isOutput>false</isOutput>
-    </variables>
-</Flow>
+    <screens>
+        <name>Select_Account</name>
