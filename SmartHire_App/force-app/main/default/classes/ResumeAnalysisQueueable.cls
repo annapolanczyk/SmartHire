@@ -35,9 +35,10 @@ public class ResumeAnalysisQueueable implements Queueable, Database.AllowsCallou
                 System.enqueueJob(new ResumeAnalysisQueueable(remainingApplications));
             } else {
                 // Loguj, że nie wszystkie aplikacje zostały przetworzone
-                Logger.error('ResumeAnalysisQueueable', 'execute', 
-                            'Nie wszystkie aplikacje zostały przetworzone ze względu na limity. ' + 
-                            'Pozostało ' + remainingApplications.size() + ' aplikacji.', null);
+                Logger.error(
+                    'ResumeAnalysisQueueable - execute: Nie wszystkie aplikacje zostały przetworzone ze względu na limity. ' +
+                    'Pozostało ' + remainingApplications.size() + ' aplikacji.', null
+                );
             }
         }
     }
@@ -83,24 +84,32 @@ public class ResumeAnalysisQueueable implements Queueable, Database.AllowsCallou
                             app.Status__c = 'Evaluation';
                             update app;
                         } catch (Exception updateEx) {
-                            Logger.error('ResumeAnalysisQueueable', 'processApplications', 
-                                        'Błąd podczas aktualizacji statusu aplikacji: ' + app.Id, updateEx);
+                            Logger.error(
+                                'ResumeAnalysisQueueable - processApplications: Błąd podczas aktualizacji statusu aplikacji: ' + app.Id,
+                                updateEx
+                            );
                         }
                     } else {
                         // Loguj brak dokumentu CV
-                        Logger.error('ResumeAnalysisQueueable', 'processApplications', 
-                                   'Nie znaleziono dokumentu CV dla aplikacji: ' + app.Id, null);
+                        Logger.error(
+                            'ResumeAnalysisQueueable - processApplications: Nie znaleziono dokumentu CV dla aplikacji: ' + app.Id,
+                            null
+                        );
                     }
                 } catch (Exception e) {
                     // Loguj błąd przetwarzania pojedynczej aplikacji
-                    Logger.error('ResumeAnalysisQueueable', 'processApplications', 
-                               'Błąd podczas przetwarzania aplikacji: ' + app.Id, e);
+                    Logger.error(
+                        'ResumeAnalysisQueueable - processApplications: Błąd podczas przetwarzania aplikacji: ' + app.Id,
+                        e
+                    );
                 }
             }
         } catch (Exception e) {
             // Loguj błąd ogólny
-            Logger.error('ResumeAnalysisQueueable', 'processApplications', 
-                       'Błąd podczas przetwarzania aplikacji', e);
+            Logger.error(
+                'ResumeAnalysisQueueable - processApplications: Błąd podczas przetwarzania aplikacji',
+                e
+            );
         }
     }
 }
