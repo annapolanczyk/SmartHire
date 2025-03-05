@@ -185,7 +185,7 @@ public with sharing class CandidateConversionService {
             SecurityUtils.checkReadAccess(CandidateConversionHistory__c.SObjectType, 
                 new List<String>{'Id', 'Candidate__c', 'Conversion_Date__c', 'Conversion_Type__c', 'Related_Record_Id__c'});
             
-            return [SELECT Id, Conversion_Type__c, Conversion_Date__c,Candidate__c 
+            return [SELECT Id, Conversion_Type__c,Conversion_Date__c,Candidate__c 
                    FROM CandidateConversionHistory__c 
                    WHERE Candidate__c = :candidateId 
                    ORDER BY Conversion_Date__c DESC];

@@ -149,11 +149,4 @@
         <isInput>true</isInput>
         <isOutput>false</isOutput>
     </variables>
-    <variables>
-        <name>selectedAccountId</name>
-        <dataType>String</dataType>
-        <isCollection>false</isCollection>
-        <isInput>false</isInput>
-        <isOutput>true</isOutput>
-    </variables>
 </Flow>
