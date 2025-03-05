@@ -79,8 +79,13 @@ public class ResumeAnalysisQueueable implements Queueable, Database.AllowsCallou
                         CVAnalysisService.createRecruiterTaskFromAnalysis(app.Id, analysisResults);
                         
                         // Aktualizuj status aplikacji
-                        app.Status__c = 'Evaluation';
-                        update app;
+                        try { 
+                            app.Status__c = 'Evaluation';
+                            update app;
+                        } catch (Exception updateEx) {
+                            Logger.error('ResumeAnalysisQueueable', 'processApplications', 
+                                        'Błąd podczas aktualizacji statusu aplikacji: ' + app.Id, updateEx);
+                        }
                     } else {
                         // Loguj brak dokumentu CV
                         Logger.error('ResumeAnalysisQueueable', 'processApplications', 

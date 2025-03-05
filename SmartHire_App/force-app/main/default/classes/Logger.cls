@@ -57,6 +57,22 @@ public with sharing class Logger {
         
         // Log to debug logs
         System.debug(LoggingLevel.ERROR, fullMessage);
+
+        try {
+            // Sprawdź uprawnienia przed utworzeniem rekordu
+            if (!Schema.SObjectType.Error_Log__c.isCreateable()) {
+                System.debug(LoggingLevel.WARN, 'Insufficient permissions to create Error_Log__c records.');
+                return;
+            }
+            
+            // Sprawdź uprawnienia do poszczególnych pól
+            Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.Error_Log__c.fields.getMap();
+            for (String field : new List<String>{'Class_Name__c', 'Method_Name__c', 'Message__c', 'Stack_Trace__c', 'Exception_Type__c', 'Log_Time__c'}) {
+                if (!fieldMap.get(field).getDescribe().isCreateable()) {
+                    System.debug(LoggingLevel.WARN, 'Insufficient permissions to create Error_Log__c.' + field);
+                    return;
+                }
+            }
         
         // Create error log record
         Error_Log__c log = new Error_Log__c(
@@ -68,7 +84,6 @@ public with sharing class Logger {
             Log_Time__c = Datetime.now()
         );
         
-        try {
             insert log;
         } catch (Exception ex) {
             // If we can't insert the log record, at least write to debug logs

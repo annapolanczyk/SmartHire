@@ -1,6 +1,9 @@
 /**
  * Controller for Candidate Conversion operations
  */
+/**
+ * Controller for Candidate Conversion operations
+ */
 public with sharing class CandidateConversionController {
     
     private static final String CLASS_NAME = 'CandidateConversionController';
@@ -21,7 +24,6 @@ public with sharing class CandidateConversionController {
             throw new AuraHandledException(e.getMessage());
         }
     }
-}
     
     /**
      * Get conversion details
