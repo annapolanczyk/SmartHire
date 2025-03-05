@@ -11,7 +11,7 @@ public with sharing class PositionService {
     };
     
     private static final List<String> DETAIL_FIELDS = new List<String>{
-        'Description__c', 'Qualifications__c' // ❌ Usunięto 'Duties__c'
+        'Description__c', 'Qualifications__c'
     };
 
     /**
@@ -41,7 +41,7 @@ public with sharing class PositionService {
 
         List<Position__c> positions = [SELECT Id, Name, Department__c, Status__c, Location__c,
                                               Required_Skills__c, Salary_Range__c, Description__c,
-                                              Qualifications__c // ❌ Usunięto Duties__c
+                                              Qualifications__c
                                        FROM Position__c 
                                        WHERE Id = :positionId];
 

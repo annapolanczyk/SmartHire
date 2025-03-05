@@ -3,6 +3,8 @@
  */
 public with sharing class CandidateContactConversionController {
     
+    private static final String CLASS_NAME = 'CandidateContactConversionController';
+
     /**
      * Get available roles
      * @return List of available roles
@@ -10,8 +12,9 @@ public with sharing class CandidateContactConversionController {
     @AuraEnabled(cacheable=true)
     public static List<UserRole> getAvailableRoles() {
         try {
-            return CandidateContactConversionService.getAvailableRoles();
+            return CandidateConversionService.getAvailableRoles();
         } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'getAvailableRoles', 'Error fetching available roles', e);
             throw new AuraHandledException(e.getMessage());
         }
     }
@@ -25,6 +28,7 @@ public with sharing class CandidateContactConversionController {
         try {
             return CandidateConversionService.getAvailableProfiles();
         } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'getAvailableProfiles', 'Error fetching available profiles', e);
             throw new AuraHandledException(e.getMessage());
         }
     }
@@ -39,8 +43,10 @@ public with sharing class CandidateContactConversionController {
     @AuraEnabled
     public static Id convertCandidateToUser(Id candidateId, Id profileId, Id roleId) {
         try {
+            validateCandidatePermissions();
             return CandidateConversionService.convertCandidateToUser(candidateId, profileId, roleId);
         } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'convertCandidateToUser', 'Error converting candidate to user', e);
             throw new AuraHandledException(e.getMessage());
         }
     }
@@ -54,9 +60,20 @@ public with sharing class CandidateContactConversionController {
     @AuraEnabled
     public static Id convertCandidateToContact(Id candidateId, Id accountId) {
         try {
-            return CandidateContactConversionService.convertCandidateToContact(candidateId, accountId);
+            validateCandidatePermissions();
+            return CandidateConversionService.convertCandidateToContact(candidateId, accountId);
         } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'convertCandidateToContact', 'Error converting candidate to contact', e);
             throw new AuraHandledException(e.getMessage());
         }
     }
-} 
+
+    /**
+     * Validate permissions for Candidate__c object
+     */
+    private static void validateCandidatePermissions() {
+        if (!Schema.SObjectType.Candidate__c.isAccessible()) {
+            throw new AuraHandledException('Insufficient permissions to access Candidate__c');
+        }
+    }
+}

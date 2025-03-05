@@ -5,86 +5,78 @@ public with sharing class ApplicationController {
     
     /**
      * Get applications for a position
-     * @param positionId Position Id
-     * @return List of applications
      */
     @AuraEnabled(cacheable=true)
     public static List<Application__c> getApplicationsByPosition(Id positionId) {
-        try {
-            return ApplicationService.getApplicationsByPosition(positionId);
-        } catch (Exception e) {
-            throw new AuraHandledException(e.getMessage());
+        if (!Schema.SObjectType.Application__c.isAccessible()) {
+            throw new AuraHandledException('Insufficient permissions to access Application__c');
         }
+        
+        return ApplicationService.getApplicationsByPosition(positionId);
     }
     
     /**
      * Get applications for a candidate
-     * @param candidateId Candidate Id
-     * @return List of applications
      */
     @AuraEnabled(cacheable=true)
     public static List<Application__c> getApplicationsByCandidate(Id candidateId) {
-        try {
-            return ApplicationService.getApplicationsByCandidate(candidateId);
-        } catch (Exception e) {
-            throw new AuraHandledException(e.getMessage());
+        if (!Schema.SObjectType.Application__c.isAccessible()) {
+            throw new AuraHandledException('Insufficient permissions to access Application__c');
         }
+        
+        return ApplicationService.getApplicationsByCandidate(candidateId);
     }
     
     /**
      * Get application by Id
-     * @param applicationId Application Id
-     * @return Application details
      */
     @AuraEnabled(cacheable=true)
     public static Application__c getApplicationById(Id applicationId) {
-        try {
-            return ApplicationService.getApplicationById(applicationId);
-        } catch (Exception e) {
-            throw new AuraHandledException(e.getMessage());
+        if (!Schema.SObjectType.Application__c.isAccessible()) {
+            throw new AuraHandledException('Insufficient permissions to access Application__c');
         }
+
+        List<Application__c> applications = ApplicationService.getApplicationById(applicationId);
+        if (applications.isEmpty()) {
+            throw new AuraHandledException('Application not found');
+        }
+
+        return applications[0];
     }
     
     /**
      * Create a new application
-     * @param application Application to create
-     * @return Id of the created application
      */
     @AuraEnabled
     public static Id createApplication(Application__c application) {
-        try {
-            return ApplicationService.createApplication(application);
-        } catch (Exception e) {
-            throw new AuraHandledException(e.getMessage());
+        if (!Schema.SObjectType.Application__c.isCreateable()) {
+            throw new AuraHandledException('Insufficient permissions to create Application__c');
         }
+        
+        return ApplicationService.createApplication(application);
     }
     
     /**
      * Update application status
-     * @param applicationId Application Id
-     * @param status New status
-     * @param comments Optional comments
      */
     @AuraEnabled
     public static void updateApplicationStatus(Id applicationId, String status, String comments) {
-        try {
-            ApplicationService.updateApplicationStatus(applicationId, status, comments);
-        } catch (Exception e) {
-            throw new AuraHandledException(e.getMessage());
+        if (!Schema.SObjectType.Application__c.isUpdateable()) {
+            throw new AuraHandledException('Insufficient permissions to update Application__c');
         }
+        
+        ApplicationService.updateApplicationStatus(applicationId, status, comments);
     }
     
     /**
      * Get application history
-     * @param applicationId Application Id
-     * @return List of status history records
      */
     @AuraEnabled(cacheable=true)
     public static List<ApplicationStatusHistory__c> getApplicationHistory(Id applicationId) {
-        try {
-            return ApplicationService.getApplicationHistory(applicationId);
-        } catch (Exception e) {
-            throw new AuraHandledException(e.getMessage());
+        if (!Schema.SObjectType.ApplicationStatusHistory__c.isAccessible()) {
+            throw new AuraHandledException('Insufficient permissions to access ApplicationStatusHistory__c');
         }
+        
+        return ApplicationService.getApplicationHistory(applicationId);
     }
-} 
+}

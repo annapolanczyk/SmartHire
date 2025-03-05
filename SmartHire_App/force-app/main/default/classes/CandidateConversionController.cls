@@ -3,6 +3,8 @@
  */
 public with sharing class CandidateConversionController {
     
+    private static final String CLASS_NAME = 'CandidateConversionController';
+
     /**
      * Convert candidate to employee
      * @param candidateId Candidate Id
@@ -15,9 +17,11 @@ public with sharing class CandidateConversionController {
         try {
             return CandidateConversionService.convertCandidateToEmployee(candidateId, applicationId, employeeData);
         } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'convertCandidateToEmployee', 'Error converting candidate to employee', e);
             throw new AuraHandledException(e.getMessage());
         }
     }
+}
     
     /**
      * Get conversion details
@@ -30,6 +34,7 @@ public with sharing class CandidateConversionController {
         try {
             return CandidateConversionService.getConversionDetails(candidateId, applicationId);
         } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'getConversionDetails', 'Error fetching conversion details', e);
             throw new AuraHandledException(e.getMessage());
         }
     }
@@ -45,6 +50,7 @@ public with sharing class CandidateConversionController {
         try {
             return CandidateConversionService.canConvertCandidate(candidateId, applicationId);
         } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'canConvertCandidate', 'Error checking candidate conversion eligibility', e);
             throw new AuraHandledException(e.getMessage());
         }
     }
@@ -59,6 +65,7 @@ public with sharing class CandidateConversionController {
         try {
             return CandidateConversionService.getConversionHistory(candidateId);
         } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'getConversionHistory', 'Error fetching candidate conversion history', e);
             throw new AuraHandledException(e.getMessage());
         }
     }
@@ -72,6 +79,7 @@ public with sharing class CandidateConversionController {
         try {
             return CandidateConversionService.getAvailableRoles();
         } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'getAvailableRoles', 'Error fetching available roles', e);
             throw new AuraHandledException(e.getMessage());
         }
     }
@@ -85,6 +93,7 @@ public with sharing class CandidateConversionController {
         try {
             return CandidateConversionService.getAvailableProfiles();
         } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'getAvailableProfiles', 'Error fetching available profiles', e);
             throw new AuraHandledException(e.getMessage());
         }
     }
@@ -99,8 +108,9 @@ public with sharing class CandidateConversionController {
     @AuraEnabled
     public static Id convertCandidateToUser(Id candidateId, Id profileId, Id roleId) {
         try {
-            return CandidateConversionService.convertCandidateToUser(candidateId, profileId, roleId); // 🔄 Zmiana na CandidateConversionService
+            return CandidateConversionService.convertCandidateToUser(candidateId, profileId, roleId);
         } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'convertCandidateToUser', 'Error converting candidate to user', e);
             throw new AuraHandledException(e.getMessage());
         }
     }
@@ -114,8 +124,9 @@ public with sharing class CandidateConversionController {
     @AuraEnabled
     public static Id convertCandidateToContact(Id candidateId, Id accountId) {
         try {
-            return CandidateConversionService.convertCandidateToContact(candidateId, accountId); // 🔄 Zmiana na CandidateConversionService
+            return CandidateConversionService.convertCandidateToContact(candidateId, accountId);
         } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'convertCandidateToContact', 'Error converting candidate to contact', e);
             throw new AuraHandledException(e.getMessage());
         }
     }
