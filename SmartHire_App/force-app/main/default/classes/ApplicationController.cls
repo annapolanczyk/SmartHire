@@ -36,8 +36,8 @@ public with sharing class ApplicationController {
             throw new AuraHandledException('Insufficient permissions to access Application__c');
         }
 
-        List<Application__c> applications = ApplicationService.getApplicationById(applicationId);
-        if (applications.isEmpty()) {
+        Application__c application = ApplicationService.getApplicationById(applicationId);
+        if (application == null) {
             throw new AuraHandledException('Application not found');
         }
 

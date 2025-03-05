@@ -56,6 +56,9 @@ public with sharing class ApplicationService {
             throw new AuraHandledException(e.getMessage());
         }
     }
+    public static List<Application__c> getApplicationsByCandidate(Id candidateId) {
+        return [SELECT Id, Name, Status__c FROM Application__c WHERE Candidate__c = :candidateId];
+    }
     
     /**
      * Create a new application
