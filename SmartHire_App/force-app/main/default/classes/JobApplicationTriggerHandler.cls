@@ -1,45 +1,53 @@
 /**
- * Serwis do obsługi analizy CV
- */
-public with sharing class ResumeAnalysisService {
-
-    private static final String CLASS_NAME = 'ResumeAnalysisService';
+ * @description       : Handler class for Job Application triggers
+ * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+ * @group             : 
+ * @last modified on  : 03-05-2025
+ * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+**/
+public class JobApplicationTriggerHandler {
     
-    /**
-     * Planuje analizę CV dla nowych aplikacji
-     * @param applications lista nowych aplikacji
-     */
-    public static void scheduleAnalysisForApplications(List<Job_Application__c> applications) {
-        if (applications == null || applications.isEmpty()) {
-            Logger.warn(CLASS_NAME, 'scheduleAnalysisForApplications', 'No applications provided for analysis.');
-            return;
-        }
-
-        // Zbierz ID aplikacji, które wymagają analizy CV
-        List<Id> applicationsForAnalysis = new List<Id>();
-
-        for (Job_Application__c app : applications) {
-            if (app.Status__c != null && (app.Status__c.equalsIgnoreCase('Applied') || app.Status__c.equalsIgnoreCase('Resume Review'))) {
-                applicationsForAnalysis.add(app.Id);
-            }
-        }
-
-        if (applicationsForAnalysis.isEmpty()) {
-            Logger.info(CLASS_NAME, 'scheduleAnalysisForApplications', 'No applications require resume analysis.');
-            return;
-        }
-
-        try {
-            // Sprawdź limit kolejki przed zaplanowaniem zadania
-            if (Limits.getQueueableJobs() < Limits.getLimitQueueableJobs()) {
-                System.enqueueJob(new ResumeAnalysisQueueable(applicationsForAnalysis));
-                Logger.info(CLASS_NAME, 'scheduleAnalysisForApplications', 'Queued CV analysis for ' + applicationsForAnalysis.size() + ' applications.');
-            } else {
-                Logger.error(CLASS_NAME, 'scheduleAnalysisForApplications', 
-                             'Cannot schedule analysis due to queueable job limits. Applications count: ' + applicationsForAnalysis.size(), null);
-            }
-        } catch (Exception e) {
-            Logger.error(CLASS_NAME, 'scheduleAnalysisForApplications', 'Error scheduling CV analysis job', e);
-        }
+    private static final String CLASS_NAME = 'JobApplicationTriggerHandler';
+    
+    // Metoda obsługująca logikę przed wstawieniem nowych rekordów
+    public void onBeforeInsert(List<Job_Application__c> newList) {
+        Logger.info(CLASS_NAME, 'onBeforeInsert', 'Trigger executed.');
+        // Dodaj tutaj logikę, np. walidacje lub uzupełnianie pól
+    }
+    
+    // Metoda obsługująca logikę przed aktualizacją rekordów
+    public void onBeforeUpdate(List<Job_Application__c> newList, Map<Id, Job_Application__c> oldMap) {
+        Logger.info(CLASS_NAME, 'onBeforeUpdate', 'Trigger executed.');
+        // Dodaj tutaj logikę przed aktualizacją
+    }
+    
+    // Metoda obsługująca logikę przed usunięciem rekordów
+    public void onBeforeDelete(List<Job_Application__c> oldList) {
+        Logger.info(CLASS_NAME, 'onBeforeDelete', 'Trigger executed.');
+        // Dodaj tutaj logikę przed usunięciem
+    }
+    
+    // Metoda obsługująca logikę po wstawieniu nowych rekordów
+    public void onAfterInsert(List<Job_Application__c> newList) {
+        Logger.info(CLASS_NAME, 'onAfterInsert', 'Trigger executed.');
+        // Dodaj tutaj logikę po wstawieniu rekordów
+    }
+    
+    // Metoda obsługująca logikę po aktualizacji rekordów
+    public void onAfterUpdate(List<Job_Application__c> newList, Map<Id, Job_Application__c> oldMap) {
+        Logger.info(CLASS_NAME, 'onAfterUpdate', 'Trigger executed.');
+        // Dodaj tutaj logikę po aktualizacji rekordów
+    }
+    
+    // Metoda obsługująca logikę po usunięciu rekordów
+    public void onAfterDelete(List<Job_Application__c> oldList) {
+        Logger.info(CLASS_NAME, 'onAfterDelete', 'Trigger executed.');
+        // Dodaj tutaj logikę po usunięciu rekordów
+    }
+    
+    // Metoda obsługująca logikę po przywróceniu rekordów (undelete)
+    public void onAfterUndelete(List<Job_Application__c> newList) {
+        Logger.info(CLASS_NAME, 'onAfterUndelete', 'Trigger executed.');
+        // Dodaj tutaj logikę po przywróceniu rekordów
     }
 }
