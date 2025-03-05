@@ -90,6 +90,45 @@ public with sharing class SecurityUtils {
     }
     
     /**
+     * Sprawdza uprawnienia do odczytu konkretnych pól obiektu
+     * @param objectType Typ obiektu do sprawdzenia
+     * @param fieldApiNames Lista nazw API pól do sprawdzenia
+     * @param accessType Typ dostępu (READ, CREATE, UPDATE)
+     * @throws SecurityException jeśli użytkownik nie ma wymaganych uprawnień
+     */
+    public static void checkFieldAccess(SObjectType objectType, List<String> fieldApiNames, String accessType) {
+        Map<String, Schema.SObjectField> fieldMap = objectType.getDescribe().fields.getMap();
+        
+        for (String fieldName : fieldApiNames) {
+            if (!fieldMap.containsKey(fieldName)) {
+                throw new SecurityException('Pole nie istnieje: ' + fieldName);
+            }
+            
+            Schema.DescribeFieldResult fieldDescribe = fieldMap.get(fieldName).getDescribe();
+            Boolean hasAccess = false;
+            
+            switch on accessType.toUpperCase() {
+                when 'READ' {
+                    hasAccess = fieldDescribe.isAccessible();
+                }
+                when 'CREATE' {
+                    hasAccess = fieldDescribe.isCreateable();
+                }
+                when 'UPDATE' {
+                    hasAccess = fieldDescribe.isUpdateable();
+                }
+                when else {
+                    throw new SecurityException('Nieprawidłowy typ dostępu: ' + accessType);
+                }
+            }
+            
+            if (!hasAccess) {
+                throw new SecurityException('Brak uprawnień do ' + accessType + ' dla pola: ' + fieldName);
+            }
+        }
+    }
+    
+    /**
      * Niestandardowy wyjątek do obsługi problemów z bezpieczeństwem
      */
     public class SecurityException extends Exception {}

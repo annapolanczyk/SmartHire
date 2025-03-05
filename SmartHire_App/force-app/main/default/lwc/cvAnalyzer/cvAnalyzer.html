@@ -1,0 +1,115 @@
+<!--
+  @description       : 
+  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+  @group             : 
+  @last modified on  : 03-04-2025
+  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+-->
+<template>
+    <lightning-card title="Analiza CV z OpenAI" icon-name="standard:document">
+        <div class="slds-p-around_medium">
+            <!-- Sekcja ładowania -->
+            <template if:true={isLoading}>
+                <div class="slds-is-relative slds-p-around_medium">
+                    <lightning-spinner alternative-text="Analizowanie CV..." size="medium"></lightning-spinner>
+                    <p class="slds-text-align_center slds-m-top_large">Trwa analiza CV. To może potrwać kilka chwil...</p>
+                </div>
+            </template>
+            
+            <!-- Formularz uploadu CV -->
+            <template if:false={showResults}>
+                <lightning-file-upload
+                    label="Dodaj CV do analizy"
+                    name="cvUploader"
+                    accept={acceptedFormats}
+                    record-id={recordId}
+                    onuploadfinished={handleUpload}
+                    multiple="false">
+                </lightning-file-upload>
+                
+                <p class="slds-text-body_small slds-m-top_small">
+                    Obsługiwane formaty: PDF, DOC, DOCX, TXT
+                </p>
+            </template>
+            
+            <!-- Wyniki analizy -->
+            <template if:true={showResults}>
+                <div class="slds-box slds-theme_default">
+                    <h2 class="slds-text-heading_medium slds-m-bottom_medium">Wyniki analizy CV</h2>
+                    
+                    <!-- Wykryte umiejętności -->
+                    <template if:true={hasSkills}>
+                        <div class="slds-m-bottom_medium">
+                            <h3 class="slds-text-heading_small slds-m-bottom_x-small">Wykryte umiejętności</h3>
+                            <div class="slds-pill_container">
+                                <template for:each={analysisResults.skills} for:item="skill">
+                                    <lightning-pill 
+                                        key={skill} 
+                                        label={skill} 
+                                        class="slds-m-around_xxx-small">
+                                    </lightning-pill>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- Doświadczenie zawodowe -->
+                    <template if:true={analysisResults.experience}>
+                        <div class="slds-m-bottom_medium">
+                            <h3 class="slds-text-heading_small slds-m-bottom_x-small">Doświadczenie zawodowe</h3>
+                            <div class="slds-text-longform">
+                                <lightning-formatted-rich-text 
+                                    value={analysisResults.experience}>
+                                </lightning-formatted-rich-text>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- Wykształcenie -->
+                    <template if:true={analysisResults.education}>
+                        <div class="slds-m-bottom_medium">
+                            <h3 class="slds-text-heading_small slds-m-bottom_x-small">Wykształcenie</h3>
+                            <div class="slds-text-longform">
+                                <lightning-formatted-rich-text 
+                                    value={analysisResults.education}>
+                                </lightning-formatted-rich-text>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- Dopasowanie do stanowiska -->
+                    <template if:true={hasJobMatch}>
+                        <div class="slds-m-bottom_medium">
+                            <h3 class="slds-text-heading_small slds-m-bottom_x-small">Dopasowanie do stanowiska</h3>
+                            <div class={matchColor}>
+                                <lightning-progress-bar 
+                                    value={analysisResults.matchScore} 
+                                    size="large">
+                                </lightning-progress-bar>
+                                <p class="slds-text-heading_small slds-text-align_center slds-m-top_x-small">
+                                    {analysisResults.matchScore}%
+                                </p>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- Przyciski akcji -->
+                    <div class="slds-grid slds-grid_align-center slds-m-top_medium">
+                        <lightning-button-group>
+                            <lightning-button 
+                                label="Analizuj ponownie" 
+                                onclick={handleForceAnalysis} 
+                                variant="neutral">
+                            </lightning-button>
+                            <lightning-button 
+                                label="Resetuj" 
+                                onclick={handleResetAnalysis} 
+                                variant="destructive">
+                            </lightning-button>
+                        </lightning-button-group>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template> 

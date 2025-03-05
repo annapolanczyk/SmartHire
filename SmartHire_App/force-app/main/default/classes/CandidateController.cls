@@ -84,4 +84,19 @@ public with sharing class CandidateController {
             throw new AuraHandledException(e.getMessage());
         }
     }
+    
+    /**
+     * Check if email exists for another candidate
+     * @param email Email to check
+     * @param candidateId Current candidate Id (optional)
+     * @return True if email exists for another candidate
+     */
+    @AuraEnabled
+    public static Boolean isEmailExist(String email, Id candidateId) {
+        try {
+            return CandidateService.isEmailExist(email, candidateId);
+        } catch (Exception e) {
+            throw new AuraHandledException(e.getMessage());
+        }
+    }
 } 

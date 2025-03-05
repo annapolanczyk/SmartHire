@@ -81,6 +81,19 @@ public with sharing class CVAnalysisService {
      * Pobiera rekord ContentVersion na podstawie ContentDocumentId
      */
     private static ContentVersion getContentVersion(Id contentDocumentId) {
+        // Sprawdzamy uprawnienia przed SOQL
+        if (!Schema.SObjectType.ContentVersion.isAccessible()) {
+            throw new AuraHandledException('Insufficient permissions to access ContentVersion');
+        }
+        
+        // Sprawdzamy dostęp do pól
+        Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.ContentVersion.fields.getMap();
+        for (String field : new List<String>{'VersionData', 'Title', 'FileType', 'ContentDocumentId', 'IsLatest'}) {
+            if (!fieldMap.get(field).getDescribe().isAccessible()) {
+                throw new AuraHandledException('Insufficient permissions to access ContentVersion.' + field);
+            }
+        }
+            
         List<ContentVersion> cvList = [
             SELECT VersionData, Title, FileType 
             FROM ContentVersion 
@@ -98,6 +111,19 @@ public with sharing class CVAnalysisService {
      * Pobiera rekord Position__c na podstawie positionId
      */
     private static Position__c getPosition(Id positionId) {
+        // Sprawdzamy uprawnienia przed SOQL
+        if (!Schema.SObjectType.Position__c.isAccessible()) {
+            throw new AuraHandledException('Insufficient permissions to access Position__c');
+        }
+        
+        // Sprawdzamy dostęp do pól
+        Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.Position__c.fields.getMap();
+        for (String field : new List<String>{'Description__c', 'Required_Skills__c'}) {
+            if (!fieldMap.get(field).getDescribe().isAccessible()) {
+                throw new AuraHandledException('Insufficient permissions to access Position__c.' + field);
+            }
+        }
+            
         List<Position__c> positionList = [
             SELECT Description__c, Required_Skills__c 
             FROM Position__c 
@@ -177,7 +203,7 @@ public with sharing class CVAnalysisService {
     private static Map<String, Object> analyzeResumeWithOpenAI(String resumeText, String jobDescription, List<String> requiredSkills) {
         checkCalloutPermission();
         String systemPrompt = 'Jesteś ekspertem HR, analizujesz CV i wyodrębniasz dane w JSON.';
-        String skillsStr = requiredSkills.join(',');
+        String skillsStr = String.join(requiredSkills, ',');
         Map<String, Object> request = new Map<String, Object>{
             'prompt' => systemPrompt + '\nCV: ' + resumeText + '\nOpis: ' + jobDescription + '\nUmiejętności: ' + skillsStr,
             'max_tokens' => 2000
@@ -219,16 +245,15 @@ public with sharing class CVAnalysisService {
      * Walidacja uprawnień do ContentVersion
      */
     private static void validateContentVersionAccess() {
-        if (!Schema.sObjectType.ContentVersion.isAccessible()) {
-            throw new SecurityException('Insufficient permissions to access ContentVersion');
+        if (!Schema.SObjectType.ContentVersion.isAccessible()) {
+            throw new AuraHandledException('Insufficient permissions to access ContentVersion');
         }
         
-        Map<String, Schema.SObjectField> fieldMap = Schema.sObjectType.ContentVersion.fields.getMap();
-        if (!fieldMap.get('VersionData').getDescribe().isAccessible() ||
-            !fieldMap.get('Title').getDescribe().isAccessible() ||
-            !fieldMap.get('FileType').getDescribe().isAccessible() ||
-            !fieldMap.get('ContentDocumentId').getDescribe().isAccessible()) {
-            throw new SecurityException('Insufficient permissions to access required ContentVersion fields');
+        Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.ContentVersion.fields.getMap();
+        for (String field : new List<String>{'VersionData', 'Title', 'FileType', 'ContentDocumentId'}) {
+            if (!fieldMap.get(field).getDescribe().isAccessible()) {
+                throw new AuraHandledException('Insufficient permissions to access ContentVersion.' + field);
+            }
         }
     }
     
@@ -236,14 +261,85 @@ public with sharing class CVAnalysisService {
      * Walidacja uprawnień do Position__c
      */
     private static void validatePositionAccess() {
-        if (!Schema.sObjectType.Position__c.isAccessible()) {
-            throw new SecurityException('Insufficient permissions to access Position__c');
+        if (!Schema.SObjectType.Position__c.isAccessible()) {
+            throw new AuraHandledException('Insufficient permissions to access Position__c');
         }
         
-        Map<String, Schema.SObjectField> fieldMap = Schema.sObjectType.Position__c.fields.getMap();
-        if (!fieldMap.get('Description__c').getDescribe().isAccessible() ||
-            !fieldMap.get('Required_Skills__c').getDescribe().isAccessible()) {
-            throw new SecurityException('Insufficient permissions to access required Position__c fields');
+        Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.Position__c.fields.getMap();
+        for (String field : new List<String>{'Description__c', 'Required_Skills__c'}) {
+            if (!fieldMap.get(field).getDescribe().isAccessible()) {
+                throw new AuraHandledException('Insufficient permissions to access Position__c.' + field);
+            }
+        }
+    }
+
+    /**
+     * Creates a task for the recruiter based on CV analysis results
+     * @param applicationId Application Id
+     * @param analysisResults Analysis results from OpenAI
+     */
+    public static void createRecruiterTaskFromAnalysis(Id applicationId, Map<String, Object> analysisResults) {
+        try {
+            // Validate permissions for Application__c
+            if (!Schema.SObjectType.Application__c.isAccessible()) {
+                throw new AuraHandledException('Insufficient permissions to access Application__c');
+            }
+            
+            // Validate permissions for fields
+            Map<String, Schema.SObjectField> appFieldMap = Schema.SObjectType.Application__c.fields.getMap();
+            for (String field : new List<String>{'Candidate__c', 'Position__c', 'Assigned_Reviewer__c'}) {
+                if (!appFieldMap.get(field).getDescribe().isAccessible()) {
+                    throw new AuraHandledException('Insufficient permissions to access Application__c.' + field);
+                }
+            }
+            
+            // Validate permissions for Task
+            if (!Schema.SObjectType.Task.isCreateable()) {
+                throw new AuraHandledException('Insufficient permissions to create Task');
+            }
+            
+            Map<String, Schema.SObjectField> taskFieldMap = Schema.SObjectType.Task.fields.getMap();
+            for (String field : new List<String>{'Subject', 'Description', 'WhatId', 'OwnerId', 'Status', 'Priority', 'ActivityDate'}) {
+                if (!taskFieldMap.get(field).getDescribe().isCreateable()) {
+                    throw new AuraHandledException('Insufficient permissions to create Task.' + field);
+                }
+            }
+            
+            // Query application details
+            Application__c app = [
+                SELECT Id, Candidate__r.Name, Position__r.Name, Assigned_Reviewer__c
+                FROM Application__c 
+                WHERE Id = :applicationId
+                LIMIT 1
+            ];
+            
+            // Extract insights from AI analysis results
+            String insights = '';
+            if (analysisResults.containsKey('skills_match')) {
+                insights += 'Matches ' + analysisResults.get('skills_match') + '% of required skills. ';
+            }
+            if (analysisResults.containsKey('experience_years')) {
+                insights += 'Estimated experience: ' + analysisResults.get('experience_years') + ' years. ';
+            }
+            if (analysisResults.containsKey('recommendations')) {
+                insights += '\n\nRecommendations: ' + analysisResults.get('recommendations');
+            }
+            
+            // Create task for the recruiter
+            Task t = new Task(
+                Subject = 'Review CV Analysis: ' + app.Candidate__r.Name + ' for ' + app.Position__r.Name,
+                Description = 'AI Analysis Results:\n\n' + insights,
+                WhatId = applicationId,
+                OwnerId = app.Assigned_Reviewer__c != null ? app.Assigned_Reviewer__c : UserInfo.getUserId(),
+                Status = 'Not Started',
+                Priority = 'High',
+                ActivityDate = Date.today().addDays(2)
+            );
+            
+            insert t;
+            
+        } catch (Exception e) {
+            throw new AuraHandledException('Error creating recruiter task: ' + e.getMessage());
         }
     }
 }

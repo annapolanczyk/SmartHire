@@ -4,10 +4,10 @@ import { getRecord } from 'lightning/uiRecordApi';
 import { NavigationMixin } from 'lightning/navigation';
 
 // Import Apex methods
-import convertCandidateToContact from '@salesforce/apex/RecruitmentController.convertCandidateToContact';
-import convertCandidateToUser from '@salesforce/apex/RecruitmentController.convertCandidateToUser';
-import getAvailableProfiles from '@salesforce/apex/RecruitmentController.getAvailableProfiles';
-import getAvailableRoles from '@salesforce/apex/RecruitmentController.getAvailableRoles';
+import convertCandidateToContact from '@salesforce/apex/CandidateConversionController.convertCandidateToContact';
+import convertCandidateToUser from '@salesforce/apex/CandidateConversionController.convertCandidateToUser';
+import getAvailableProfiles from '@salesforce/apex/CandidateConversionController.getAvailableProfiles';
+import getAvailableRoles from '@salesforce/apex/CandidateConversionController.getAvailableRoles';
 
 // Import fields
 import CANDIDATE_NAME_FIELD from '@salesforce/schema/Candidate__c.Name';
@@ -156,4 +156,27 @@ export default class CandidateConversion extends NavigationMixin(LightningElemen
         convertCandidateToUser({
             candidateId: this.recordId,
             profileId: this.selectedProfileId,
-            roleId: this.selectedRole
+            roleId: this.selectedRoleId
+        })
+            .then(userId => {
+                this.isLoading = false;
+                this.showToast('Success', 'Candidate has been converted to a User', 'success');
+                
+                // Navigate to the new user
+                this[NavigationMixin.Navigate]({
+                    type: 'standard__recordPage',
+                    attributes: {
+                        recordId: userId,
+                        objectApiName: 'User',
+                        actionName: 'view'
+                    }
+                });
+                
+                this.dispatchEvent(new CustomEvent('close'));
+            })
+            .catch(error => {
+                this.isLoading = false;
+                this.showToast('Error', 'Error converting candidate: ' + error.body.message, 'error');
+            });
+    }
+}

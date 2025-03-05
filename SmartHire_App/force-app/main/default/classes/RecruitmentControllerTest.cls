@@ -46,7 +46,7 @@ private class RecruitmentControllerTest {
     @isTest
     static void testGetActivePositions() {
         Test.startTest();
-        List<Position__c> positions = RecruitmentController.getActivePositions();
+        List<Position__c> positions = PositionController.getActivePositions();
         Test.stopTest();
         
         System.assertEquals(1, positions.size(), 'Powinna być jedna aktywna pozycja');
@@ -61,7 +61,7 @@ private class RecruitmentControllerTest {
         Position__c position = [SELECT Id FROM Position__c LIMIT 1];
         
         Test.startTest();
-        Position__c result = RecruitmentController.getPositionById(position.Id);
+        Position__c result = PositionController.getPositionById(position.Id);
         Test.stopTest();
         
         System.assertNotEquals(null, result, 'Rezultat nie powinien być null');
@@ -95,10 +95,10 @@ private class RecruitmentControllerTest {
         // Spodziewamy się wyjątku, ponieważ w teście nie możemy naprawdę wywołać OpenAI,
         // ale przynajmniej sprawdzimy, czy metoda kontrolera prawidłowo deleguje wywołanie do usługi
         try {
-            Map<String, Object> results = RecruitmentController.analyzeCandidateResume(conDocId, position.Id);
+            Map<String, Object> results = CVAnalysisController.analyzeCandidateResume(conDocId, position.Id, false);
             // Jeśli dojdziemy do tego miejsca, oznacza to, że mamy poprawnie skonfigurowane mocki
             System.assertNotEquals(null, results, 'Wyniki nie powinny być null');
-        } catch (AuraHandledException e) {
+        } catch (Exception e) {
             // Oczekujemy wyjątku ze względu na brak rzeczywistej usługi, 
             // ale chcemy upewnić się, że jest to wyjątek związany z analizą CV
             System.assert(e.getMessage().contains('CV') || e.getMessage().contains('Error'),
@@ -140,5 +140,5 @@ private class RecruitmentControllerTest {
         }
     }
     
-    // Tutaj powinny znaleźć się testy dla innych metod RecruitmentController...
+    // Tutaj powinny znaleźć się testy dla innych metod kontrolerów...
 }

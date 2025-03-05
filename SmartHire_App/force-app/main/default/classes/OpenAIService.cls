@@ -112,12 +112,11 @@ public with sharing class OpenAIService {
      * Sprawdza uprawnienia dostępu do ustawień OpenAI
      */
     private static void validateOpenAISettingsAccess() {
-        if (!Schema.sObjectType.OpenAI_Settings__c.isAccessible()) {
-            throw new SecurityException('Insufficient permissions to access OpenAI_Settings__c');
-        }
-        
-        if (!Schema.sObjectType.OpenAI_Settings__c.fields.API_Key__c.isAccessible()) {
-            throw new SecurityException('Insufficient permissions to access API_Key__c field');
+        try {
+            SecurityUtils.checkReadAccess(OpenAI_Settings__c.SObjectType, 
+                new List<String>{'API_Key__c'});
+        } catch (SecurityUtils.SecurityException e) {
+            throw new SecurityException('Insufficient permissions to access OpenAI settings: ' + e.getMessage());
         }
     }
     

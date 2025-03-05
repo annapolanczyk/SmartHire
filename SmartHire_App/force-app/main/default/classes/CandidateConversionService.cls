@@ -3,6 +3,22 @@
  */
 public with sharing class CandidateConversionService {
     
+    private static final String CLASS_NAME = 'CandidateConversionService';
+    private static final List<String> CANDIDATE_FIELDS = new List<String>{
+        'Name', 'Email__c', 'Phone__c', 'Status__c'
+    };
+    
+    private static final List<String> APPLICATION_FIELDS = new List<String>{
+        'Position__c', 'Position__r.Name', 'Position__r.Department__c',
+        'Position__r.Salary_Range__c', 'Status__c'
+    };
+    
+    private static final List<String> EMPLOYEE_FIELDS = new List<String>{
+        'First_Name__c', 'Last_Name__c', 'Email__c', 'Phone__c',
+        'Position__c', 'Department__c', 'Hire_Date__c', 'Salary__c',
+        'Manager__c', 'Candidate__c'
+    };
+    
     /**
      * Convert candidate to employee
      * @param candidateId Candidate Id
@@ -11,65 +27,30 @@ public with sharing class CandidateConversionService {
      * @return Id of the created employee
      */
     public static Id convertCandidateToEmployee(Id candidateId, Id applicationId, Map<String, Object> employeeData) {
-        // Check permissions
-        if (!Schema.SObjectType.Candidate__c.isAccessible() || 
-            !Schema.SObjectType.Application__c.isAccessible() ||
-            !Schema.SObjectType.Employee__c.isCreateable() ||
-            !Schema.SObjectType.Candidate__c.isUpdateable() ||
-            !Schema.SObjectType.Application__c.isUpdateable()) {
-            throw new SecurityException('Insufficient permissions for candidate conversion');
-        }
-        
-        // Validate conversion eligibility
-        if (!canConvertCandidate(candidateId, applicationId)) {
-            throw new AuraHandledException('Candidate is not eligible for conversion');
-        }
-        
-        // Start transaction
-        Savepoint sp = Database.setSavepoint();
-        
         try {
-            // Get candidate and application details
-            Candidate__c candidate = [SELECT Id, Name, Email__c, Phone__c, Status__c 
-                                     FROM Candidate__c 
-                                     WHERE Id = :candidateId];
+            validateConversionPermissions();
+            validateConversionEligibility(candidateId, applicationId);
             
-            Application__c application = [SELECT Id, Position__c, Position__r.Name, Status__c 
-                                         FROM Application__c 
-                                         WHERE Id = :applicationId];
+            Savepoint sp = Database.setSavepoint();
             
-            // Create employee record
-            Employee__c employee = new Employee__c(
-                First_Name__c = (String)employeeData.get('firstName'),
-                Last_Name__c = (String)employeeData.get('lastName'),
-                Email__c = candidate.Email__c,
-                Phone__c = candidate.Phone__c,
-                Position__c = application.Position__c,
-                Department__c = (String)employeeData.get('department'),
-                Hire_Date__c = Date.valueOf((String)employeeData.get('hireDate')),
-                Salary__c = Decimal.valueOf((String)employeeData.get('salary')),
-                Manager__c = (Id)employeeData.get('managerId'),
-                Candidate__c = candidateId
-            );
-            
-            insert employee;
-            
-            // Update candidate status
-            candidate.Status__c = 'Hired';
-            update candidate;
-            
-            // Update application status
-            application.Status__c = 'Hired';
-            update application;
-            
-            // Create conversion history record
-            createConversionHistoryRecord(candidateId, employee.Id, applicationId);
-            
-            return employee.Id;
+            try {
+                Candidate__c candidate = getCandidateForConversion(candidateId);
+                Application__c application = getApplicationForConversion(applicationId);
+                
+                Id employeeId = createEmployeeRecord(candidate, application, employeeData);
+                updateCandidateStatus(candidate);
+                updateApplicationStatus(application);
+                createConversionHistoryRecord(candidateId, employeeId, applicationId);
+                
+                return employeeId;
+            } catch (Exception e) {
+                Database.rollback(sp);
+                throw e;
+            }
         } catch (Exception e) {
-            // Rollback transaction on error
-            Database.rollback(sp);
-            throw new AuraHandledException('Error during conversion: ' + e.getMessage());
+            Logger.error(CLASS_NAME, 'convertCandidateToEmployee', 
+                'Error converting candidate ' + candidateId + ' to employee', e);
+            throw new AuraHandledException(e.getMessage());
         }
     }
     
@@ -80,39 +61,21 @@ public with sharing class CandidateConversionService {
      * @return Map with conversion details
      */
     public static Map<String, Object> getConversionDetails(Id candidateId, Id applicationId) {
-        if (!Schema.SObjectType.Candidate__c.isAccessible() || 
-            !Schema.SObjectType.Application__c.isAccessible() ||
-            !Schema.SObjectType.Position__c.isAccessible()) {
-            throw new SecurityException('Insufficient permissions to access conversion details');
+        try {
+            validateConversionDetailsPermissions();
+            
+            Map<String, Object> details = new Map<String, Object>();
+            details.put('candidate', getCandidateForConversion(candidateId));
+            details.put('application', getApplicationForConversion(applicationId));
+            details.put('managers', getAvailableManagers());
+            details.put('departments', getDepartmentPicklistValues());
+            
+            return details;
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'getConversionDetails', 
+                'Error getting conversion details for candidate ' + candidateId, e);
+            throw new AuraHandledException(e.getMessage());
         }
-        
-        Map<String, Object> details = new Map<String, Object>();
-        
-        // Get candidate details
-        Candidate__c candidate = [SELECT Id, Name, Email__c, Phone__c 
-                                 FROM Candidate__c 
-                                 WHERE Id = :candidateId];
-        
-        // Get application and position details
-        Application__c application = [SELECT Id, Position__c, Position__r.Name, Position__r.Department__c,
-                                             Position__r.Salary_Range__c 
-                                     FROM Application__c 
-                                     WHERE Id = :applicationId];
-        
-        // Get available managers
-        List<User> managers = [SELECT Id, Name 
-                              FROM User 
-                              WHERE IsActive = true 
-                              AND Profile.Name = 'Manager' 
-                              ORDER BY Name];
-        
-        // Populate details map
-        details.put('candidate', candidate);
-        details.put('application', application);
-        details.put('managers', managers);
-        details.put('departments', getDepartmentPicklistValues());
-        
-        return details;
     }
     
     /**
@@ -122,51 +85,19 @@ public with sharing class CandidateConversionService {
      * @return True if candidate can be converted
      */
     public static Boolean canConvertCandidate(Id candidateId, Id applicationId) {
-        if (!Schema.SObjectType.Candidate__c.isAccessible() || 
-            !Schema.SObjectType.Application__c.isAccessible()) {
-            throw new SecurityException('Insufficient permissions to check conversion eligibility');
+        try {
+            SecurityUtils.checkReadAccess(Application__c.SObjectType, new List<String>{'Status__c', 'Candidate__c'});
+            SecurityUtils.checkReadAccess(Candidate__c.SObjectType, new List<String>{'Status__c'});
+            SecurityUtils.checkReadAccess(Employee__c.SObjectType, new List<String>{'Candidate__c'});
+            
+            return validateApplicationStatus(applicationId, candidateId) && 
+                   validateCandidateStatus(candidateId) && 
+                   !isAlreadyEmployee(candidateId);
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'canConvertCandidate', 
+                'Error checking if candidate ' + candidateId + ' can be converted', e);
+            throw new AuraHandledException(e.getMessage());
         }
-        
-        // Check if application status is 'Offer Accepted'
-        List<Application__c> applications = [SELECT Id, Status__c 
-                                            FROM Application__c 
-                                            WHERE Id = :applicationId 
-                                            AND Candidate__c = :candidateId 
-                                            AND Status__c = 'Offer Accepted'];
-        
-        // Check if candidate is not already hired
-        List<Candidate__c> candidates = [SELECT Id 
-                                        FROM Candidate__c 
-                                        WHERE Id = :candidateId 
-                                        AND Status__c != 'Hired'];
-        
-        // Check if candidate is not already converted to employee
-        List<Employee__c> employees = [SELECT Id 
-                                      FROM Employee__c 
-                                      WHERE Candidate__c = :candidateId];
-        
-        return !applications.isEmpty() && !candidates.isEmpty() && employees.isEmpty();
-    }
-    
-    /**
-     * Create conversion history record
-     * @param candidateId Candidate Id
-     * @param employeeId Employee Id
-     * @param applicationId Application Id
-     */
-    private static void createConversionHistoryRecord(Id candidateId, Id employeeId, Id applicationId) {
-        if (!Schema.SObjectType.CandidateConversionHistory__c.isCreateable()) {
-            throw new SecurityException('Insufficient permissions to create conversion history');
-        }
-        
-        CandidateConversionHistory__c history = new CandidateConversionHistory__c(
-            Candidate__c = candidateId,
-            Employee__c = employeeId,
-            Application__c = applicationId,
-            Conversion_Date__c = DateTime.now()
-        );
-        
-        insert history;
     }
     
     /**
@@ -175,31 +106,235 @@ public with sharing class CandidateConversionService {
      * @return List of conversion history records
      */
     public static List<CandidateConversionHistory__c> getConversionHistory(Id candidateId) {
-        if (!Schema.SObjectType.CandidateConversionHistory__c.isAccessible()) {
-            throw new SecurityException('Insufficient permissions to access conversion history');
+        try {
+            SecurityUtils.checkReadAccess(CandidateConversionHistory__c.SObjectType, 
+                new List<String>{'Candidate__c', 'Employee__c', 'Application__c', 'Conversion_Date__c', 'CreatedBy.Name'});
+            
+            return [SELECT Id, Candidate__c, Employee__c, Application__c, 
+                           Conversion_Date__c, CreatedBy.Name 
+                    FROM CandidateConversionHistory__c 
+                    WHERE Candidate__c = :candidateId 
+                    ORDER BY Conversion_Date__c DESC];
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'getConversionHistory', 
+                'Error getting conversion history for candidate ' + candidateId, e);
+            throw new AuraHandledException(e.getMessage());
         }
-        
-        return [SELECT Id, Candidate__c, Employee__c, Application__c, 
-                       Conversion_Date__c, CreatedBy.Name 
-                FROM CandidateConversionHistory__c 
-                WHERE Candidate__c = :candidateId 
-                ORDER BY Conversion_Date__c DESC];
     }
     
-    /**
-     * Get department picklist values
-     * @return List of department values
-     */
-    private static List<String> getDepartmentPicklistValues() {
-        List<String> departments = new List<String>();
-        
-        Schema.DescribeFieldResult fieldResult = Employee__c.Department__c.getDescribe();
-        List<Schema.PicklistEntry> entries = fieldResult.getPicklistValues();
-        
-        for (Schema.PicklistEntry entry : entries) {
-            departments.add(entry.getValue());
+    // Private helper methods
+    
+    private static void validateConversionPermissions() {
+        try {
+            SecurityUtils.checkReadAccess(Candidate__c.SObjectType, CANDIDATE_FIELDS);
+            SecurityUtils.checkReadAccess(Application__c.SObjectType, APPLICATION_FIELDS);
+            SecurityUtils.checkCreateAccess(Employee__c.SObjectType, EMPLOYEE_FIELDS);
+            SecurityUtils.checkUpdateAccess(Candidate__c.SObjectType, new List<String>{'Status__c'});
+            SecurityUtils.checkUpdateAccess(Application__c.SObjectType, new List<String>{'Status__c'});
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'validateConversionPermissions', 'Error validating conversion permissions', e);
+            throw e;
         }
-        
-        return departments;
+    }
+    
+    private static void validateConversionDetailsPermissions() {
+        try {
+            SecurityUtils.checkReadAccess(Candidate__c.SObjectType, CANDIDATE_FIELDS);
+            SecurityUtils.checkReadAccess(Application__c.SObjectType, APPLICATION_FIELDS);
+            SecurityUtils.checkReadAccess(User.SObjectType, new List<String>{'Name'});
+            SecurityUtils.checkReadAccess(Profile.SObjectType, new List<String>{'Name'});
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'validateConversionDetailsPermissions', 'Error validating conversion details permissions', e);
+            throw e;
+        }
+    }
+    
+    private static void validateConversionEligibility(Id candidateId, Id applicationId) {
+        try {
+            if (!canConvertCandidate(candidateId, applicationId)) {
+                throw new AuraHandledException('Candidate is not eligible for conversion');
+            }
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'validateConversionEligibility', 
+                'Error validating conversion eligibility for candidate ' + candidateId, e);
+            throw e;
+        }
+    }
+    
+    private static Candidate__c getCandidateForConversion(Id candidateId) {
+        try {
+            SecurityUtils.checkReadAccess(Candidate__c.SObjectType, CANDIDATE_FIELDS);
+            
+            return [SELECT Id, Name, Email__c, Phone__c, Status__c 
+                    FROM Candidate__c 
+                    WHERE Id = :candidateId];
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'getCandidateForConversion', 
+                'Error getting candidate ' + candidateId + ' for conversion', e);
+            throw e;
+        }
+    }
+    
+    private static Application__c getApplicationForConversion(Id applicationId) {
+        try {
+            SecurityUtils.checkReadAccess(Application__c.SObjectType, APPLICATION_FIELDS);
+            
+            return [SELECT Id, Position__c, Position__r.Name, Status__c 
+                    FROM Application__c 
+                    WHERE Id = :applicationId];
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'getApplicationForConversion', 
+                'Error getting application ' + applicationId + ' for conversion', e);
+            throw e;
+        }
+    }
+    
+    private static Id createEmployeeRecord(Candidate__c candidate, Application__c application, Map<String, Object> employeeData) {
+        try {
+            Employee__c employee = new Employee__c(
+                First_Name__c = (String)employeeData.get('firstName'),
+                Last_Name__c = (String)employeeData.get('lastName'),
+                Email__c = candidate.Email__c,
+                Phone__c = candidate.Phone__c,
+                Position__c = application.Position__c,
+                Department__c = (String)employeeData.get('department'),
+                Hire_Date__c = Date.valueOf((String)employeeData.get('hireDate')),
+                Salary__c = Decimal.valueOf((String)employeeData.get('salary')),
+                Manager__c = (Id)employeeData.get('managerId'),
+                Candidate__c = candidate.Id
+            );
+            
+            insert employee;
+            return employee.Id;
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'createEmployeeRecord', 
+                'Error creating employee record for candidate ' + candidate.Id, e);
+            throw e;
+        }
+    }
+    
+    private static void updateCandidateStatus(Candidate__c candidate) {
+        try {
+            candidate.Status__c = 'Hired';
+            update candidate;
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'updateCandidateStatus', 
+                'Error updating status for candidate ' + candidate.Id, e);
+            throw e;
+        }
+    }
+    
+    private static void updateApplicationStatus(Application__c application) {
+        try {
+            application.Status__c = 'Hired';
+            update application;
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'updateApplicationStatus', 
+                'Error updating status for application ' + application.Id, e);
+            throw e;
+        }
+    }
+    
+    private static Boolean validateApplicationStatus(Id applicationId, Id candidateId) {
+        try {
+            SecurityUtils.checkReadAccess(Application__c.SObjectType, 
+                new List<String>{'Status__c', 'Candidate__c'});
+            
+            List<Application__c> applications = [SELECT Id 
+                                               FROM Application__c 
+                                               WHERE Id = :applicationId 
+                                               AND Candidate__c = :candidateId 
+                                               AND Status__c = 'Offer Accepted'];
+            return !applications.isEmpty();
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'validateApplicationStatus', 
+                'Error validating application status for application ' + applicationId, e);
+            throw e;
+        }
+    }
+    
+    private static Boolean validateCandidateStatus(Id candidateId) {
+        try {
+            SecurityUtils.checkReadAccess(Candidate__c.SObjectType, 
+                new List<String>{'Status__c'});
+            
+            List<Candidate__c> candidates = [SELECT Id 
+                                           FROM Candidate__c 
+                                           WHERE Id = :candidateId 
+                                           AND Status__c != 'Hired'];
+            return !candidates.isEmpty();
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'validateCandidateStatus', 
+                'Error validating candidate status for candidate ' + candidateId, e);
+            throw e;
+        }
+    }
+    
+    private static Boolean isAlreadyEmployee(Id candidateId) {
+        try {
+            SecurityUtils.checkReadAccess(Employee__c.SObjectType, 
+                new List<String>{'Candidate__c'});
+            
+            List<Employee__c> employees = [SELECT Id 
+                                         FROM Employee__c 
+                                         WHERE Candidate__c = :candidateId];
+            return !employees.isEmpty();
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'isAlreadyEmployee', 
+                'Error checking if candidate ' + candidateId + ' is already an employee', e);
+            throw e;
+        }
+    }
+    
+    private static List<User> getAvailableManagers() {
+        try {
+            SecurityUtils.checkReadAccess(User.SObjectType, 
+                new List<String>{'Name', 'IsActive', 'Profile.Name'});
+            
+            return [SELECT Id, Name 
+                    FROM User 
+                    WHERE IsActive = true 
+                    AND Profile.Name = 'Manager' 
+                    ORDER BY Name];
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'getAvailableManagers', 'Error getting available managers', e);
+            throw e;
+        }
+    }
+    
+    private static List<String> getDepartmentPicklistValues() {
+        try {
+            List<String> departments = new List<String>();
+            Schema.DescribeFieldResult fieldResult = Employee__c.Department__c.getDescribe();
+            
+            for (Schema.PicklistEntry entry : fieldResult.getPicklistValues()) {
+                departments.add(entry.getValue());
+            }
+            
+            return departments;
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'getDepartmentPicklistValues', 'Error getting department picklist values', e);
+            throw e;
+        }
+    }
+    
+    private static void createConversionHistoryRecord(Id candidateId, Id employeeId, Id applicationId) {
+        try {
+            SecurityUtils.checkCreateAccess(CandidateConversionHistory__c.SObjectType, 
+                new List<String>{'Candidate__c', 'Employee__c', 'Application__c', 'Conversion_Date__c'});
+            
+            CandidateConversionHistory__c history = new CandidateConversionHistory__c(
+                Candidate__c = candidateId,
+                Employee__c = employeeId,
+                Application__c = applicationId,
+                Conversion_Date__c = DateTime.now()
+            );
+            
+            insert history;
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'createConversionHistoryRecord', 
+                'Error creating conversion history record for candidate ' + candidateId, e);
+            throw e;
+        }
     }
 }

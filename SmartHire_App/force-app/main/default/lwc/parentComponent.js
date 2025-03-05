@@ -1,6 +1,6 @@
 // parentComponent/parentComponent.js
 import { LightningElement, api, track } from 'lwc';
-import getApplicationsByPosition from '@salesforce/apex/RecruitmentController.getApplicationsByPosition';
+import getApplicationsByPosition from '@salesforce/apex/ApplicationController.getApplicationsByPosition';
 
 export default class ParentComponent extends LightningElement {
     @api recordId; // ID stanowiska
