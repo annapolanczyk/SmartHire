@@ -32,9 +32,9 @@
         <name>FirstNameFormula</name>
         <dataType>String</dataType>
         <expression>IF(
-            CONTAINS({!Get_Candidate_Record.Name}, " "),
-            LEFT({!Get_Candidate_Record.Name}, FIND(" ", {!Get_Candidate_Record.Name}) - 1),
-            {!Get_Candidate_Record.Name}
+            CONTAINS({!Candidate_Name}, " "),
+            LEFT({!Candidate_Name}, FIND(" ", {!Candidate_Name}) - 1),
+            {!Candidate_Name}
         )</expression>
     </formulas>
 
@@ -42,8 +42,8 @@
         <name>LastNameFormula</name>
         <dataType>String</dataType>
         <expression>IF(
-            CONTAINS({!Get_Candidate_Record.Name}, " "),
-            RIGHT({!Get_Candidate_Record.Name}, LEN({!Get_Candidate_Record.Name}) - FIND(" ", {!Get_Candidate_Record.Name})),
+            CONTAINS({!Candidate_Name}, " "),
+            RIGHT({!Candidate_Name}, LEN({!Candidate_Name}) - FIND(" ", {!Candidate_Name})),
             "[Brak nazwiska]"
         )</expression>
     </formulas>
@@ -117,7 +117,12 @@
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
         <object>Candidate__c</object>
-        <fields>Name</fields> <!-- Dodano jawne pobieranie pola Name -->
+        <outputAssignments>
+            <field>Candidate_Name</field>
+            <value>
+                <elementReference>Name</elementReference>
+            </value>
+        </outputAssignments>
     </recordLookups>
 
     <screens>
@@ -158,6 +163,14 @@
         <isCollection>false</isCollection>
         <isInput>true</isInput>
         <isOutput>false</isOutput>
+    </variables>
+
+    <variables>
+        <name>Candidate_Name</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
     </variables>
 
 </Flow>
