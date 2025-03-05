@@ -1,9 +1,9 @@
 /**
  * Service class for converting candidates to contacts or users.
  */
-public with sharing class CandidateContactConversionService {
+public with sharing class CandidateConversionService {
     
-    private static final String CLASS_NAME = 'CandidateContactConversionService';
+    private static final String CLASS_NAME = 'CandidateConversionService';
     
     private static final List<String> CANDIDATE_FIELDS = new List<String>{
         'Name', 'Email__c', 'Phone__c', 'Status__c', 'Current_Position__c'

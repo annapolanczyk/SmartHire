@@ -70,7 +70,7 @@ public with sharing class CandidateConversionController {
     @AuraEnabled(cacheable=true)
     public static List<UserRole> getAvailableRoles() {
         try {
-            return CandidateContactConversionService.getAvailableRoles();
+            return CandidateConversionService.getAvailableRoles();
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }
@@ -83,7 +83,7 @@ public with sharing class CandidateConversionController {
     @AuraEnabled(cacheable=true)
     public static List<Profile> getAvailableProfiles() {
         try {
-            return CandidateContactConversionService.getAvailableProfiles();
+            return CandidateConversionService.getAvailableProfiles();
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }
