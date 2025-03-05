@@ -31,36 +31,24 @@
         <name>FirstNameFormula</name>
         <dataType>String</dataType>
         <expression>IF(
-    CONTAINS({!Candidate_Record.Name}, &quot; &quot;),
-    LEFT({!Candidate_Record.Name}, FIND(&quot; &quot;, {!Candidate_Record.Name}) - 1),
-    {!Candidate_Record.Name}
-)</expression>
+            CONTAINS({!Candidate_Record.Name}, " "),
+            LEFT({!Candidate_Record.Name}, FIND(" ", {!Candidate_Record.Name}) - 1),
+            {!Candidate_Record.Name}
+        )</expression>
     </formulas>
     <formulas>
         <name>LastNameFormula</name>
         <dataType>String</dataType>
         <expression>IF(
-    CONTAINS({!Candidate_Record.Name}, &quot; &quot;),
-    RIGHT({!Candidate_Record.Name}, LEN({!Candidate_Record.Name}) - FIND(&quot; &quot;, {!Candidate_Record.Name})),
-    &quot;[Brak nazwiska]&quot;
-)</expression>
+            CONTAINS({!Candidate_Record.Name}, " "),
+            RIGHT({!Candidate_Record.Name}, LEN({!Candidate_Record.Name}) - FIND(" ", {!Candidate_Record.Name})),
+            "[Brak nazwiska]"
+        )</expression>
     </formulas>
     <interviewLabel>Konwersja Kandydata na Kontakt {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Konwersja Kandydata na Kontakt</label>
     <processMetadataValues>
         <name>BuilderType</name>
-        <value>
-            <stringValue>LightningFlowBuilder</stringValue>
-        </value>
-    </processMetadataValues>
-    <processMetadataValues>
-        <name>CanvasMode</name>
-        <value>
-            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
-        </value>
-    </processMetadataValues>
-    <processMetadataValues>
-        <name>OriginBuilderType</name>
         <value>
             <stringValue>LightningFlowBuilder</stringValue>
         </value>
@@ -121,7 +109,6 @@
         <connector>
             <targetReference>Create_Contact</targetReference>
         </connector>
-        <filterLogic>and</filterLogic>
         <filters>
             <field>Id</field>
             <operator>EqualTo</operator>
@@ -140,7 +127,6 @@
         <connector>
             <targetReference>Success_Screen</targetReference>
         </connector>
-        <filterLogic>and</filterLogic>
         <filters>
             <field>Id</field>
             <operator>EqualTo</operator>
@@ -156,7 +142,6 @@
         </inputAssignments>
         <object>Candidate__c</object>
     </recordUpdates>
-    <runInMode>DefaultMode</runInMode>
     <start>
         <locationX>56</locationX>
         <locationY>0</locationY>
