@@ -41,7 +41,7 @@ public with sharing class ApplicationController {
             throw new AuraHandledException('Application not found');
         }
 
-        return applications[0];
+        return application;
     }
     
     /**

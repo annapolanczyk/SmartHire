@@ -10,8 +10,9 @@ public with sharing class PositionService {
         'Required_Skills__c', 'Salary_Range__c'
     };
     
+    // Pole Qualifications__c zostało usunięte, ponieważ używamy Required_Skills__c
     private static final List<String> DETAIL_FIELDS = new List<String>{
-        'Description__c', 'Qualifications__c'
+        'Description__c'
     };
 
     /**
@@ -40,8 +41,7 @@ public with sharing class PositionService {
         }
 
         List<Position__c> positions = [SELECT Id, Name, Department__c, Status__c, Location__c,
-                                              Required_Skills__c, Salary_Range__c, Description__c,
-                                              Qualifications__c
+                                              Required_Skills__c, Salary_Range__c, Description__c
                                        FROM Position__c 
                                        WHERE Id = :positionId];
 
@@ -86,7 +86,7 @@ public with sharing class PositionService {
         Map<String, Integer> statistics = new Map<String, Integer>();
 
         for (AggregateResult ar : [SELECT Status__c, COUNT(Id) countValue 
-                                   FROM Job_Application__c // ✅ Poprawiona nazwa obiektu
+                                   FROM Job_Application__c 
                                    WHERE Position__c = :positionId 
                                    GROUP BY Status__c]) {
             statistics.put((String)ar.get('Status__c'), (Integer)ar.get('countValue'));
