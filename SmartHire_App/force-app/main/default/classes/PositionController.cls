@@ -9,11 +9,7 @@ public with sharing class PositionController {
      */
     @AuraEnabled(cacheable=true)
     public static List<Position__c> getActivePositions() {
-        try {
-            return PositionService.getActivePositions();
-        } catch (Exception e) {
-            throw new AuraHandledException(e.getMessage());
-        }
+        return PositionService.getActivePositions(); // ❌ Usunięto zbędny try-catch
     }
     
     /**
@@ -23,11 +19,7 @@ public with sharing class PositionController {
      */
     @AuraEnabled(cacheable=true)
     public static Position__c getPositionById(Id positionId) {
-        try {
-            return PositionService.getPositionById(positionId);
-        } catch (Exception e) {
-            throw new AuraHandledException(e.getMessage());
-        }
+        return PositionService.getPositionById(positionId);
     }
     
     /**
@@ -37,11 +29,7 @@ public with sharing class PositionController {
      */
     @AuraEnabled
     public static Id createPosition(Position__c position) {
-        try {
-            return PositionService.createPosition(position);
-        } catch (Exception e) {
-            throw new AuraHandledException(e.getMessage());
-        }
+        return PositionService.createPosition(position);
     }
     
     /**
@@ -50,11 +38,7 @@ public with sharing class PositionController {
      */
     @AuraEnabled
     public static void updatePosition(Position__c position) {
-        try {
-            PositionService.updatePosition(position);
-        } catch (Exception e) {
-            throw new AuraHandledException(e.getMessage());
-        }
+        PositionService.updatePosition(position);
     }
     
     /**
@@ -64,10 +48,6 @@ public with sharing class PositionController {
      */
     @AuraEnabled(cacheable=true)
     public static Map<String, Integer> getApplicationStatistics(Id positionId) {
-        try {
-            return PositionService.getApplicationStatistics(positionId);
-        } catch (Exception e) {
-            throw new AuraHandledException(e.getMessage());
-        }
+        return PositionService.getApplicationStatistics(positionId);
     }
-} 
+}

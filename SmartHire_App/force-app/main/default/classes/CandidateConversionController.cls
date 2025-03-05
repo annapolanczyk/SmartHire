@@ -99,7 +99,7 @@ public with sharing class CandidateConversionController {
     @AuraEnabled
     public static Id convertCandidateToUser(Id candidateId, Id profileId, Id roleId) {
         try {
-            return CandidateContactConversionService.convertCandidateToUser(candidateId, profileId, roleId);
+            return CandidateConversionService.convertCandidateToUser(candidateId, profileId, roleId); // 🔄 Zmiana na CandidateConversionService
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }
@@ -114,9 +114,9 @@ public with sharing class CandidateConversionController {
     @AuraEnabled
     public static Id convertCandidateToContact(Id candidateId, Id accountId) {
         try {
-            return CandidateContactConversionService.convertCandidateToContact(candidateId, accountId);
+            return CandidateConversionService.convertCandidateToContact(candidateId, accountId); // 🔄 Zmiana na CandidateConversionService
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }
     }
-} 
+}
