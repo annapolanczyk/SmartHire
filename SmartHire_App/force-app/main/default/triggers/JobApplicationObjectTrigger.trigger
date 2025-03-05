@@ -1,7 +1,7 @@
 /**
  * Trigger for Job_Application__c object
  */
-trigger JobApplicationTrigger on Job_Application__c (before insert, before update, before delete, 
+trigger JobApplicationObjectTrigger on Job_Application__c (before insert, before update, before delete, 
                                                      after insert, after update, after delete, after undelete) {
     
     // Initialize the trigger handler
