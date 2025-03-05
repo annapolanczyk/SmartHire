@@ -111,7 +111,6 @@
             </value>
         </inputAssignments>
         <object>Contact</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordCreates>
     <recordLookups>
         <name>Get_Candidate_Record</name>
@@ -132,7 +131,6 @@
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
         <object>Candidate__c</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
     <recordUpdates>
         <name>Update_Candidate_Status</name>
@@ -159,72 +157,6 @@
         <object>Candidate__c</object>
     </recordUpdates>
     <runInMode>DefaultMode</runInMode>
-    <screens>
-        <name>Error_Screen</name>
-        <label>Error Screen</label>
-        <locationX>314</locationX>
-        <locationY>398</locationY>
-        <allowBack>true</allowBack>
-        <allowFinish>true</allowFinish>
-        <allowPause>false</allowPause>
-        <connector>
-            <targetReference>Select_Account</targetReference>
-        </connector>
-        <fields>
-            <name>ErrorMessage</name>
-            <fieldText>&lt;p style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;color: rgb(255, 0, 0); font-size: 16px;&quot;&gt;Musisz wybrać konto, aby kontynuować&lt;/span&gt;&lt;/p&gt;</fieldText>
-            <fieldType>DisplayText</fieldType>
-        </fields>
-        <showFooter>true</showFooter>
-        <showHeader>true</showHeader>
-    </screens>
-    <screens>
-        <name>Select_Account</name>
-        <label>Select Account</label>
-        <locationX>182</locationX>
-        <locationY>278</locationY>
-        <allowBack>false</allowBack>
-        <allowFinish>true</allowFinish>
-        <allowPause>false</allowPause>
-        <connector>
-            <targetReference>Check_Selected_Account</targetReference>
-        </connector>
-        <fields>
-            <name>InstructionsText</name>
-            <fieldText>&lt;p&gt;&lt;span style=&quot;font-size: 14px;&quot;&gt;Wybierz konto, do którego ma zostać przypisany nowy kontakt utworzony z tego kandydata.&lt;/span&gt;&lt;/p&gt;</fieldText>
-            <fieldType>DisplayText</fieldType>
-        </fields>
-        <fields>
-            <name>selectedAccountId</name>
-            <dataType>String</dataType>
-            <fieldText>Wybierz konto</fieldText>
-            <fieldType>InputField</fieldType>
-            <isRequired>false</isRequired>
-        </fields>
-        <showFooter>true</showFooter>
-        <showHeader>true</showHeader>
-    </screens>
-    <screens>
-        <name>Success_Screen</name>
-        <label>Success Screen</label>
-        <locationX>182</locationX>
-        <locationY>878</locationY>
-        <allowBack>false</allowBack>
-        <allowFinish>true</allowFinish>
-        <allowPause>false</allowPause>
-        <fields>
-            <name>SuccessMessage</name>
-            <fieldText>&lt;p style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;color: rgb(0, 112, 60); font-size: 16px;&quot;&gt;Kandydat został pomyślnie przekonwertowany na kontakt!&lt;/span&gt;&lt;/p&gt;</fieldText>
-            <fieldType>DisplayText</fieldType>
-        </fields>
-        <fields>
-            <name>ContactDetailsText</name>
-            <fieldText>&lt;p&gt;Utworzono nowy kontakt:&lt;/p&gt;&lt;p&gt;Imię: {!FirstNameFormula}&lt;/p&gt;&lt;p&gt;Nazwisko: {!LastNameFormula}&lt;/p&gt;&lt;p&gt;Konto: {!Select_Account.selectedAccountId}&lt;/p&gt;</fieldText>
-            <fieldType>DisplayText</fieldType>
-        </fields>
-        <showFooter>true</showFooter>
-        <showHeader>true</showHeader>
-    </screens>
     <start>
         <locationX>56</locationX>
         <locationY>0</locationY>
