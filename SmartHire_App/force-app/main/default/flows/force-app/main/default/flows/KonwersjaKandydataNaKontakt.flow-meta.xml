@@ -27,27 +27,31 @@
         </rules>
     </decisions>
     <description>Konwertuje rekord kandydata na kontakt w wybranym koncie</description>
+    
     <formulas>
         <name>FirstNameFormula</name>
         <dataType>String</dataType>
         <expression>IF(
-            CONTAINS({!Candidate_Record.Name}, " "),
-            LEFT({!Candidate_Record.Name}, FIND(" ", {!Candidate_Record.Name}) - 1),
-            {!Candidate_Record.Name}
+            CONTAINS({!Get_Candidate_Record.Name}, " "),
+            LEFT({!Get_Candidate_Record.Name}, FIND(" ", {!Get_Candidate_Record.Name}) - 1),
+            {!Get_Candidate_Record.Name}
         )</expression>
     </formulas>
+
     <formulas>
         <name>LastNameFormula</name>
         <dataType>String</dataType>
         <expression>IF(
-            CONTAINS({!Candidate_Record.Name}, " "),
-            RIGHT({!Candidate_Record.Name}, LEN({!Candidate_Record.Name}) - FIND(" ", {!Candidate_Record.Name})),
+            CONTAINS({!Get_Candidate_Record.Name}, " "),
+            RIGHT({!Get_Candidate_Record.Name}, LEN({!Get_Candidate_Record.Name}) - FIND(" ", {!Get_Candidate_Record.Name})),
             "[Brak nazwiska]"
         )</expression>
     </formulas>
+
     <interviewLabel>Konwersja Kandydata na Kontakt {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Konwersja Kandydata na Kontakt</label>
     <processType>Flow</processType>
+
     <recordCreates>
         <name>Create_Contact</name>
         <label>Create Contact</label>
@@ -94,6 +98,7 @@
         </inputAssignments>
         <object>Contact</object>
     </recordCreates>
+
     <recordLookups>
         <name>Get_Candidate_Record</name>
         <label>Get Candidate Record</label>
@@ -112,7 +117,9 @@
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
         <object>Candidate__c</object>
+        <fields>Name</fields> <!-- Dodano jawne pobieranie pola Name -->
     </recordLookups>
+
     <screens>
         <name>Select_Account</name>
         <label>Select Account</label>
@@ -134,6 +141,7 @@
         <showFooter>true</showFooter>
         <showHeader>true</showHeader>
     </screens>
+
     <start>
         <locationX>56</locationX>
         <locationY>0</locationY>
@@ -141,7 +149,9 @@
             <targetReference>Select_Account</targetReference>
         </connector>
     </start>
+
     <status>Active</status>
+
     <variables>
         <name>recordId</name>
         <dataType>String</dataType>
@@ -149,4 +159,5 @@
         <isInput>true</isInput>
         <isOutput>false</isOutput>
     </variables>
+
 </Flow>
