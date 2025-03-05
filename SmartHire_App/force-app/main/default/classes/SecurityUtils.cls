@@ -6,86 +6,70 @@
 public with sharing class SecurityUtils {
     
     /**
-     * Sprawdza uprawnienia do odczytu obiektu i jego pól
-     * @param objectType Typ obiektu do sprawdzenia
-     * @param fields Lista pól do sprawdzenia
-     * @throws SecurityException jeśli użytkownik nie ma wymaganych uprawnień
+     * Check if the current user has read access to the specified object and fields
+     * @param objectType The SObject type to check
+     * @param fields List of field API names to check
      */
-    public static void checkReadAccess(SObjectType objectType, List<String> fields) {
-        // Sprawdź uprawnienia na poziomie obiektu
-        if (!objectType.getDescribe().isAccessible()) {
-            throw new SecurityException('Nie masz uprawnień do odczytu obiektów typu: ' + objectType.getDescribe().getLabel());
+    public static void checkReadAccess(Schema.SObjectType objectType, List<String> fields) {
+        Schema.DescribeSObjectResult objectDescribe = objectType.getDescribe();
+        if (!objectDescribe.isAccessible()) {
+            throw new AuraHandledException('Insufficient permissions to access ' + objectDescribe.getName());
         }
         
-        // Sprawdź uprawnienia na poziomie pola
-        Map<String, Schema.SObjectField> fieldMap = objectType.getDescribe().fields.getMap();
-        for (String fieldName : fields) {
-            if (!fieldMap.containsKey(fieldName)) {
-                throw new SecurityException('Pole nie istnieje: ' + fieldName);
-            }
-            if (!fieldMap.get(fieldName).getDescribe().isAccessible()) {
-                throw new SecurityException('Nie masz uprawnień do odczytu pola: ' + fieldName);
+        Map<String, Schema.SObjectField> fieldMap = objectDescribe.fields.getMap();
+        for (String field : fields) {
+            if (!fieldMap.get(field).getDescribe().isAccessible()) {
+                throw new AuraHandledException('Insufficient permissions to access ' + objectDescribe.getName() + '.' + field);
             }
         }
     }
     
     /**
-     * Sprawdza uprawnienia do tworzenia obiektu i jego pól
-     * @param objectType Typ obiektu do sprawdzenia
-     * @param fields Lista pól do sprawdzenia
-     * @throws SecurityException jeśli użytkownik nie ma wymaganych uprawnień
+     * Check if the current user has create access to the specified object and fields
+     * @param objectType The SObject type to check
+     * @param fields List of field API names to check
      */
-    public static void checkCreateAccess(SObjectType objectType, List<String> fields) {
-        // Sprawdź uprawnienia na poziomie obiektu
-        if (!objectType.getDescribe().isCreateable()) {
-            throw new SecurityException('Nie masz uprawnień do tworzenia obiektów typu: ' + objectType.getDescribe().getLabel());
+    public static void checkCreateAccess(Schema.SObjectType objectType, List<String> fields) {
+        Schema.DescribeSObjectResult objectDescribe = objectType.getDescribe();
+        if (!objectDescribe.isCreateable()) {
+            throw new AuraHandledException('Insufficient permissions to create ' + objectDescribe.getName());
         }
         
-        // Sprawdź uprawnienia na poziomie pola
-        Map<String, Schema.SObjectField> fieldMap = objectType.getDescribe().fields.getMap();
-        for (String fieldName : fields) {
-            if (!fieldMap.containsKey(fieldName)) {
-                throw new SecurityException('Pole nie istnieje: ' + fieldName);
-            }
-            if (!fieldMap.get(fieldName).getDescribe().isCreateable()) {
-                throw new SecurityException('Nie masz uprawnień do tworzenia pola: ' + fieldName);
+        Map<String, Schema.SObjectField> fieldMap = objectDescribe.fields.getMap();
+        for (String field : fields) {
+            if (!fieldMap.get(field).getDescribe().isCreateable()) {
+                throw new AuraHandledException('Insufficient permissions to create ' + objectDescribe.getName() + '.' + field);
             }
         }
     }
     
     /**
-     * Sprawdza uprawnienia do aktualizacji obiektu i jego pól
-     * @param objectType Typ obiektu do sprawdzenia
-     * @param fields Lista pól do sprawdzenia
-     * @throws SecurityException jeśli użytkownik nie ma wymaganych uprawnień
+     * Check if the current user has update access to the specified object and fields
+     * @param objectType The SObject type to check
+     * @param fields List of field API names to check
      */
-    public static void checkUpdateAccess(SObjectType objectType, List<String> fields) {
-        // Sprawdź uprawnienia na poziomie obiektu
-        if (!objectType.getDescribe().isUpdateable()) {
-            throw new SecurityException('Nie masz uprawnień do aktualizacji obiektów typu: ' + objectType.getDescribe().getLabel());
+    public static void checkUpdateAccess(Schema.SObjectType objectType, List<String> fields) {
+        Schema.DescribeSObjectResult objectDescribe = objectType.getDescribe();
+        if (!objectDescribe.isUpdateable()) {
+            throw new AuraHandledException('Insufficient permissions to update ' + objectDescribe.getName());
         }
         
-        // Sprawdź uprawnienia na poziomie pola
-        Map<String, Schema.SObjectField> fieldMap = objectType.getDescribe().fields.getMap();
-        for (String fieldName : fields) {
-            if (!fieldMap.containsKey(fieldName)) {
-                throw new SecurityException('Pole nie istnieje: ' + fieldName);
-            }
-            if (!fieldMap.get(fieldName).getDescribe().isUpdateable()) {
-                throw new SecurityException('Nie masz uprawnień do aktualizacji pola: ' + fieldName);
+        Map<String, Schema.SObjectField> fieldMap = objectDescribe.fields.getMap();
+        for (String field : fields) {
+            if (!fieldMap.get(field).getDescribe().isUpdateable()) {
+                throw new AuraHandledException('Insufficient permissions to update ' + objectDescribe.getName() + '.' + field);
             }
         }
     }
     
     /**
-     * Sprawdza uprawnienia do usuwania obiektu
-     * @param objectType Typ obiektu do sprawdzenia
-     * @throws SecurityException jeśli użytkownik nie ma wymaganych uprawnień
+     * Check if the current user has delete access to the specified object
+     * @param objectType The SObject type to check
      */
-    public static void checkDeleteAccess(SObjectType objectType) {
-        // Sprawdź uprawnienia na poziomie obiektu
-        if (!objectType.getDescribe().isDeletable()) {
-            throw new SecurityException('Nie masz uprawnień do usuwania obiektów typu: ' + objectType.getDescribe().getLabel());
+    public static void checkDeleteAccess(Schema.SObjectType objectType) {
+        Schema.DescribeSObjectResult objectDescribe = objectType.getDescribe();
+        if (!objectDescribe.isDeletable()) {
+            throw new AuraHandledException('Insufficient permissions to delete ' + objectDescribe.getName());
         }
     }
     

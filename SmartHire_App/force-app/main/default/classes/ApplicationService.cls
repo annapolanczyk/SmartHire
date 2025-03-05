@@ -253,6 +253,47 @@ public with sharing class ApplicationService {
         }
     }
     
+    /**
+     * Get applications for a candidate
+     * @param candidateId Candidate Id
+     * @return List of applications
+     */
+    public static List<Application__c> getApplicationsByCandidate(Id candidateId) {
+        try {
+            // Sprawdzamy uprawnienia dla Application__c
+            if (!Schema.SObjectType.Application__c.isAccessible()) {
+                throw new AuraHandledException('Insufficient permissions to access Application__c');
+            }
+            
+            // Sprawdzamy uprawnienia dla pól Application__c
+            Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.Application__c.fields.getMap();
+            for (String field : new List<String>{'Name', 'Candidate__c', 'Position__c', 'Status__c', 
+                'Application_Date__c', 'Last_Modified_Date__c'}) {
+                if (!fieldMap.get(field).getDescribe().isAccessible()) {
+                    throw new AuraHandledException('Insufficient permissions to access Application__c.' + field);
+                }
+            }
+            
+            // Sprawdzamy uprawnienia dla Position__c
+            if (!Schema.SObjectType.Position__c.isAccessible()) {
+                throw new AuraHandledException('Insufficient permissions to access Position__c');
+            }
+            if (!Schema.SObjectType.Position__c.fields.Name.isAccessible()) {
+                throw new AuraHandledException('Insufficient permissions to access Position__c.Name');
+            }
+            
+            // Wykonujemy zapytanie po upewnieniu się, że mamy wszystkie uprawnienia
+            return [SELECT Id, Name, Position__c, Position__r.Name,
+                          Status__c, Application_Date__c, Last_Modified_Date__c 
+                   FROM Application__c 
+                   WHERE Candidate__c = :candidateId 
+                   ORDER BY Application_Date__c DESC];
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'getApplicationsByCandidate', 'Error retrieving applications for candidate: ' + candidateId, e);
+            throw new AuraHandledException(e.getMessage());
+        }
+    }
+    
     // Private helper methods
     
     private static void validateCreatePermissions() {

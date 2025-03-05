@@ -197,48 +197,48 @@ public with sharing class RecruitmentController {
     }
     
     /**
-     * @deprecated Use CandidateConversionController.convertCandidateToContact() instead
+     * @deprecated Use CandidateContactConversionController.convertCandidateToContact() instead
      */
     @AuraEnabled
     public static Id convertCandidateToContact(Id candidateId, Id accountId) {
         try {
-            return CandidateConversionService.convertCandidateToContact(candidateId, accountId);
+            return CandidateContactConversionService.convertCandidateToContact(candidateId, accountId);
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }
     }
     
     /**
-     * @deprecated Use CandidateConversionController.convertCandidateToUser() instead
+     * @deprecated Use CandidateContactConversionController.convertCandidateToUser() instead
      */
     @AuraEnabled
     public static Id convertCandidateToUser(Id candidateId, Id profileId, Id roleId) {
         try {
-            return CandidateConversionService.convertCandidateToUser(candidateId, profileId, roleId);
+            return CandidateContactConversionService.convertCandidateToUser(candidateId, profileId, roleId);
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }
     }
     
     /**
-     * @deprecated Use CandidateConversionController.getAvailableProfiles() instead
+     * @deprecated Use CandidateContactConversionController.getAvailableProfiles() instead
      */
     @AuraEnabled(cacheable=true)
     public static List<Profile> getAvailableProfiles() {
         try {
-            return CandidateConversionService.getAvailableProfiles();
+            return CandidateContactConversionService.getAvailableProfiles();
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }
     }
     
     /**
-     * @deprecated Use CandidateConversionController.getAvailableRoles() instead
+     * @deprecated Use CandidateContactConversionController.getAvailableRoles() instead
      */
     @AuraEnabled(cacheable=true)
     public static List<UserRole> getAvailableRoles() {
         try {
-            return CandidateConversionService.getAvailableRoles();
+            return CandidateContactConversionService.getAvailableRoles();
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }

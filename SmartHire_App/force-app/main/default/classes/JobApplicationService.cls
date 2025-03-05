@@ -24,10 +24,17 @@ public with sharing class JobApplicationService {
             allFields.addAll(BASIC_FIELDS);
             allFields.addAll(DETAIL_FIELDS);
             
-            SecurityUtils.checkReadAccess(Schema.SObjectType.Job_Application__c, allFields);
-            SecurityUtils.checkReadAccess(Schema.SObjectType.Contact, new List<String>{'Name', 'Email__c'});
-            SecurityUtils.checkReadAccess(Schema.SObjectType.Position__c, new List<String>{'Name'});
-            SecurityUtils.checkReadAccess(Schema.SObjectType.User, new List<String>{'Name'});
+            // Sprawdzamy uprawnienia dla Job_Application__c
+            SecurityUtils.checkReadAccess(Job_Application__c.SObjectType, new List<String>{'Id', 'Name', 'Status__c', 'Candidate__c', 'Position__c'});
+            
+            // Sprawdzamy uprawnienia dla Candidate__c
+            SecurityUtils.checkReadAccess(Candidate__c.SObjectType, new List<String>{'Id', 'Name', 'Email__c'});
+            
+            // Sprawdzamy uprawnienia dla Position__c
+            SecurityUtils.checkReadAccess(Position__c.SObjectType, new List<String>{'Id', 'Name', 'Department__c'});
+            
+            // Sprawdzamy uprawnienia dla User
+            SecurityUtils.checkReadAccess(User.SObjectType, new List<String>{'Id', 'Name'});
             
             List<Job_Application__c> applications = [
                 SELECT Id, Name, Candidate__c, Candidate__r.Name, Candidate__r.Email__c, 
@@ -58,9 +65,14 @@ public with sharing class JobApplicationService {
             List<String> fieldsToCheck = new List<String>{'Id'};
             fieldsToCheck.addAll(BASIC_FIELDS);
             
-            SecurityUtils.checkReadAccess(Schema.SObjectType.Job_Application__c, fieldsToCheck);
-            SecurityUtils.checkReadAccess(Schema.SObjectType.Contact, new List<String>{'Name'});
-            SecurityUtils.checkReadAccess(Schema.SObjectType.User, new List<String>{'Name'});
+            // Sprawdzamy uprawnienia dla Job_Application__c
+            SecurityUtils.checkReadAccess(Job_Application__c.SObjectType, new List<String>{'Id', 'Name', 'Status__c', 'Candidate__c', 'Position__c'});
+            
+            // Sprawdzamy uprawnienia dla Candidate__c
+            SecurityUtils.checkReadAccess(Candidate__c.SObjectType, new List<String>{'Id', 'Name'});
+            
+            // Sprawdzamy uprawnienia dla User
+            SecurityUtils.checkReadAccess(User.SObjectType, new List<String>{'Id', 'Name'});
             
             return [
                 SELECT Id, Name, Candidate__c, Candidate__r.Name, Status__c, 
@@ -82,15 +94,13 @@ public with sharing class JobApplicationService {
      */
     public static Id createApplication(Job_Application__c application) {
         try {
-            // Check CRUD permissions
-            List<String> fieldsToCheck = new List<String>{'Id'};
-            fieldsToCheck.addAll(BASIC_FIELDS);
-            SecurityUtils.checkCreateAccess(Schema.SObjectType.Job_Application__c, fieldsToCheck);
+            // Sprawdzamy uprawnienia do tworzenia Job_Application__c
+            SecurityUtils.checkCreateAccess(Job_Application__c.SObjectType, new List<String>{'Candidate__c', 'Position__c', 'Status__c'});
             
-            // Check if candidate already applied for this position
-            SecurityUtils.checkReadAccess(Schema.SObjectType.Job_Application__c, 
-                new List<String>{'Id', 'Candidate__c', 'Position__c'});
-                
+            // Sprawdzamy, czy kandydat i pozycja istnieją
+            SecurityUtils.checkReadAccess(Candidate__c.SObjectType, new List<String>{'Id'});
+            SecurityUtils.checkReadAccess(Position__c.SObjectType, new List<String>{'Id'});
+            
             Integer existingApplications = [
                 SELECT COUNT() 
                 FROM Job_Application__c 
@@ -118,9 +128,8 @@ public with sharing class JobApplicationService {
      */
     public static void updateApplicationStatus(Id applicationId, String status, String notes) {
         try {
-            // Check CRUD permissions for Job_Application__c
-            List<String> appFieldsToCheck = new List<String>{'Id', 'Status__c', 'Evaluation_Notes__c'};
-            SecurityUtils.checkUpdateAccess(Schema.SObjectType.Job_Application__c, appFieldsToCheck);
+            // Sprawdzamy uprawnienia do aktualizacji Job_Application__c
+            SecurityUtils.checkUpdateAccess(Job_Application__c.SObjectType, new List<String>{'Status__c'});
             
             Job_Application__c app = new Job_Application__c(
                 Id = applicationId,
@@ -137,9 +146,8 @@ public with sharing class JobApplicationService {
             if (status == 'Hired') {
                 Job_Application__c application = getApplicationById(applicationId);
                 
-                // Check CRUD permissions for Candidate__c
-                SecurityUtils.checkUpdateAccess(Schema.SObjectType.Candidate__c, 
-                    new List<String>{'Id', 'Status__c'});
+                // Sprawdzamy uprawnienia do aktualizacji Candidate__c
+                SecurityUtils.checkUpdateAccess(Candidate__c.SObjectType, new List<String>{'Id', 'Status__c'});
                 
                 Candidate__c candidate = new Candidate__c(
                     Id = application.Candidate__c,
@@ -147,9 +155,8 @@ public with sharing class JobApplicationService {
                 );
                 update candidate;
                 
-                // Check CRUD permissions for Position__c
-                SecurityUtils.checkUpdateAccess(Schema.SObjectType.Position__c, 
-                    new List<String>{'Id', 'Status__c', 'Close_Date__c'});
+                // Sprawdzamy uprawnienia do aktualizacji Position__c
+                SecurityUtils.checkUpdateAccess(Position__c.SObjectType, new List<String>{'Id', 'Status__c', 'Close_Date__c'});
                 
                 // Close the position if needed
                 Position__c position = new Position__c(
@@ -172,9 +179,8 @@ public with sharing class JobApplicationService {
      */
     public static void assignReviewer(Id applicationId, Id reviewerId) {
         try {
-            // Check CRUD permissions
-            SecurityUtils.checkUpdateAccess(Schema.SObjectType.Job_Application__c, 
-                new List<String>{'Id', 'Assigned_Reviewer__c'});
+            // Sprawdzamy uprawnienia dla Job_Application__c
+            SecurityUtils.checkUpdateAccess(Job_Application__c.SObjectType, new List<String>{'Id', 'Assigned_Reviewer__c'});
             
             Job_Application__c app = new Job_Application__c(
                 Id = applicationId,

@@ -64,13 +64,13 @@ public with sharing class CandidateConversionController {
     }
     
     /**
-     * Get available user roles
-     * @return List of available user roles
+     * Get available roles
+     * @return List of available roles
      */
     @AuraEnabled(cacheable=true)
     public static List<UserRole> getAvailableRoles() {
         try {
-            return CandidateUserConversionService.getAvailableRoles();
+            return CandidateContactConversionService.getAvailableRoles();
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }
@@ -83,7 +83,7 @@ public with sharing class CandidateConversionController {
     @AuraEnabled(cacheable=true)
     public static List<Profile> getAvailableProfiles() {
         try {
-            return CandidateUserConversionService.getAvailableProfiles();
+            return CandidateContactConversionService.getAvailableProfiles();
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }
@@ -99,7 +99,7 @@ public with sharing class CandidateConversionController {
     @AuraEnabled
     public static Id convertCandidateToUser(Id candidateId, Id profileId, Id roleId) {
         try {
-            return CandidateUserConversionService.convertCandidateToUser(candidateId, profileId, roleId);
+            return CandidateContactConversionService.convertCandidateToUser(candidateId, profileId, roleId);
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }

@@ -11,7 +11,7 @@ public with sharing class PositionService {
     };
     
     private static final List<String> DETAIL_FIELDS = new List<String>{
-        'Description__c', 'Responsibilities__c', 'Qualifications__c'
+        'Description__c', 'Duties__c', 'Qualifications__c'
     };
     
     /**
@@ -69,7 +69,7 @@ public with sharing class PositionService {
             
             List<Position__c> positions = [SELECT Id, Name, Department__c, Status__c, Location__c,
                                                 Required_Skills__c, Salary_Range__c, Description__c,
-                                                Responsibilities__c, Qualifications__c 
+                                                Duties__c, Qualifications__c 
                                          FROM Position__c 
                                          WHERE Id = :positionId];
             
@@ -175,6 +175,38 @@ public with sharing class PositionService {
             return statistics;
         } catch (Exception e) {
             Logger.error(CLASS_NAME, 'getApplicationStatistics', 'Error getting statistics for position: ' + positionId, e);
+            throw new AuraHandledException(e.getMessage());
+        }
+    }
+    
+    /**
+     * Get all active positions
+     * @return List of active positions
+     */
+    public static List<Position__c> getActivePositions() {
+        try {
+            // Sprawdzamy uprawnienia dla Position__c
+            if (!Schema.SObjectType.Position__c.isAccessible()) {
+                throw new AuraHandledException('Insufficient permissions to access Position__c');
+            }
+            
+            // Sprawdzamy uprawnienia dla pól Position__c
+            Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.Position__c.fields.getMap();
+            for (String field : new List<String>{'Name', 'Department__c', 'Status__c', 
+                'Location__c', 'Required_Skills__c', 'Salary_Range__c'}) {
+                if (!fieldMap.get(field).getDescribe().isAccessible()) {
+                    throw new AuraHandledException('Insufficient permissions to access Position__c.' + field);
+                }
+            }
+            
+            // Wykonujemy zapytanie po upewnieniu się, że mamy wszystkie uprawnienia
+            return [SELECT Id, Name, Department__c, Status__c, Location__c, 
+                          Required_Skills__c, Salary_Range__c 
+                   FROM Position__c 
+                   WHERE Status__c = 'Open' 
+                   ORDER BY CreatedDate DESC];
+        } catch (Exception e) {
+            Logger.error('PositionService', 'getActivePositions', 'Error retrieving active positions', e);
             throw new AuraHandledException(e.getMessage());
         }
     }
