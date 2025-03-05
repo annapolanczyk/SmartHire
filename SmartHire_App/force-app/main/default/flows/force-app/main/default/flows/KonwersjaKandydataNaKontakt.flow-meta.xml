@@ -119,9 +119,7 @@
         <object>Candidate__c</object>
         <outputAssignments>
             <field>Candidate_Name</field>
-            <value>
-                <elementReference>Name</elementReference>
-            </value>
+            <elementReference>Name</elementReference> <!-- Poprawiona wartość -->
         </outputAssignments>
     </recordLookups>
 
