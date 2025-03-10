@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
-    <fullName>JobApplication__c</fullName>
+    <fullName>Application__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
     <externalId>false</externalId>
     <label>Application</label>
-    <referenceTo>Job_Application__c</referenceTo>
+    <referenceTo>Application__c</referenceTo>
     <relationshipLabel>Status History</relationshipLabel>
     <relationshipName>Status_History</relationshipName>
     <required>false</required>
