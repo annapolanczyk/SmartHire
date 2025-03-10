@@ -10,7 +10,7 @@ public with sharing class JobApplicationService {
     };
     
     private static final List<String> DETAIL_FIELDS = new List<String>{
-        'Evaluation_Notes__c'
+        'Evaluation_Notes__c', 'Cover_Letter__c', 'Resume__c', 'Notes__c'
     };
     
     /**
@@ -39,7 +39,8 @@ public with sharing class JobApplicationService {
             List<Job_Application__c> applications = [
                 SELECT Id, Name, Candidate__c, Candidate__r.Name, Candidate__r.Email__c, 
                        Position__c, Position__r.Name, Status__c, Application_Date__c,
-                       Evaluation_Notes__c, Assigned_Reviewer__c, Assigned_Reviewer__r.Name
+                       Evaluation_Notes__c, Assigned_Reviewer__c, Assigned_Reviewer__r.Name,
+                       Cover_Letter__c, Resume__c, Notes__c
                 FROM Job_Application__c
                 WHERE Id = :applicationId
             ];
@@ -88,6 +89,27 @@ public with sharing class JobApplicationService {
     }
     
     /**
+     * Get applications for a candidate
+     * @param candidateId Candidate Id
+     * @return List of applications
+     */
+    public static List<Job_Application__c> getApplicationsByCandidate(Id candidateId) {
+        try {
+            SecurityUtils.checkReadAccess(Job_Application__c.SObjectType, new List<String>{'Id', 'Name', 'Status__c', 'Position__c'});
+            
+            return [
+                SELECT Id, Name, Status__c, Position__c, Position__r.Name, Application_Date__c
+                FROM Job_Application__c 
+                WHERE Candidate__c = :candidateId
+                ORDER BY Application_Date__c DESC
+            ];
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'getApplicationsByCandidate', 'Error retrieving applications for candidate: ' + candidateId, e);
+            throw new AuraHandledException(e.getMessage());
+        }
+    }
+    
+    /**
      * Create a new job application
      * @param application Job application to create
      * @return Created application Id
@@ -112,7 +134,14 @@ public with sharing class JobApplicationService {
                 throw new AuraHandledException('This candidate has already applied for this position');
             }
             
+            // Ustawienie domyślnych wartości
+            setDefaultValues(application);
+            
             insert application;
+            
+            // Tworzenie rekordu historii statusu
+            createStatusHistoryRecord(application.Id, application.Status__c, 'Initial application');
+            
             return application.Id;
         } catch (Exception e) {
             Logger.error(CLASS_NAME, 'createApplication', 'Error creating application', e);
@@ -131,6 +160,15 @@ public with sharing class JobApplicationService {
             // Sprawdzamy uprawnienia do aktualizacji Job_Application__c
             SecurityUtils.checkUpdateAccess(Job_Application__c.SObjectType, new List<String>{'Status__c'});
             
+            // Pobierz aktualny status aplikacji
+            Job_Application__c currentApp = getApplicationById(applicationId);
+            
+            // Jeśli status nie zmienił się, nie rób nic
+            if (currentApp.Status__c == status) {
+                return;
+            }
+            
+            // Aktualizuj status aplikacji
             Job_Application__c app = new Job_Application__c(
                 Id = applicationId,
                 Status__c = status
@@ -142,15 +180,16 @@ public with sharing class JobApplicationService {
             
             update app;
             
+            // Tworzenie rekordu historii statusu
+            createStatusHistoryRecord(applicationId, status, notes);
+            
             // If hired, update candidate status to Active
             if (status == 'Hired') {
-                Job_Application__c application = getApplicationById(applicationId);
-                
                 // Sprawdzamy uprawnienia do aktualizacji Candidate__c
                 SecurityUtils.checkUpdateAccess(Candidate__c.SObjectType, new List<String>{'Id', 'Status__c'});
                 
                 Candidate__c candidate = new Candidate__c(
-                    Id = application.Candidate__c,
+                    Id = currentApp.Candidate__c,
                     Status__c = 'Active'
                 );
                 update candidate;
@@ -160,7 +199,7 @@ public with sharing class JobApplicationService {
                 
                 // Close the position if needed
                 Position__c position = new Position__c(
-                    Id = application.Position__c,
+                    Id = currentApp.Position__c,
                     Status__c = 'Closed',
                     Close_Date__c = Date.today()
                 );
@@ -191,6 +230,69 @@ public with sharing class JobApplicationService {
         } catch (Exception e) {
             Logger.error(CLASS_NAME, 'assignReviewer', 'Error assigning reviewer to application: ' + applicationId, e);
             throw new AuraHandledException(e.getMessage());
+        }
+    }
+    
+    /**
+     * Get application status history
+     * @param applicationId Application Id
+     * @return List of status history records
+     */
+    public static List<ApplicationStatusHistory__c> getApplicationHistory(Id applicationId) {
+        try {
+            SecurityUtils.checkReadAccess(ApplicationStatusHistory__c.SObjectType, 
+                                         new List<String>{'Id', 'Status__c', 'Comments__c', 'Change_Date__c'});
+            
+            SecurityUtils.checkReadAccess(User.SObjectType, new List<String>{'Id', 'Name'});
+
+            return [SELECT Id, Status__c, Comments__c, Change_Date__c, CreatedBy.Name 
+                   FROM ApplicationStatusHistory__c 
+                   WHERE JobApplication__c = :applicationId 
+                   ORDER BY Change_Date__c DESC];
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'getApplicationHistory', 'Error retrieving application history: ' + applicationId, e);
+            throw new AuraHandledException(e.getMessage());
+        }
+    }
+    
+    // ===================== Private helper methods =====================
+    
+    /**
+     * Set default values for new application
+     * @param application Application to set defaults for
+     */
+    private static void setDefaultValues(Job_Application__c application) {
+        if (application.Application_Date__c == null) {
+            application.Application_Date__c = Date.today();
+        }
+        
+        if (String.isBlank(application.Status__c)) {
+            application.Status__c = 'Applied';
+        }
+    }
+    
+    /**
+     * Create a status history record for an application
+     * @param applicationId Application Id
+     * @param status New status
+     * @param comments Optional comments
+     */
+    private static void createStatusHistoryRecord(Id applicationId, String status, String comments) {
+        try {
+            SecurityUtils.checkCreateAccess(ApplicationStatusHistory__c.SObjectType, 
+                                            new List<String>{'JobApplication__c', 'Status__c', 'Comments__c'});
+
+            ApplicationStatusHistory__c history = new ApplicationStatusHistory__c(
+                JobApplication__c = applicationId,
+                Status__c = status,
+                Comments__c = comments,
+                Change_Date__c = DateTime.now()
+            );
+
+            insert history;
+        } catch (Exception e) {
+            Logger.error(CLASS_NAME, 'createStatusHistoryRecord', 'Error creating history record for application: ' + applicationId, e);
+            // Nie rzucamy wyjątku, aby nie przerywać głównej operacji
         }
     }
 }
