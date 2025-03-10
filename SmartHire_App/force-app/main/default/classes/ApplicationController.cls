@@ -12,7 +12,7 @@ public with sharing class ApplicationController {
             throw new AuraHandledException('Insufficient permissions to access Job_Application__c');
         }
         
-        return ApplicationService.getApplicationsByPosition(positionId);
+        return JobApplicationService.getApplicationsByPosition(positionId);
     }
     
     /**
@@ -20,11 +20,13 @@ public with sharing class ApplicationController {
      */
     @AuraEnabled(cacheable=true)
     public static List<Job_Application__c> getApplicationsByCandidate(Id candidateId) {
-        if (!Schema.SObjectType.Application__c.isAccessible()) {
-            throw new AuraHandledException('Insufficient permissions to access Application__c');
+        if (!Schema.SObjectType.Job_Application__c.isAccessible()) {
+            throw new AuraHandledException('Insufficient permissions to access Job_Application__c');
         }
         
-        return ApplicationService.getApplicationsByCandidate(candidateId);
+        // Implementacja metody getApplicationsByCandidate w JobApplicationService
+        List<Job_Application__c> applications = [SELECT Id, Name, Status__c FROM Job_Application__c WHERE Candidate__c = :candidateId];
+        return applications;
     }
     
     /**
@@ -36,7 +38,7 @@ public with sharing class ApplicationController {
             throw new AuraHandledException('Insufficient permissions to access Job_Application__c');
         }
 
-        Job_Application__c application = ApplicationService.getApplicationById(applicationId);
+        Job_Application__c application = JobApplicationService.getApplicationById(applicationId);
         if (application == null) {
             throw new AuraHandledException('Application not found');
         }
@@ -53,7 +55,7 @@ public with sharing class ApplicationController {
             throw new AuraHandledException('Insufficient permissions to create Job_Application__c');
         }
         
-        return ApplicationService.createApplication(application);
+        return JobApplicationService.createApplication(application);
     }
     
     /**
@@ -65,7 +67,7 @@ public with sharing class ApplicationController {
             throw new AuraHandledException('Insufficient permissions to update Job_Application__c');
         }
         
-        ApplicationService.updateApplicationStatus(applicationId, status, comments);
+        JobApplicationService.updateApplicationStatus(applicationId, status, comments);
     }
     
     /**
@@ -77,6 +79,10 @@ public with sharing class ApplicationController {
             throw new AuraHandledException('Insufficient permissions to access ApplicationStatusHistory__c');
         }
         
-        return ApplicationService.getApplicationHistory(applicationId);
+        // Implementacja metody getApplicationHistory
+        return [SELECT Id, Status__c, Comments__c, Change_Date__c, CreatedBy.Name 
+               FROM ApplicationStatusHistory__c 
+               WHERE Application__c = :applicationId 
+               ORDER BY Change_Date__c DESC];
     }
 }

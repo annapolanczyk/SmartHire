@@ -280,16 +280,16 @@ public with sharing class CVAnalysisService {
      */
     public static void createRecruiterTaskFromAnalysis(Id applicationId, Map<String, Object> analysisResults) {
         try {
-            // Validate permissions for Application__c
-            if (!Schema.SObjectType.Application__c.isAccessible()) {
-                throw new AuraHandledException('Insufficient permissions to access Application__c');
+            // Validate permissions for Job_Application__c
+            if (!Schema.SObjectType.Job_Application__c.isAccessible()) {
+                throw new AuraHandledException('Insufficient permissions to access Job_Application__c');
             }
             
             // Validate permissions for fields
-            Map<String, Schema.SObjectField> appFieldMap = Schema.SObjectType.Application__c.fields.getMap();
+            Map<String, Schema.SObjectField> appFieldMap = Schema.SObjectType.Job_Application__c.fields.getMap();
             for (String field : new List<String>{'Candidate__c', 'Position__c', 'Assigned_Reviewer__c'}) {
                 if (!appFieldMap.get(field).getDescribe().isAccessible()) {
-                    throw new AuraHandledException('Insufficient permissions to access Application__c.' + field);
+                    throw new AuraHandledException('Insufficient permissions to access Job_Application__c.' + field);
                 }
             }
             
@@ -306,9 +306,9 @@ public with sharing class CVAnalysisService {
             }
             
             // Query application details
-            Application__c app = [
+            Job_Application__c app = [
                 SELECT Id, Candidate__r.Name, Position__r.Name, Assigned_Reviewer__c
-                FROM Application__c 
+                FROM Job_Application__c 
                 WHERE Id = :applicationId
                 LIMIT 1
             ];
