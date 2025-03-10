@@ -10,7 +10,7 @@ public with sharing class JobApplicationService {
     };
     
     private static final List<String> DETAIL_FIELDS = new List<String>{
-        'Evaluation_Notes__c', 'Cover_Letter__c', 'Resume__c', 'Notes__c'
+        'Evaluation_Notes__c'
     };
     
     /**
@@ -39,8 +39,7 @@ public with sharing class JobApplicationService {
             List<Job_Application__c> applications = [
                 SELECT Id, Name, Candidate__c, Candidate__r.Name, Candidate__r.Email__c, 
                        Position__c, Position__r.Name, Status__c, Application_Date__c,
-                       Evaluation_Notes__c, Assigned_Reviewer__c, Assigned_Reviewer__r.Name,
-                       Cover_Letter__c, Resume__c, Notes__c
+                       Evaluation_Notes__c, Assigned_Reviewer__c, Assigned_Reviewer__r.Name
                 FROM Job_Application__c
                 WHERE Id = :applicationId
             ];
