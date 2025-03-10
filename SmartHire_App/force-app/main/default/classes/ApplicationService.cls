@@ -17,13 +17,13 @@ public with sharing class ApplicationService {
     /**
      * Get applications for a position
      */
-    public static List<Application__c> getApplicationsByPosition(Id positionId) {
+    public static List<Job_Application__c> getApplicationsByPosition(Id positionId) {
         try {
             validateReadPermissions();
 
             return [SELECT Id, Name, Candidate__c, Candidate__r.Name, Position__c, Position__r.Name,
                           Status__c, Application_Date__c, Last_Modified_Date__c 
-                   FROM Application__c 
+                   FROM Job_Application__c 
                    WHERE Position__c = :positionId 
                    ORDER BY Application_Date__c DESC];
         } catch (Exception e) {
@@ -35,15 +35,15 @@ public with sharing class ApplicationService {
     /**
      * Get application by Id
      */
-    public static Application__c getApplicationById(Id applicationId) {
+    public static Job_Application__c getApplicationById(Id applicationId) {
         try {
             validateReadPermissions();
 
-            List<Application__c> applications = [SELECT Id, Name, Candidate__c, Candidate__r.Name, 
+            List<Job_Application__c> applications = [SELECT Id, Name, Candidate__c, Candidate__r.Name, 
                                                      Position__c, Position__r.Name, Status__c, 
                                                      Application_Date__c, Last_Modified_Date__c,
                                                      Cover_Letter__c, Resume__c, Notes__c 
-                                              FROM Application__c 
+                                              FROM Job_Application__c 
                                               WHERE Id = :applicationId LIMIT 1];
             
             if (applications.isEmpty()) {
@@ -56,14 +56,14 @@ public with sharing class ApplicationService {
             throw new AuraHandledException(e.getMessage());
         }
     }
-    public static List<Application__c> getApplicationsByCandidate(Id candidateId) {
-        return [SELECT Id, Name, Status__c FROM Application__c WHERE Candidate__c = :candidateId];
+    public static List<Job_Application__c> getApplicationsByCandidate(Id candidateId) {
+        return [SELECT Id, Name, Status__c FROM Job_Application__c WHERE Candidate__c = :candidateId];
     }
     
     /**
      * Create a new application
      */
-    public static Id createApplication(Application__c application) {
+    public static Id createApplication(Job_Application__c application) {
         try {
             validateCreatePermissions();
             validateNoDuplicateApplication(application);
@@ -86,7 +86,7 @@ public with sharing class ApplicationService {
         try {
             validateUpdatePermissions();
 
-            Application__c application = getApplicationById(applicationId);
+            Job_Application__c application = getApplicationById(applicationId);
             
             if (application.Status__c == status) {
                 return; // No change needed

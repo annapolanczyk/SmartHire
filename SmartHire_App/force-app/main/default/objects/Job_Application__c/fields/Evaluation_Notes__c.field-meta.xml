@@ -4,7 +4,8 @@
     <externalId>false</externalId>
     <label>Evaluation Notes</label>
     <length>32768</length>
+    <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
     <type>LongTextArea</type>
     <visibleLines>5</visibleLines>
-</CustomField> 
+</CustomField>

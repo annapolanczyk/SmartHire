@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ReservationDurationInSeconds</fullName>
+    <inlineHelpText>The reservation time limit must be between 300 and 14,400. The default for a new store is 900.</inlineHelpText>
+</CustomField>

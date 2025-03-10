@@ -3,8 +3,9 @@
     <fullName>Required_Skills__c</fullName>
     <externalId>false</externalId>
     <label>Required Skills</label>
+    <length>32768</length>
+    <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
     <type>LongTextArea</type>
     <visibleLines>3</visibleLines>
-    <length>32768</length>
-</CustomField> 
+</CustomField>
