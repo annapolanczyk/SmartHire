@@ -82,7 +82,7 @@ public with sharing class ApplicationController {
         // Implementacja metody getApplicationHistory
         return [SELECT Id, Status__c, Comments__c, Change_Date__c, CreatedBy.Name 
                FROM ApplicationStatusHistory__c 
-               WHERE Application__c = :applicationId 
+               WHERE JobApplication__c = :applicationId 
                ORDER BY Change_Date__c DESC];
     }
 }
