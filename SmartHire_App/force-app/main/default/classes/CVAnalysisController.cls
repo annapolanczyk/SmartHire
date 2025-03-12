@@ -18,4 +18,4 @@ public with sharing class CVAnalysisController {
             throw new AuraHandledException(e.getMessage());
         }
     }
-} 
+}

@@ -4,7 +4,7 @@
 public with sharing class ResumeAnalysisService {
 
     private static final String CLASS_NAME = 'ResumeAnalysisService';
-    
+
     /**
      * Planuje analizę CV dla nowych aplikacji
      * @param applications lista nowych aplikacji
@@ -18,9 +18,19 @@ public with sharing class ResumeAnalysisService {
         // Zbierz ID aplikacji, które wymagają analizy CV
         List<Id> applicationsForAnalysis = new List<Id>();
 
+        System.debug('🔍 [ResumeAnalysisService] Processing applications: ' + applications.size());
+
         for (Job_Application__c app : applications) {
-            if (app.Status__c != null && (app.Status__c.equalsIgnoreCase('Applied') || app.Status__c.equalsIgnoreCase('Resume Review'))) {
+            System.debug('📝 Checking application: ' + app.Id + ', Status: ' + app.Status__c);
+
+            // Sprawdzenie, czy status nie jest pusty i czy pasuje do warunków analizy
+            if (String.isNotBlank(app.Status__c) && 
+                (app.Status__c.equalsIgnoreCase('Applied') || app.Status__c.equalsIgnoreCase('Resume Review'))) {
+                
+                System.debug('✅ Application PASSES filter: ' + app.Id);
                 applicationsForAnalysis.add(app.Id);
+            } else {
+                System.debug('❌ Application DOES NOT pass filter: ' + app.Id);
             }
         }
 
@@ -31,15 +41,22 @@ public with sharing class ResumeAnalysisService {
 
         try {
             // Sprawdź limit kolejki przed zaplanowaniem zadania
-            if (Limits.getQueueableJobs() < Limits.getLimitQueueableJobs()) {
+            Integer queueableJobsRunning = Limits.getQueueableJobs();
+            Integer queueableJobsLimit = Limits.getLimitQueueableJobs();
+            System.debug('📊 Queueable Jobs: ' + queueableJobsRunning + '/' + queueableJobsLimit);
+
+            if (queueableJobsRunning < queueableJobsLimit) {
                 System.enqueueJob(new ResumeAnalysisQueueable(applicationsForAnalysis));
-                Logger.info(CLASS_NAME, 'scheduleAnalysisForApplications', 'Queued CV analysis for ' + applicationsForAnalysis.size() + ' applications.');
+                Logger.info(CLASS_NAME, 'scheduleAnalysisForApplications', 
+                            'Queued CV analysis for ' + applicationsForAnalysis.size() + ' applications.');
             } else {
-                Logger.error(CLASS_NAME, 'scheduleAnalysisForApplications', 
-                             'Cannot schedule analysis due to queueable job limits. Applications count: ' + applicationsForAnalysis.size(), null);
+                Logger.warn(CLASS_NAME, 'scheduleAnalysisForApplications', 
+                            'Cannot schedule analysis due to queueable job limits. Applications count: ' 
+                            + applicationsForAnalysis.size());
             }
         } catch (Exception e) {
             Logger.error(CLASS_NAME, 'scheduleAnalysisForApplications', 'Error scheduling CV analysis job', e);
+            System.debug('⚠ ERROR scheduling CV analysis: ' + e.getMessage());
         }
     }
 }

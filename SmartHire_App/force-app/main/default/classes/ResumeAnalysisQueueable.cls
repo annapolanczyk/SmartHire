@@ -13,15 +13,13 @@ public class ResumeAnalysisQueueable implements Queueable, Database.AllowsCallou
     }
     
     public void execute(QueueableContext context) {
-        // Przetwarzaj nie więcej niż 5 aplikacji w jednym wywołaniu 
-        // (ze względu na limity calloutów)
         Integer maxToProcess = Math.min(applicationIds.size(), 5);
         List<Id> currentBatch = new List<Id>();
-        
+
         for (Integer i = 0; i < maxToProcess; i++) {
             currentBatch.add(applicationIds[i]);
         }
-        
+
         processApplications(currentBatch);
         
         // Jeśli zostały jeszcze aplikacje, zaplanuj kolejne zadanie
@@ -29,79 +27,73 @@ public class ResumeAnalysisQueueable implements Queueable, Database.AllowsCallou
             List<Id> remainingApplications = new List<Id>();
             for (Integer i = maxToProcess; i < applicationIds.size(); i++) {
                 remainingApplications.add(applicationIds[i]);
-            }
-            
-            // Sprawdź limity przed zaplanowaniem kolejnego zadania
-            if (Limits.getQueueableJobs() < Limits.getLimitQueueableJobs()) {
+            } 
+
+            Integer queueableJobsRunning = Limits.getQueueableJobs();
+            Integer queueableJobsLimit = Limits.getLimitQueueableJobs();
+
+            if (queueableJobsRunning < queueableJobsLimit) {
                 System.enqueueJob(new ResumeAnalysisQueueable(remainingApplications));
             } else {
-                // Loguj, że nie wszystkie aplikacje zostały przetworzone
-                Logger.error(CLASS_NAME, 'execute', 
-                    'Nie wszystkie aplikacje zostały przetworzone ze względu na limity. ' +
-                    'Pozostało ' + remainingApplications.size() + ' aplikacji.', null);
+                Logger.warn(CLASS_NAME, 'execute', 
+                    'Limit kolejki osiągnięty. Nie przetworzono ' + remainingApplications.size() + ' aplikacji.');
             }
         }
     }
     
     private void processApplications(List<Id> appIds) {
         try {
-            // Validate CRUD permissions
             SecurityUtils.checkReadAccess(Job_Application__c.SObjectType, 
                 new List<String>{'Id', 'Candidate__c', 'Position__c', 'Status__c'});
             SecurityUtils.checkReadAccess(ContentDocumentLink.SObjectType, 
                 new List<String>{'ContentDocumentId', 'ContentDocument.Title', 'ContentDocument.FileType', 'ContentDocument.CreatedDate'});
             SecurityUtils.checkUpdateAccess(Job_Application__c.SObjectType, 
                 new List<String>{'Status__c'});
-            
-            // Get application data with related CV documents
+
+            // 🔹 **Poprawione zapytanie SOQL - usuwa filtr Title**
             List<Job_Application__c> applications = [
                 SELECT Id, Candidate__c, Position__c, 
-                       (SELECT ContentDocumentId FROM ContentDocumentLinks WHERE 
-                        ContentDocument.Title LIKE '%CV%' OR 
-                        ContentDocument.Title LIKE '%Resume%' OR
-                        ContentDocument.FileType IN ('PDF', 'DOCX', 'DOC', 'TXT')
-                        ORDER BY ContentDocument.CreatedDate DESC LIMIT 1)
+                       (SELECT ContentDocumentId FROM ContentDocumentLinks)
                 FROM Job_Application__c
                 WHERE Id IN :appIds
             ];
-            
+
             for (Job_Application__c app : applications) {
                 try {
-                    // Jeśli znaleziono dokument CV
-                    if (!app.ContentDocumentLinks.isEmpty()) {
-                        Id contentDocumentId = app.ContentDocumentLinks[0].ContentDocumentId;
-                        
-                        // Analizuj CV
-                        Map<String, Object> analysisResults = CVAnalysisService.analyzeCandidateResume(
-                            contentDocumentId, app.Position__c, false
-                        );
-                        
-                        // Utwórz zadanie z wynikami analizy
-                        CVAnalysisService.createRecruiterTaskFromAnalysis(app.Id, analysisResults);
-                        
-                        // Aktualizuj status aplikacji
-                        try { 
-                            app.Status__c = 'Evaluation';
-                            update app;
-                        } catch (Exception updateEx) {
-                            Logger.error(CLASS_NAME, 'processApplications', 
-                                'Błąd podczas aktualizacji statusu aplikacji: ' + app.Id, updateEx);
-                        }
-                    } else {
-                        // Loguj brak dokumentu CV
+                    // 🔹 **Dodajemy debugowanie liczby znalezionych dokumentów**
+                    System.debug('🔍 Application ID: ' + app.Id + ', Found ContentDocumentLinks: ' + 
+                        (app.ContentDocumentLinks != null ? app.ContentDocumentLinks.size() : 0));
+
+                    if (app.ContentDocumentLinks == null || app.ContentDocumentLinks.isEmpty()) {
+                        Logger.warn(CLASS_NAME, 'processApplications', 'Brak CV dla aplikacji: ' + app.Id);
+                        continue;
+                    }
+
+                    Id contentDocumentId = app.ContentDocumentLinks[0].ContentDocumentId;
+                    
+                    System.debug('📄 Processing CV for application: ' + app.Id + ', ContentDocumentId: ' + contentDocumentId);
+                    
+                    Map<String, Object> analysisResults = CVAnalysisService.analyzeCandidateResume(
+                        contentDocumentId, app.Position__c, false
+                    );
+
+                    CVAnalysisService.createRecruiterTaskFromAnalysis(app.Id, analysisResults);
+
+                    try { 
+                        app.Status__c = 'Evaluation';
+                        update app;
+                        System.debug('✅ Status updated to Evaluation for: ' + app.Id);
+                    } catch (Exception updateEx) {
                         Logger.error(CLASS_NAME, 'processApplications', 
-                            'Nie znaleziono dokumentu CV dla aplikacji: ' + app.Id, null);
+                            'Błąd podczas aktualizacji statusu aplikacji: ' + app.Id, updateEx);
                     }
                 } catch (Exception e) {
-                    // Loguj błąd przetwarzania pojedynczej aplikacji
                     Logger.error(CLASS_NAME, 'processApplications', 
                         'Błąd podczas przetwarzania aplikacji: ' + app.Id, e);
                 }
             }
         } catch (Exception e) {
-            // Loguj błąd ogólny
-            Logger.error(CLASS_NAME, 'processApplications', 
-                'Błąd podczas przetwarzania aplikacji', e);
+            Logger.error(CLASS_NAME, 'processApplications', 'Błąd podczas przetwarzania aplikacji', e);
         }
     }
 }
