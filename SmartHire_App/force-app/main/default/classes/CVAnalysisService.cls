@@ -1,17 +1,48 @@
+/**
+ * @description       : 
+ * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+ * @group             : 
+ * @last modified on  : 03-12-2025
+ * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+**/
 public with sharing class CVAnalysisService {
     
     private static final String CACHE_PARTITION_NAME = 'local.SmartHireCache';
     private static final Integer CACHE_TTL = 86400; // 24 godziny
     
     public static Map<String, Object> analyzeCandidateResume(Id contentDocumentId, Id positionId, Boolean bypassCache) {
-        // 1️⃣ SPRAWDŹ, CZY contentDocumentId JEST POPRAWNY
+        // Walidacja parametrów
         if (contentDocumentId == null || String.isBlank(String.valueOf(contentDocumentId))) {
             System.debug(LoggingLevel.ERROR, '❌ ERROR: contentDocumentId is NULL or empty.');
             throw new AuraHandledException('contentDocumentId cannot be null or empty.');
         }
 
-        // 2️⃣ GENERUJ KLUCZ CACHE - TYLKO LITERY I CYFRY
-        // Usuwamy wszystkie znaki niealfanumeryczne i skracamy klucz do maksymalnie 40 znaków
+        // Generowanie klucza cache
+        String cacheKey = generateCacheKey(contentDocumentId);
+        
+        // Próba odczytu z cache
+        Map<String, Object> cachedResults = getCachedResults(cacheKey, bypassCache);
+        if (cachedResults != null) {
+            return cachedResults;
+        }
+
+        // Pobierz dane CV i stanowiska
+        ContentVersion cv = getContentVersion(contentDocumentId);
+        if (cv == null) {
+            throw new AuraHandledException('CV document not found');
+        }
+        
+        // Analiza CV
+        Map<String, Object> analysisResults = CVAnalysisHelper.analyzeResume(cv, positionId);
+        
+        // Zapisz wyniki do cache
+        saveToCache(cacheKey, analysisResults);
+
+        return analysisResults;
+    }
+    
+    // Generuje klucz cache dla dokumentu CV
+    private static String generateCacheKey(Id contentDocumentId) {
         String cacheKey = String.valueOf(contentDocumentId).replaceAll('[^a-zA-Z0-9]', '');
         if (String.isNotBlank(cacheKey)) {
             cacheKey = 'CV' + cacheKey;
@@ -23,127 +54,62 @@ public with sharing class CVAnalysisService {
             cacheKey = 'CV' + String.valueOf(Datetime.now().getTime());
             System.debug(LoggingLevel.WARN, '⚠️ Using timestamp-based cache key: ' + cacheKey);
         }
-
-        // 3️⃣ SPRAWDŹ CZY PLATFORM CACHE JEST DOSTĘPNY
+        return cacheKey;
+    }
+    
+    // Pobiera wyniki z cache
+    private static Map<String, Object> getCachedResults(String cacheKey, Boolean bypassCache) {
+        if (bypassCache) {
+            return null;
+        }
+        
         Cache.OrgPartition cachePart;
         try {
             cachePart = Cache.Org.getPartition(CACHE_PARTITION_NAME);
             if (cachePart == null) {
                 System.debug(LoggingLevel.ERROR, '❌ Cache partition not found: ' + CACHE_PARTITION_NAME);
-                bypassCache = true;
+                return null;
+            }
+            
+            Object cachedObj = cachePart.get(cacheKey);
+            if (cachedObj != null) {
+                Map<String, Object> cachedResults = (Map<String, Object>)cachedObj;
+                System.debug(LoggingLevel.INFO, '✅ Returning cached data for key: ' + cacheKey);
+                return cachedResults;
             }
         } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, '❌ Error accessing cache: ' + e.getMessage());
-            bypassCache = true;
+            System.debug(LoggingLevel.ERROR, '❌ Error retrieving from cache: ' + e.getMessage());
         }
-
-        // 4️⃣ PRÓBA ODCZYTU DANYCH Z CACHE
-        if (!bypassCache && cachePart != null) {
-            try {
-                Object cachedObj = cachePart.get(cacheKey);
-                if (cachedObj != null) {
-                    Map<String, Object> cachedResults = (Map<String, Object>)cachedObj;
-                    System.debug(LoggingLevel.INFO, '✅ Returning cached data for key: ' + cacheKey);
-                    return cachedResults;
-                }
-            } catch (Exception e) {
-                System.debug(LoggingLevel.ERROR, '❌ Error retrieving from cache: ' + e.getMessage());
-                // Kontynuuj bez cache
-            }
-        }
-
-        // 5️⃣ POBIERZ DANE CV
-        ContentVersion cv = getContentVersion(contentDocumentId);
-        if (cv == null) {
-            throw new AuraHandledException('CV document not found');
-        }
-
-        // 6️⃣ KONWERSJA CV NA TEKST - IMPLEMENTACJA TYMCZASOWA DLA DEBUGOWANIA
-        String resumeText;
-        try {
-            // Uproszczona wersja, która nie wymaga zewnętrznych usług (dla debugowania)
-            resumeText = extractTextFromCV(cv);
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, '❌ Error converting document: ' + e.getMessage());
-            throw new AuraHandledException('Error extracting text from document: ' + e.getMessage());
-        }
-        
-        String jobDescription = '';
-        List<String> requiredSkills = new List<String>();
-
-        // 7️⃣ POBIERZ DANE STANOWISKA, JEŚLI PODANO ID
-        if (positionId != null) {
-            Position__c position = getPosition(positionId);
-            if (position != null) {
-                jobDescription = position.Description__c != null ? position.Description__c : '';
-                if (String.isNotBlank(position.Required_Skills__c)) {
-                    requiredSkills = parseSkills(position.Required_Skills__c);
-                }
-            }
-        }
-
-        // 8️⃣ ANALIZA CV PRZY UŻYCIU AI - TYMCZASOWE MOCKI
-        Map<String, Object> analysisResults = mockAnalysisResults(resumeText, jobDescription, requiredSkills);
-
-        // 9️⃣ ZAPIS DANYCH DO CACHE
-        if (cachePart != null) {
-            try {
-                cachePart.put(cacheKey, analysisResults, CACHE_TTL);
-                System.debug(LoggingLevel.INFO, '✅ Cache zapisany dla klucza: ' + cacheKey);
-            } catch (Exception e) {
-                System.debug(LoggingLevel.ERROR, '❌ Error saving to cache: ' + e.getMessage());
-                // Kontynuuj bez zapisywania cache
-            }
-        }
-
-        return analysisResults;
-    }
-
-    // Uproszczony ekstraktor tekstu dla debugowania
-    private static String extractTextFromCV(ContentVersion cv) {
-        if (cv.FileType == null) {
-            return 'Sample CV content for ' + cv.Title;
-        }
-        
-        // W fazie debugowania zwraca zaślepkę
-        return 'Sample CV content for ' + cv.Title + ' (Format: ' + cv.FileType + ')';
+        return null;
     }
     
-    // Tymczasowa implementacja dla fazy debugowania
-    private static Map<String, Object> mockAnalysisResults(String resumeText, String jobDescription, List<String> requiredSkills) {
-        Map<String, Object> results = new Map<String, Object>();
-        
-        // Podstawowe dane
-        results.put('candidateName', 'Anna Polanczyk');
-        results.put('candidateEmail', 'anna.polanczyk@example.com');
-        results.put('candidatePhone', '+48 123 456 789');
-        
-        // Umiejętności
-        List<Map<String, Object>> skills = new List<Map<String, Object>>();
-        for (String skill : requiredSkills) {
-            skills.add(new Map<String, Object>{
-                'name' => skill,
-                'found' => Math.random() > 0.3, // Losowo określa czy umiejętność znaleziona
-                'confidence' => Math.random() * 100
-            });
+    // Zapisuje wyniki do cache
+    private static void saveToCache(String cacheKey, Map<String, Object> analysisResults) {
+        try {
+            Cache.OrgPartition cachePart = Cache.Org.getPartition(CACHE_PARTITION_NAME);
+            if (cachePart != null) {
+                cachePart.put(cacheKey, analysisResults, CACHE_TTL);
+                System.debug(LoggingLevel.INFO, '✅ Cache zapisany dla klucza: ' + cacheKey);
+            }
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, '❌ Error saving to cache: ' + e.getMessage());
         }
-        results.put('skills', skills);
-        
-        // Dodatkowe informacje
-        results.put('experienceYears', 5);
-        results.put('education', 'Master\'s Degree in Computer Science');
-        results.put('matchScore', Math.random() * 100);
-        
-        return results;
     }
 
+    // Pobiera wersję zawartości dokumentu
     private static ContentVersion getContentVersion(Id contentDocumentId) {
         try {
+            // Walidacja uprawnień CRUD
+            if (!Schema.SObjectType.ContentVersion.isAccessible()) {
+                throw new AuraHandledException('Brak uprawnień do odczytu obiektów ContentVersion');
+            }
+            
             List<ContentVersion> cvList = [
                 SELECT VersionData, Title, FileType 
                 FROM ContentVersion 
                 WHERE ContentDocumentId = :contentDocumentId 
                   AND IsLatest = true 
+                WITH SECURITY_ENFORCED
                 LIMIT 1
             ];
             return cvList.isEmpty() ? null : cvList[0];
@@ -153,95 +119,191 @@ public with sharing class CVAnalysisService {
         }
     }
 
-    private static Position__c getPosition(Id positionId) {
+    /**
+     * Tworzy zadanie dla rekrutera na podstawie wyników analizy CV
+     * @param applicationId - Id aplikacji/zgłoszenia kandydata
+     * @param analysisResults - Wyniki analizy CV z AI
+     */
+    public static void createRecruiterTaskFromAnalysis(Id applicationId, Map<String, Object> analysisResults) {
+        if (applicationId == null || analysisResults == null) {
+            System.debug(LoggingLevel.ERROR, '❌ ERROR: Nieprawidłowe parametry dla zadania rekrutera');
+            return;
+        }
+        
         try {
-            List<Position__c> positionList = [
-                SELECT Description__c, Required_Skills__c 
-                FROM Position__c 
-                WHERE Id = :positionId 
+            // Pobierz dane o aplikacji
+            Job_Application__c application = getApplicationForTask(applicationId);
+            if (application == null) {
+                return;
+            }
+            
+            // Przygotuj dane zadania
+            TaskParams params = new TaskParams();
+            params.relatedRecordId = applicationId;
+            params.subject = 'Przegląd CV: ' + application.Candidate__r.Name;
+            params.priority = determineTaskPriority(analysisResults);
+            params.description = buildTaskDescription(application, analysisResults);
+            
+            // Utwórz zadanie
+            createTask(params);
+            
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, '❌ ERROR: Nie udało się utworzyć zadania rekrutera: ' + e.getMessage());
+        }
+    }
+
+    /**
+     * Klasa pomocnicza do przechowywania parametrów zadania
+     */
+    private class TaskParams {
+        public Id relatedRecordId;
+        public String subject;
+        public String description;
+        public String priority;
+    }
+
+    /**
+     * Pobiera dane aplikacji dla zadania
+     */
+    private static Job_Application__c getApplicationForTask(Id applicationId) {
+        try {
+            // Walidacja uprawnień CRUD
+            if (!Schema.SObjectType.Job_Application__c.isAccessible()) {
+                throw new AuraHandledException('Brak uprawnień do odczytu obiektów Job_Application__c');
+            }
+            
+            return [
+                SELECT Id, Name, Candidate__c, Position__c, Candidate__r.Name, Position__r.Name 
+                FROM Job_Application__c 
+                WHERE Id = :applicationId 
+                WITH SECURITY_ENFORCED
                 LIMIT 1
             ];
-            return positionList.isEmpty() ? null : positionList[0];
         } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, '❌ Error fetching Position: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, '❌ ERROR: Nie udało się pobrać danych aplikacji: ' + e.getMessage());
             return null;
         }
     }
 
-    private static List<String> parseSkills(String skillsString) {
-        if (String.isBlank(skillsString)) return new List<String>();
-        
-        List<String> skills = skillsString.split(',');
-        for (Integer i = 0; i < skills.size(); i++) {
-            skills[i] = skills[i].trim();
-        }
-        return skills;
-    }
-
-    // Oryginalne metody parsowania - tymczasowo nieużywane
-    private static String convertToText(ContentVersion cv) {
-        if (cv.FileType == null) {
-            throw new AuraHandledException('File type is not specified');
-        }
-        
-        if (cv.FileType.equalsIgnoreCase('PDF')) {
-            return parsePDF(cv.VersionData);
-        } else if (cv.FileType.equalsIgnoreCase('DOCX') || cv.FileType.equalsIgnoreCase('DOC')) {
-            return parseWord(cv.VersionData);
-        } else if (cv.FileType.equalsIgnoreCase('TXT')) {
-            // Poprawna konwersja Blob do String z określonym kodowaniem
-            return EncodingUtil.base64Decode(EncodingUtil.base64Encode(cv.VersionData)).toString();
-        }
-        throw new AuraHandledException('Unsupported file format: ' + cv.FileType);
-    }
-
-    private static String parsePDF(Blob pdfData) {
-        try {
-            // UWAGA: Ta metoda wymaga prawidłowego skonfigurowania Named Credential "PDF_Parser_Service"
-            // Tymczasowo zwracamy zaślepkę zamiast rzeczywistego callout dla celów debugowania
-            return 'Sample PDF content (parsePDF method)';
-            
-            /*
-            HttpRequest req = new HttpRequest();
-            req.setEndpoint('callout:PDF_Parser_Service');
-            req.setMethod('POST');
-            req.setHeader('Content-Type', 'application/pdf');
-            req.setBodyAsBlob(pdfData);
-            req.setTimeout(120000); // 2 minuty timeout
-        
-            HttpResponse res = new Http().send(req);
-            if (res.getStatusCode() == 200) {
-                return res.getBody();
+    /**
+     * Określa priorytet zadania na podstawie wyniku dopasowania
+     */
+    private static String determineTaskPriority(Map<String, Object> analysisResults) {
+        String taskPriority = 'Normal';
+        if (analysisResults.containsKey('matchScore')) {
+            Object scoreObj = analysisResults.get('matchScore');
+            Decimal matchScore = scoreObj instanceof Decimal ? (Decimal)scoreObj : 0;
+            if (matchScore > 80) {
+                taskPriority = 'High';
+            } else if (matchScore < 40) {
+                taskPriority = 'Low';
             }
-            throw new AuraHandledException('Error parsing PDF: Status ' + res.getStatusCode() + ' - ' + res.getStatus());
-            */
-        } catch (Exception e) {
-            throw new AuraHandledException('PDF parsing service error: ' + e.getMessage());
         }
+        return taskPriority;
     }
 
-    private static String parseWord(Blob wordData) {
-        try {
-            // UWAGA: Ta metoda wymaga prawidłowego skonfigurowania Named Credential "DOCX_Parser_Service"
-            // Tymczasowo zwracamy zaślepkę zamiast rzeczywistego callout dla celów debugowania
-            return 'Sample DOCX content (parseWord method)';
-            
-            /*
-            HttpRequest req = new HttpRequest();
-            req.setEndpoint('callout:DOCX_Parser_Service');
-            req.setMethod('POST');
-            req.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-            req.setBodyAsBlob(wordData);
-            req.setTimeout(120000); // 2 minuty timeout
+    /**
+     * Buduje opis zadania na podstawie wyników analizy
+     */
+    private static String buildTaskDescription(Job_Application__c application, Map<String, Object> analysisResults) {
+        String taskDescription = 'Automatyczna analiza CV kandydata ' + application.Candidate__r.Name + 
+                                ' dla stanowiska ' + application.Position__r.Name + '.\n\n';
         
-            HttpResponse res = new Http().send(req);
-            if (res.getStatusCode() == 200) {
-                return res.getBody();
+        // Dodaj informacje o umiejętnościach
+        taskDescription += buildSkillsSection(analysisResults);
+        
+        // Dodaj informacje o doświadczeniu
+        if (analysisResults.containsKey('experienceYears')) {
+            taskDescription += 'Lata doświadczenia: ' + analysisResults.get('experienceYears') + '\n';
+        }
+        
+        // Dodaj informacje o wykształceniu
+        if (analysisResults.containsKey('education')) {
+            taskDescription += 'Wykształcenie: ' + analysisResults.get('education') + '\n';
+        }
+        
+        return taskDescription;
+    }
+
+    /**
+     * Buduje sekcję umiejętności dla opisu zadania
+     */
+    private static String buildSkillsSection(Map<String, Object> analysisResults) {
+        // Jeśli nie ma umiejętności, zwróć pusty string
+        if (!analysisResults.containsKey('skills')) {
+            return '';
+        }
+        
+        Object skillsObj = analysisResults.get('skills');
+        if (!(skillsObj instanceof List<Object>)) {
+            return '';
+        }
+        
+        List<Object> skills = (List<Object>)skillsObj;
+        if (skills.isEmpty()) {
+            return '';
+        }
+        
+        // Buduj sekcję umiejętności
+        String skillsSection = 'Kluczowe umiejętności:\n';
+        
+        // Przetwórz każdą umiejętność
+        for (Object skillObj : skills) {
+            String skillLine = formatSkillLine(skillObj);
+            if (String.isNotBlank(skillLine)) {
+                skillsSection += skillLine;
             }
-            throw new AuraHandledException('Error parsing Word document: Status ' + res.getStatusCode() + ' - ' + res.getStatus());
-            */
-        } catch (Exception e) {
-            throw new AuraHandledException('Word parsing service error: ' + e.getMessage());
+        }
+        
+        return skillsSection + '\n';
+    }
+    
+    /**
+     * Formatuje linię dla pojedynczej umiejętności
+     * @param skillObj Obiekt reprezentujący umiejętność
+     * @return Sformatowana linia tekstu dla umiejętności
+     */
+    private static String formatSkillLine(Object skillObj) {
+        if (!(skillObj instanceof Map<String, Object>)) {
+            return '';
+        }
+        
+        Map<String, Object> skill = (Map<String, Object>)skillObj;
+        if (!skill.containsKey('name')) {
+            return '';
+        }
+        
+        Boolean found = skill.get('found') == true;
+        String foundIcon = found ? '✅' : '❌';
+        return '- ' + foundIcon + ' ' + skill.get('name') + '\n';
+    }
+
+    /**
+     * Tworzy zadanie w systemie
+     * @param params Parametry zadania
+     */
+    private static void createTask(TaskParams params) {
+        // Walidacja uprawnień CRUD
+        if (!Schema.SObjectType.Task.isCreateable()) {
+            System.debug(LoggingLevel.ERROR, '❌ ERROR: Brak uprawnień do tworzenia zadań');
+            return;
+        }
+        
+        Task newTask = new Task(
+            Subject = params.subject,
+            Description = params.description,
+            Priority = params.priority,
+            Status = 'Not Started',
+            WhatId = params.relatedRecordId,
+            ActivityDate = Date.today().addDays(2)
+        );
+        
+        // Użyj Database.insert z opcją sprawdzania uprawnień
+        Database.SaveResult result = Database.insert(newTask, true);
+        if (result.isSuccess()) {
+            System.debug(LoggingLevel.INFO, '✅ Utworzono zadanie rekrutera: ' + newTask.Id);
+        } else {
+            System.debug(LoggingLevel.ERROR, '❌ ERROR: Nie udało się utworzyć zadania: ' + result.getErrors()[0].getMessage());
         }
     }
 }

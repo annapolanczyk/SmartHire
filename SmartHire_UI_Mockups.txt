@@ -1,0 +1,264 @@
+# SmartHire - Makiety UI dla głównych komponentów
+
+## 1. Komponent analizy CV (cvAnalyzer)
+
+```
++-------------------------------------------------------+
+|                   CV ANALYZER                         |
++-------------------------------------------------------+
+|                                                       |
+| [ Drag & Drop CV here or click to upload ]            |
+|                                                       |
++-------------------------------------------------------+
+|                                                       |
+| WYNIKI ANALIZY                                        |
+|                                                       |
+| Dane kandydata:                                       |
+| - Imię i nazwisko: Jan Kowalski                       |
+| - Email: jan.kowalski@example.com                     |
+| - Telefon: +48 123 456 789                            |
+| - Doświadczenie: 5 lat                                |
+|                                                       |
+| Wykryte umiejętności:                                 |
+| +------------------+                                  |
+| | JavaScript       | ████████░░ 80%                   |
+| | React            | ███████░░░ 70%                   |
+| | Node.js          | ██████░░░░ 60%                   |
+| | HTML/CSS         | █████████░ 90%                   |
+| | TypeScript       | ████░░░░░░ 40%                   |
+| +------------------+                                  |
+|                                                       |
+| Dopasowanie do stanowiska:                            |
+| +------------------+                                  |
+| | Ogólne           | ████████░░ 80%                   |
+| | Umiejętności     | ███████░░░ 70%                   |
+| | Doświadczenie    | ████████░░ 80%                   |
+| +------------------+                                  |
+|                                                       |
+| Rekomendacja AI:                                      |
+| Kandydat wykazuje dobre dopasowanie do stanowiska     |
+| Frontend Developer. Posiada większość wymaganych      |
+| umiejętności, szczególnie mocny w HTML/CSS i          |
+| JavaScript. Zalecany kontakt w celu weryfikacji       |
+| umiejętności TypeScript.                              |
+|                                                       |
++-------------------------------------------------------+
+|                                                       |
+| [ Zaakceptuj ] [ Odrzuć ] [ Żądaj więcej informacji ] |
+|                                                       |
++-------------------------------------------------------+
+```
+
+### Opis komponentu cvAnalyzer:
+- **Cel**: Umożliwienie rekruterom dodawania i analizy CV kandydatów
+- **Funkcjonalności**:
+  - Upload pliku CV (drag & drop lub wybór pliku)
+  - Wyświetlanie wyników analizy AI
+  - Wizualizacja dopasowania umiejętności
+  - Wyświetlanie rekomendacji AI
+  - Przyciski akcji (Zaakceptuj, Odrzuć, Żądaj więcej informacji)
+- **Interakcje**:
+  - Po dodaniu CV, komponent wywołuje kontroler Apex do analizy
+  - Wyniki analizy są prezentowane w formie wizualnej
+  - Przyciski akcji aktualizują status aplikacji
+
+## 2. Komponent konwersji kandydatów (candidateConversion)
+
+```
++-------------------------------------------------------+
+|               KONWERSJA KANDYDATA                     |
++-------------------------------------------------------+
+|                                                       |
+| Dane kandydata:                                       |
+| - Imię: [Jan                 ]                        |
+| - Nazwisko: [Kowalski        ]                        |
+| - Email: [jan.kowalski@example.com]                   |
+| - Telefon: [+48 123 456 789  ]                        |
+|                                                       |
++-------------------------------------------------------+
+|                                                       |
+| Mapowanie pól:                                        |
+|                                                       |
+| Kandydat           | Kontakt                          |
+| ------------------+--------------------------------   |
+| First_Name__c     | FirstName                         |
+| Last_Name__c      | LastName                          |
+| Email__c          | Email                             |
+| Phone__c          | Phone                             |
+| Skills__c         | Description                       |
+|                                                       |
++-------------------------------------------------------+
+|                                                       |
+| Opcje konwersji:                                      |
+|                                                       |
+| (•) Konwertuj tylko na kontakt                        |
+| ( ) Konwertuj na kontakt i utwórz użytkownika         |
+|                                                       |
++-------------------------------------------------------+
+|                                                       |
+| Ustawienia użytkownika (jeśli wybrano):               |
+|                                                       |
+| - Profil: [Kandydat zewnętrzny ▼]                     |
+| - Rola: [Kandydat            ▼]                       |
+| - Aktywny: [✓]                                        |
+| - Wyślij email powitalny: [✓]                         |
+|                                                       |
++-------------------------------------------------------+
+|                                                       |
+| [ Konwertuj ] [ Anuluj ]                              |
+|                                                       |
++-------------------------------------------------------+
+```
+
+### Opis komponentu candidateConversion:
+- **Cel**: Umożliwienie konwersji kandydatów na kontakty i opcjonalnie użytkowników
+- **Funkcjonalności**:
+  - Wyświetlanie i edycja danych kandydata
+  - Mapowanie pól kandydata do pól kontaktu
+  - Wybór opcji konwersji (tylko kontakt / kontakt + użytkownik)
+  - Konfiguracja ustawień użytkownika
+  - Przyciski akcji (Konwertuj, Anuluj)
+- **Interakcje**:
+  - Komponent pobiera dane kandydata z kontrolera Apex
+  - Po zatwierdzeniu konwersji, wywołuje metodę kontrolera do konwersji
+  - Wyświetla potwierdzenie udanej konwersji
+
+## 3. Dashboard rekrutera
+
+```
++-------------------------------------------------------+
+|                 DASHBOARD REKRUTERA                   |
++-------------------------------------------------------+
+|                                                       |
+| STATYSTYKI                      | ZADANIA DO WYKONANIA|
+| +-------------------------+     | +------------------+|
+| | Nowe aplikacje: 12      |     | | Analiza CV (5)   ||
+| | W trakcie analizy: 3    |     | | Ocena kandyd.(3) ||
+| | Przeanalizowane: 8      |     | | Rozmowy tel.(2)  ||
+| | Shortlista: 5           |     | | Feedback (4)     ||
+| | Zatrudnieni: 2          |     | | +------------------+|
+| +-------------------------+     |                     |
+|                                 |                     |
++-------------------------------------------------------+
+|                                                       |
+| OSTATNIO DODANE APLIKACJE                             |
+| +---------------------------------------------------+ |
+| | Imię i nazwisko | Stanowisko    | Data     | Status| |
+| |-----------------|---------------|----------|-------| |
+| | Jan Kowalski    | Frontend Dev  | 10.05.23 | Nowa  | |
+| | Anna Nowak      | UX Designer   | 09.05.23 | Analiz| |
+| | Piotr Wiśniewski| Java Developer| 08.05.23 | Short.| |
+| | Marta Kowalczyk | Product Owner | 07.05.23 | Ocena | |
+| | Tomasz Jankowski| DevOps Eng.   | 06.05.23 | Nowa  | |
+| +---------------------------------------------------+ |
+|                                                       |
++-------------------------------------------------------+
+|                                                       |
+| NAJLEPSI KANDYDACI                                    |
+| +---------------------------------------------------+ |
+| | Imię i nazwisko | Stanowisko    | Dopasowanie      | |
+| |-----------------|---------------|------------------| |
+| | Piotr Wiśniewski| Java Developer| ████████░░ 80%   | |
+| | Marta Kowalczyk | Product Owner | ███████░░░ 70%   | |
+| | Karol Zieliński | Backend Dev   | ██████░░░░ 60%   | |
+| +---------------------------------------------------+ |
+|                                                       |
++-------------------------------------------------------+
+|                                                       |
+| STATUS APLIKACJI                                      |
+| [Wykres kołowy pokazujący rozkład statusów aplikacji] |
+|                                                       |
++-------------------------------------------------------+
+```
+
+### Opis dashboardu rekrutera:
+- **Cel**: Zapewnienie rekruterom szybkiego przeglądu aktualnego stanu rekrutacji
+- **Funkcjonalności**:
+  - Wyświetlanie statystyk aplikacji
+  - Lista zadań do wykonania
+  - Tabela ostatnio dodanych aplikacji
+  - Lista najlepszych kandydatów
+  - Wykres statusów aplikacji
+- **Interakcje**:
+  - Kliknięcie na aplikację przenosi do widoku szczegółów
+  - Kliknięcie na zadanie przenosi do odpowiedniego widoku
+  - Dashboard odświeża się automatycznie lub na żądanie
+
+## 4. Widok szczegółów aplikacji
+
+```
++-------------------------------------------------------+
+|                 SZCZEGÓŁY APLIKACJI                   |
++-------------------------------------------------------+
+|                                                       |
+| Kandydat: Jan Kowalski                                |
+| Stanowisko: Frontend Developer                        |
+| Status: Przeanalizowano                               |
+| Data aplikacji: 10.05.2023                            |
+| Przypisany recenzent: Anna Nowak                      |
+|                                                       |
++-------------------------------------------------------+
+|                                                       |
+| DANE KANDYDATA                   | WYNIKI ANALIZY CV  |
+| +-------------------------+      | +----------------+ |
+| | Email: jan@example.com  |      | | Dopasowanie:   | |
+| | Telefon: +48 123456789  |      | | ████████░░ 80% | |
+| | Doświadczenie: 5 lat    |      | |                | |
+| | Wykształcenie: Magister |      | | Umiejętności:  | |
+| | Obecna firma: XYZ Corp. |      | | - JavaScript   | |
+| | Obecne stanowisko: Dev  |      | | - React        | |
+| +-------------------------+      | | - HTML/CSS     | |
+|                                  | | - TypeScript   | |
+|                                  | +----------------+ |
++-------------------------------------------------------+
+|                                                       |
+| DOKUMENTY                                             |
+| +---------------------------------------------------+ |
+| | [CV] [List motywacyjny] [Certyfikaty]              | |
+| +---------------------------------------------------+ |
+|                                                       |
++-------------------------------------------------------+
+|                                                       |
+| HISTORIA STATUSÓW                                     |
+| +---------------------------------------------------+ |
+| | Data       | Status        | Użytkownik           | |
+| |------------|---------------|----------------------| |
+| | 10.05.2023 | Nowa          | System               | |
+| | 10.05.2023 | W analizie    | System               | |
+| | 10.05.2023 | Przeanalizowano| System              | |
+| +---------------------------------------------------+ |
+|                                                       |
++-------------------------------------------------------+
+|                                                       |
+| NOTATKI I KOMENTARZE                                  |
+| +---------------------------------------------------+ |
+| | Anna Nowak (11.05.2023):                          | |
+| | Kandydat ma dobre doświadczenie w React.          | |
+| | Warto zweryfikować umiejętności TypeScript.       | |
+| +---------------------------------------------------+ |
+| | [Dodaj komentarz...]                              | |
+| +---------------------------------------------------+ |
+|                                                       |
++-------------------------------------------------------+
+|                                                       |
+| [ Zmień status ▼ ] [ Przypisz recenzenta ▼ ]          |
+| [ Konwertuj kandydata ] [ Wyślij email ]              |
+|                                                       |
++-------------------------------------------------------+
+```
+
+### Opis widoku szczegółów aplikacji:
+- **Cel**: Zapewnienie szczegółowego widoku aplikacji kandydata
+- **Funkcjonalności**:
+  - Wyświetlanie podstawowych informacji o aplikacji
+  - Wyświetlanie danych kandydata
+  - Wyświetlanie wyników analizy CV
+  - Dostęp do dokumentów kandydata
+  - Historia statusów aplikacji
+  - Notatki i komentarze
+  - Przyciski akcji (zmiana statusu, przypisanie recenzenta, konwersja, email)
+- **Interakcje**:
+  - Zmiana statusu aktualizuje rekord aplikacji
+  - Przypisanie recenzenta aktualizuje pole Assigned_Reviewer__c
+  - Konwersja kandydata otwiera komponent candidateConversion
+  - Wysłanie emaila otwiera formularz emaila 

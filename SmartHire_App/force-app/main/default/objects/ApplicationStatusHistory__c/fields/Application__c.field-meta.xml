@@ -4,7 +4,7 @@
     <deleteConstraint>SetNull</deleteConstraint>
     <externalId>false</externalId>
     <label>Application</label>
-    <referenceTo>Application__c</referenceTo>
+    <referenceTo>Job_Application__c</referenceTo>
     <relationshipLabel>Status History</relationshipLabel>
     <relationshipName>Status_History</relationshipName>
     <required>false</required>
