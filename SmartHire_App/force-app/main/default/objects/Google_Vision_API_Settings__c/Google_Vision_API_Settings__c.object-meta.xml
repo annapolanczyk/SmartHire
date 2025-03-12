@@ -4,4 +4,5 @@
     <enableFeeds>false</enableFeeds>
     <label>Google Vision API Settings</label>
     <visibility>Public</visibility>
+    <description>Ustawienia dla integracji z Google Vision API</description>
 </CustomObject>

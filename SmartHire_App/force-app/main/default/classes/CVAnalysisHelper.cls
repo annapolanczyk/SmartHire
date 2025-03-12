@@ -382,17 +382,10 @@ public with sharing class CVAnalysisHelper {
             // Walidacja uprawnień do Custom Settings
             validateGoogleVisionSettingsAccess();
             
-            // Pobierz ustawienia Google Vision API bez użycia SOQL
-            Map<String, Google_Vision_API_Settings__c> settingsMap = Google_Vision_API_Settings__c.getAll();
-            if (settingsMap == null || settingsMap.isEmpty()) {
+            // Pobierz ustawienia Google Vision API
+            Google_Vision_API_Settings__c settings = Google_Vision_API_Settings__c.getInstance();
+            if (settings == null || String.isBlank(settings.Vision_API_Key__c)) {
                 Logger.warn('Google Vision API settings not configured');
-                return null;
-            }
-            
-            // Pobierz pierwszy rekord z mapy
-            Google_Vision_API_Settings__c settings = settingsMap.values()[0];
-            if (String.isBlank(settings.Vision_API_Key__c)) {
-                Logger.warn('Google Vision API key not configured');
                 return null;
             }
             
