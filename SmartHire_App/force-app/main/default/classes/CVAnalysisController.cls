@@ -28,24 +28,49 @@ public with sharing class CVAnalysisController {
     @AuraEnabled
     public static Id saveAnalysisResults(Id recordId, String analysisResults) {
         try {
+            // Logowanie danych wejściowych
+            System.debug(LoggingLevel.INFO, '=== saveAnalysisResults - START ===');
+            System.debug(LoggingLevel.INFO, 'saveAnalysisResults - recordId: ' + recordId);
+            System.debug(LoggingLevel.INFO, 'saveAnalysisResults - analysisResults length: ' + (analysisResults != null ? analysisResults.length() : 0));
+            
             // Sprawdź typ rekordu
             String objectType = String.valueOf(recordId.getSobjectType());
+            System.debug(LoggingLevel.INFO, 'saveAnalysisResults - objectType: ' + objectType);
             
-            // Parsuj wyniki analizy
-            Map<String, Object> results = (Map<String, Object>) JSON.deserializeUntyped(analysisResults);
-            
-            if (objectType == 'Job_Application__c') {
-                return saveJobApplicationResults(recordId, analysisResults, results);
-            } 
-            else if (objectType == 'Candidate__c') {
-                return saveCandidateResults(recordId, analysisResults, results);
-            } 
-            else {
-                throw new AuraHandledException('Unsupported record type: ' + objectType);
+            try {
+                // Parsuj wyniki analizy
+                System.debug(LoggingLevel.INFO, 'saveAnalysisResults - attempting to deserialize JSON');
+                Map<String, Object> results = (Map<String, Object>) JSON.deserializeUntyped(analysisResults);
+                System.debug(LoggingLevel.INFO, 'saveAnalysisResults - results deserialized successfully with ' + results.size() + ' keys');
+                
+                // Logowanie kluczy w wynikach analizy
+                System.debug(LoggingLevel.INFO, 'saveAnalysisResults - result keys: ' + results.keySet());
+                
+                if (objectType == 'Job_Application__c') {
+                    System.debug(LoggingLevel.INFO, 'saveAnalysisResults - calling saveJobApplicationResults');
+                    return saveJobApplicationResults(recordId, analysisResults, results);
+                } 
+                else if (objectType == 'Candidate__c') {
+                    System.debug(LoggingLevel.INFO, 'saveAnalysisResults - calling saveCandidateResults');
+                    return saveCandidateResults(recordId, analysisResults, results);
+                } 
+                else {
+                    System.debug(LoggingLevel.ERROR, 'saveAnalysisResults - unsupported record type: ' + objectType);
+                    throw new AuraHandledException('Unsupported record type: ' + objectType);
+                }
+            } catch (JSONException jsonEx) {
+                System.debug(LoggingLevel.ERROR, 'saveAnalysisResults - JSON deserialization error: ' + jsonEx.getMessage());
+                System.debug(LoggingLevel.ERROR, 'saveAnalysisResults - JSON sample: ' + (analysisResults != null && analysisResults.length() > 100 ? analysisResults.substring(0, 100) + '...' : analysisResults));
+                throw new AuraHandledException('Error parsing analysis results JSON: ' + jsonEx.getMessage());
             }
         } catch (Exception e) {
-            Logger.error('CVAnalysisController', 'saveAnalysisResults', 'Error saving analysis results', e);
-            throw new AuraHandledException(e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'saveAnalysisResults - Exception: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'saveAnalysisResults - Exception type: ' + e.getTypeName());
+            System.debug(LoggingLevel.ERROR, 'saveAnalysisResults - Stack trace: ' + e.getStackTraceString());
+            Logger.error('CVAnalysisController', 'saveAnalysisResults', 'Error saving analysis results: ' + e.getMessage(), e);
+            throw new AuraHandledException('Failed to save analysis results: ' + e.getMessage());
+        } finally {
+            System.debug(LoggingLevel.INFO, '=== saveAnalysisResults - END ===');
         }
     }
     
@@ -57,42 +82,59 @@ public with sharing class CVAnalysisController {
      * @return ID zaktualizowanego rekordu
      */
     private static Id saveJobApplicationResults(Id recordId, String analysisResults, Map<String, Object> results) {
-        // Sprawdź uprawnienia
-        SecurityUtils.checkUpdateAccess(Job_Application__c.SObjectType, 
-            new List<String>{'Analysis_Results__c', 'Analysis_Score__c', 'Skills_Identified__c'});
-        // Powyższa metoda sprawdza zarówno uprawnienia do aktualizacji obiektu (isUpdateable), 
-        // jak i uprawnienia do aktualizacji poszczególnych pól
-        
-        // Sprawdź uprawnienia do aktualizacji obiektu
-        if (!Schema.SObjectType.Job_Application__c.isUpdateable()) {
-            throw new AuraHandledException('Brak uprawnień do aktualizacji obiektów Job_Application__c');
+        try {
+            System.debug(LoggingLevel.INFO, '=== saveJobApplicationResults - START ===');
+            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - start for recordId: ' + recordId);
+            
+            // Sprawdź uprawnienia
+            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - checking update access');
+            SecurityUtils.checkUpdateAccess(Job_Application__c.SObjectType, 
+                new List<String>{'Analysis_Results__c', 'Analysis_Date__c'});
+            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - permissions checked successfully');
+            
+            // Sprawdź uprawnienia do aktualizacji obiektu
+            if (!Schema.SObjectType.Job_Application__c.isUpdateable()) {
+                System.debug(LoggingLevel.ERROR, 'saveJobApplicationResults - Job_Application__c is not updateable');
+                throw new AuraHandledException('Brak uprawnień do aktualizacji obiektów Job_Application__c');
+            }
+            
+            // Przygotuj dane do zapisu
+            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - preparing data for update');
+            Job_Application__c app = new Job_Application__c(
+                Id = recordId,
+                Analysis_Results__c = analysisResults,
+                Analysis_Date__c = Datetime.now()
+            );
+            
+            // Zapisz zmiany z wymuszeniem sprawdzania uprawnień CRUD
+            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - attempting to update record with fields: ' + 
+                          'Analysis_Results__c (length: ' + (app.Analysis_Results__c != null ? app.Analysis_Results__c.length() : 0) + '), ' +
+                          'Analysis_Date__c: ' + app.Analysis_Date__c);
+            
+            Database.DMLOptions dmlOptions = new Database.DMLOptions();
+            dmlOptions.OptAllOrNone = true;
+            Database.SaveResult result = Database.update(app, dmlOptions);
+            if (!result.isSuccess()) {
+                String errorMsg = 'Error updating Job_Application__c: ' + (result.getErrors().size() > 0 ? result.getErrors()[0].getMessage() : 'Unknown error');
+                System.debug(LoggingLevel.ERROR, 'saveJobApplicationResults - update failed: ' + errorMsg);
+                for (Database.Error err : result.getErrors()) {
+                    System.debug(LoggingLevel.ERROR, 'saveJobApplicationResults - error details: ' + 
+                                 'Fields: ' + err.getFields() + ', ' +
+                                 'Message: ' + err.getMessage() + ', ' +
+                                 'StatusCode: ' + err.getStatusCode());
+                }
+                throw new AuraHandledException(errorMsg);
+            }
+            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - update successful');
+            return recordId;
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'saveJobApplicationResults - Exception: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'saveJobApplicationResults - Exception type: ' + e.getTypeName());
+            System.debug(LoggingLevel.ERROR, 'saveJobApplicationResults - Stack trace: ' + e.getStackTraceString());
+            throw e; // Przekazujemy wyjątek wyżej, aby został obsłużony w saveAnalysisResults
+        } finally {
+            System.debug(LoggingLevel.INFO, '=== saveJobApplicationResults - END ===');
         }
-        
-        // Przygotuj dane do zapisu
-        Job_Application__c app = new Job_Application__c(
-            Id = recordId,
-            Analysis_Results__c = analysisResults,
-            Analysis_Date__c = Datetime.now()
-        );
-        
-        // Dodaj wynik dopasowania, jeśli istnieje
-        if (results.containsKey('matchScore')) {
-            app.Analysis_Score__c = extractMatchScore(results.get('matchScore'));
-        }
-        
-        // Dodaj zidentyfikowane umiejętności, jeśli istnieją
-        if (results.containsKey('skills')) {
-            app.Skills_Identified__c = extractSkillsFromResults(results);
-        }
-        
-        // Zapisz zmiany z wymuszeniem sprawdzania uprawnień CRUD
-        Database.DMLOptions dmlOptions = new Database.DMLOptions();
-        dmlOptions.OptAllOrNone = true;
-        Database.SaveResult result = Database.update(app, dmlOptions);
-        if (!result.isSuccess()) {
-            throw new AuraHandledException('Error updating Job_Application__c: ' + result.getErrors()[0].getMessage());
-        }
-        return recordId;
     }
     
     /**
@@ -103,37 +145,66 @@ public with sharing class CVAnalysisController {
      * @return ID zaktualizowanego rekordu
      */
     private static Id saveCandidateResults(Id recordId, String analysisResults, Map<String, Object> results) {
-        // Sprawdź uprawnienia
-        SecurityUtils.checkUpdateAccess(Candidate__c.SObjectType, 
-            new List<String>{'Analysis_Results__c', 'Skills__c'});
-        // Powyższa metoda sprawdza zarówno uprawnienia do aktualizacji obiektu (isUpdateable), 
-        // jak i uprawnienia do aktualizacji poszczególnych pól
-        
-        // Sprawdź uprawnienia do aktualizacji obiektu
-        if (!Schema.SObjectType.Candidate__c.isUpdateable()) {
-            throw new AuraHandledException('Brak uprawnień do aktualizacji obiektów Candidate__c');
+        try {
+            System.debug(LoggingLevel.INFO, '=== saveCandidateResults - START ===');
+            System.debug(LoggingLevel.INFO, 'saveCandidateResults - start for recordId: ' + recordId);
+            
+            // Sprawdź uprawnienia
+            System.debug(LoggingLevel.INFO, 'saveCandidateResults - checking update access');
+            SecurityUtils.checkUpdateAccess(Candidate__c.SObjectType, 
+                new List<String>{'Skills__c'});
+            System.debug(LoggingLevel.INFO, 'saveCandidateResults - permissions checked successfully');
+            
+            // Sprawdź uprawnienia do aktualizacji obiektu
+            if (!Schema.SObjectType.Candidate__c.isUpdateable()) {
+                System.debug(LoggingLevel.ERROR, 'saveCandidateResults - Candidate__c is not updateable');
+                throw new AuraHandledException('Brak uprawnień do aktualizacji obiektów Candidate__c');
+            }
+            
+            // Przygotuj dane do zapisu
+            System.debug(LoggingLevel.INFO, 'saveCandidateResults - preparing data for update');
+            Candidate__c candidate = new Candidate__c(
+                Id = recordId
+            );
+            
+            // Dodaj zidentyfikowane umiejętności, jeśli istnieją
+            if (results.containsKey('skills')) {
+                Object skillsObj = results.get('skills');
+                System.debug(LoggingLevel.INFO, 'saveCandidateResults - skills found, type: ' + getObjectType(skillsObj));
+                candidate.Skills__c = extractSkillsFromResults(results);
+                System.debug(LoggingLevel.INFO, 'saveCandidateResults - extracted skills length: ' + (candidate.Skills__c != null ? candidate.Skills__c.length() : 0));
+            } else {
+                System.debug(LoggingLevel.INFO, 'saveCandidateResults - skills not found in results');
+            }
+            
+            // Zapisz zmiany z wymuszeniem sprawdzania uprawnień CRUD
+            System.debug(LoggingLevel.INFO, 'saveCandidateResults - attempting to update record with fields: ' + 
+                          'Skills__c (length: ' + (candidate.Skills__c != null ? candidate.Skills__c.length() : 0) + ')');
+            
+            Database.DMLOptions dmlOptions = new Database.DMLOptions();
+            dmlOptions.OptAllOrNone = true;
+            Database.SaveResult result = Database.update(candidate, dmlOptions);
+            if (!result.isSuccess()) {
+                String errorMsg = 'Error updating Candidate__c: ' + (result.getErrors().size() > 0 ? result.getErrors()[0].getMessage() : 'Unknown error');
+                System.debug(LoggingLevel.ERROR, 'saveCandidateResults - update failed: ' + errorMsg);
+                for (Database.Error err : result.getErrors()) {
+                    System.debug(LoggingLevel.ERROR, 'saveCandidateResults - error details: ' + 
+                                 'Fields: ' + err.getFields() + ', ' +
+                                 'Message: ' + err.getMessage() + ', ' +
+                                 'StatusCode: ' + err.getStatusCode());
+                }
+                throw new AuraHandledException(errorMsg);
+            }
+            System.debug(LoggingLevel.INFO, 'saveCandidateResults - update successful');
+            return recordId;
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'saveCandidateResults - Exception: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'saveCandidateResults - Exception type: ' + e.getTypeName());
+            System.debug(LoggingLevel.ERROR, 'saveCandidateResults - Stack trace: ' + e.getStackTraceString());
+            throw e; // Przekazujemy wyjątek wyżej, aby został obsłużony w saveAnalysisResults
+        } finally {
+            System.debug(LoggingLevel.INFO, '=== saveCandidateResults - END ===');
         }
-        
-        // Przygotuj dane do zapisu
-        Candidate__c candidate = new Candidate__c(
-            Id = recordId,
-            Analysis_Results__c = analysisResults,
-            Last_Analysis_Date__c = Datetime.now()
-        );
-        
-        // Dodaj zidentyfikowane umiejętności, jeśli istnieją
-        if (results.containsKey('skills')) {
-            candidate.Skills__c = extractSkillsFromResults(results);
-        }
-        
-        // Zapisz zmiany z wymuszeniem sprawdzania uprawnień CRUD
-        Database.DMLOptions dmlOptions = new Database.DMLOptions();
-        dmlOptions.OptAllOrNone = true;
-        Database.SaveResult result = Database.update(candidate, dmlOptions);
-        if (!result.isSuccess()) {
-            throw new AuraHandledException('Error updating Candidate__c: ' + result.getErrors()[0].getMessage());
-        }
-        return recordId;
     }
     
     /**
@@ -172,20 +243,110 @@ public with sharing class CVAnalysisController {
     }
 
     /**
-     * Ekstrahuje wynik dopasowania z obiektu i konwertuje go na Decimal
-     * @param matchScoreObj Obiekt reprezentujący wynik dopasowania
-     * @return Wynik dopasowania jako Decimal lub null jeśli konwersja nie jest możliwa
+     * Ekstrahuje wynik dopasowania z obiektu
+     * @param matchScoreObj Obiekt zawierający wynik dopasowania
+     * @return Wynik dopasowania jako Decimal
      */
     private static Decimal extractMatchScore(Object matchScoreObj) {
-        if (matchScoreObj instanceof Decimal) {
-            return (Decimal)matchScoreObj;
-        } else if (matchScoreObj instanceof String) {
-            try {
-                return Decimal.valueOf((String)matchScoreObj);
-            } catch (Exception e) {
-                System.debug(LoggingLevel.WARN, 'Could not convert matchScore to Decimal: ' + e.getMessage());
+        try {
+            System.debug(LoggingLevel.INFO, 'extractMatchScore - input type: ' + getObjectType(matchScoreObj));
+            
+            if (matchScoreObj == null) {
+                System.debug(LoggingLevel.WARN, 'extractMatchScore - matchScoreObj is null, returning 0');
+                return 0;
             }
+            
+            // Jeśli to już Decimal, zwróć bezpośrednio
+            if (matchScoreObj instanceof Decimal) {
+                System.debug(LoggingLevel.INFO, 'extractMatchScore - matchScoreObj is Decimal: ' + (Decimal)matchScoreObj);
+                return (Decimal)matchScoreObj;
+            }
+            
+            // Jeśli to Integer, konwertuj na Decimal
+            if (matchScoreObj instanceof Integer) {
+                System.debug(LoggingLevel.INFO, 'extractMatchScore - matchScoreObj is Integer: ' + (Integer)matchScoreObj);
+                return Decimal.valueOf((Integer)matchScoreObj);
+            }
+            
+            // Jeśli to Double, konwertuj na Decimal
+            if (matchScoreObj instanceof Double) {
+                System.debug(LoggingLevel.INFO, 'extractMatchScore - matchScoreObj is Double: ' + (Double)matchScoreObj);
+                return Decimal.valueOf((Double)matchScoreObj);
+            }
+            
+            // Jeśli to String, próbuj sparsować
+            if (matchScoreObj instanceof String) {
+                String scoreStr = (String)matchScoreObj;
+                System.debug(LoggingLevel.INFO, 'extractMatchScore - matchScoreObj is String: ' + scoreStr);
+                
+                // Usuń znaki procentu i inne niebędące liczbami
+                scoreStr = scoreStr.replaceAll('[^0-9\\.]', '');
+                
+                if (String.isBlank(scoreStr)) {
+                    System.debug(LoggingLevel.WARN, 'extractMatchScore - scoreStr is blank after cleaning, returning 0');
+                    return 0;
+                }
+                
+                try {
+                    return Decimal.valueOf(scoreStr);
+                } catch (Exception e) {
+                    System.debug(LoggingLevel.ERROR, 'extractMatchScore - Error parsing String to Decimal: ' + e.getMessage());
+                    return 0;
+                }
+            }
+            
+            // Dla innych typów, próbuj konwersji przez String
+            try {
+                System.debug(LoggingLevel.INFO, 'extractMatchScore - attempting conversion via String for type: ' + getObjectType(matchScoreObj));
+                String scoreStr = String.valueOf(matchScoreObj);
+                scoreStr = scoreStr.replaceAll('[^0-9\\.]', '');
+                
+                if (String.isBlank(scoreStr)) {
+                    System.debug(LoggingLevel.WARN, 'extractMatchScore - scoreStr is blank after cleaning, returning 0');
+                    return 0;
+                }
+                
+                return Decimal.valueOf(scoreStr);
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'extractMatchScore - Error in final conversion attempt: ' + e.getMessage());
+                return 0;
+            }
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'extractMatchScore - Unexpected error: ' + e.getMessage());
+            return 0;
         }
-        return null;
+    }
+    
+    /**
+     * Zwraca typ obiektu jako String
+     * @param obj Obiekt do sprawdzenia
+     * @return Nazwa typu obiektu
+     */
+    private static String getObjectType(Object obj) {
+        if (obj == null) {
+            return 'null';
+        } else if (obj instanceof String) {
+            return 'String';
+        } else if (obj instanceof Integer) {
+            return 'Integer';
+        } else if (obj instanceof Decimal) {
+            return 'Decimal';
+        } else if (obj instanceof Double) {
+            return 'Double';
+        } else if (obj instanceof Boolean) {
+            return 'Boolean';
+        } else if (obj instanceof Date) {
+            return 'Date';
+        } else if (obj instanceof Datetime) {
+            return 'Datetime';
+        } else if (obj instanceof List<Object>) {
+            return 'List<Object>';
+        } else if (obj instanceof Map<String, Object>) {
+            return 'Map<String, Object>';
+        } else if (obj instanceof SObject) {
+            return 'SObject: ' + ((SObject)obj).getSObjectType().getDescribe().getName();
+        } else {
+            return 'Unknown type: ' + obj.toString();
+        }
     }
 }

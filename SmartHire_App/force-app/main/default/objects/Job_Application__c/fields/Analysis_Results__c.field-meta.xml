@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Analysis_Results__c</fullName>
-    <description>Wyniki analizy CV w formacie JSON</description>
+    <description>JSON results from CV analysis</description>
     <externalId>false</externalId>
-    <label>Wyniki analizy</label>
+    <inlineHelpText>JSON results from CV analysis</inlineHelpText>
+    <label>Analysis Results</label>
     <length>131072</length>
     <trackTrending>false</trackTrending>
     <type>LongTextArea</type>
-    <visibleLines>5</visibleLines>
+    <visibleLines>10</visibleLines>
 </CustomField> 

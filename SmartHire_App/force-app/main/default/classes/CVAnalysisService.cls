@@ -43,18 +43,48 @@ public with sharing class CVAnalysisService {
     
     // Generuje klucz cache dla dokumentu CV
     private static String generateCacheKey(Id contentDocumentId) {
-        String cacheKey = String.valueOf(contentDocumentId).replaceAll('[^a-zA-Z0-9]', '');
-        if (String.isNotBlank(cacheKey)) {
-            cacheKey = 'CV' + cacheKey;
+        String cacheKey = '';
+        
+        try {
+            if (contentDocumentId == null) {
+                // Jeśli contentDocumentId jest null, użyj timestampa jako klucza
+                cacheKey = 'CV_' + String.valueOf(Datetime.now().getTime()).replaceAll('[^a-zA-Z0-9]', '');
+                System.debug(LoggingLevel.WARN, '⚠️ Using timestamp-based cache key due to null contentDocumentId: ' + cacheKey);
+                return cacheKey;
+            }
+            
+            // Usuń wszystkie znaki niealfanumeryczne z ID dokumentu
+            cacheKey = String.valueOf(contentDocumentId).replaceAll('[^a-zA-Z0-9]', '');
+            
+            // Jeśli po usunięciu znaków niealfanumerycznych klucz jest pusty, użyj timestampa
+            if (String.isBlank(cacheKey)) {
+                cacheKey = String.valueOf(Datetime.now().getTime()).replaceAll('[^a-zA-Z0-9]', '');
+                System.debug(LoggingLevel.WARN, '⚠️ Using timestamp-based cache key due to empty cleaned contentDocumentId: ' + cacheKey);
+            }
+            
+            // Dodaj prefiks CV_ do klucza
+            cacheKey = 'CV_' + cacheKey;
+            
+            // Ogranicz długość klucza do 40 znaków
             if (cacheKey.length() > 40) { 
                 cacheKey = cacheKey.substring(0, 40);
             }
+            
+            // Ostateczna walidacja - jeśli z jakiegoś powodu klucz jest nadal pusty lub zawiera niedozwolone znaki,
+            // użyj bezpiecznego klucza opartego na timestampie
+            if (String.isBlank(cacheKey) || !Pattern.matches('^[a-zA-Z0-9_]+$', cacheKey)) {
+                cacheKey = 'CV_' + String.valueOf(Datetime.now().getTime()).replaceAll('[^a-zA-Z0-9]', '');
+                System.debug(LoggingLevel.WARN, '⚠️ Using fallback timestamp-based cache key: ' + cacheKey);
+            }
+            
             System.debug(LoggingLevel.INFO, '✅ Final Cache Key: ' + cacheKey);
-        } else {
-            cacheKey = 'CV' + String.valueOf(Datetime.now().getTime());
-            System.debug(LoggingLevel.WARN, '⚠️ Using timestamp-based cache key: ' + cacheKey);
+            return cacheKey;
+        } catch (Exception e) {
+            // W przypadku jakiegokolwiek błędu, zwróć bezpieczny klucz oparty na timestampie
+            cacheKey = 'CV_' + String.valueOf(Datetime.now().getTime()).replaceAll('[^a-zA-Z0-9]', '');
+            System.debug(LoggingLevel.ERROR, '❌ Error generating cache key: ' + e.getMessage() + '. Using fallback key: ' + cacheKey);
+            return cacheKey;
         }
-        return cacheKey;
     }
     
     // Pobiera wyniki z cache

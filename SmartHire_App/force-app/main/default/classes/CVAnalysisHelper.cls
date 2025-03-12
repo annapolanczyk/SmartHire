@@ -62,6 +62,13 @@ public with sharing class CVAnalysisHelper {
             }
             
             return results;
+        } catch (OpenAIService.OpenAIException e) {
+            // Logowanie błędu OpenAI
+            Logger.error('Error calling OpenAI API', e);
+            
+            // Rzuć wyjątek, aby użytkownik wiedział, że wystąpił problem z API
+            throw new AuraHandledException('Błąd podczas analizy CV przez AI: ' + e.getMessage() + 
+                '. Sprawdź konfigurację API lub spróbuj ponownie później.');
         } catch (Exception e) {
             Logger.error('Error analyzing resume', e);
             throw new AuraHandledException('Error analyzing resume: ' + e.getMessage());
@@ -219,7 +226,7 @@ public with sharing class CVAnalysisHelper {
      */
     private static String extractTextFromCV(ContentVersion cv) {
         if (cv.FileType == null) {
-            throw new AuraHandledException('File type is not specified');
+            throw new AuraHandledException('Typ pliku nie został określony');
         }
         
         return convertToText(cv);
@@ -293,26 +300,21 @@ public with sharing class CVAnalysisHelper {
      */
     private static String convertToText(ContentVersion cv) {
         if (cv.FileType == null) {
-            throw new AuraHandledException('File type is not specified');
+            throw new AuraHandledException('Typ pliku nie został określony');
         }
         
         String fileType = cv.FileType.toUpperCase();
         
         if (fileType == PDF_TYPE) {
             return parsePDF(cv.VersionData);
-        } else if (fileType == DOCX_TYPE || fileType == DOC_TYPE) {
-            return parseWord(cv.VersionData);
-        } else if (fileType == TXT_TYPE) {
-            // Poprawna konwersja Blob do String z określonym kodowaniem
-            return EncodingUtil.base64Decode(EncodingUtil.base64Encode(cv.VersionData)).toString();
+        } else {
+            throw new AuraHandledException('Nieobsługiwany format pliku: ' + cv.FileType + '. Aplikacja obsługuje tylko pliki PDF.');
         }
-        throw new AuraHandledException('Unsupported file format: ' + cv.FileType);
     }
     
     /**
      * @description Parsuje dokument PDF
      * Wykorzystuje Google Vision API do ekstrakcji tekstu z dokumentu PDF
-     * W przypadku niepowodzenia, próbuje użyć alternatywnej metody
      * @param pdfData Dane dokumentu PDF w formacie Blob
      * @return Wyekstrahowany tekst z dokumentu PDF
      */
@@ -326,48 +328,13 @@ public with sharing class CVAnalysisHelper {
                 return extractedText;
             }
             
-            // Jeśli Google Vision API nie zadziałało, próbujemy alternatywnej metody
-            return extractTextUsingPDFParserService(pdfData);
+            // Jeśli Google Vision API nie zadziałało, zwróć informację o błędzie
+            throw new AuraHandledException('Nie udało się przetworzyć pliku PDF. Usługa Google Vision API nie zwróciła tekstu. Sprawdź, czy plik PDF zawiera tekst możliwy do odczytania.');
+        } catch (AuraHandledException e) {
+            throw e; // Przekazujemy dalej wyjątki AuraHandledException
         } catch (Exception e) {
             Logger.error('Error parsing PDF', e);
-            
-            // Próba użycia alternatywnej metody w przypadku błędu
-            try {
-                return extractTextUsingPDFParserService(pdfData);
-            } catch (Exception ex) {
-                throw new AuraHandledException('PDF parsing error: ' + e.getMessage() + '. Alternative method also failed: ' + ex.getMessage());
-            }
-        }
-    }
-    
-    /**
-     * @description Parsuje dokument Word
-     * Wykorzystuje Google Vision API do ekstrakcji tekstu z dokumentu Word
-     * W przypadku niepowodzenia, próbuje użyć alternatywnej metody
-     * @param wordData Dane dokumentu Word w formacie Blob
-     * @return Wyekstrahowany tekst z dokumentu Word
-     */
-    private static String parseWord(Blob wordData) {
-        try {
-            // Próba użycia Google Vision API do ekstrakcji tekstu
-            String extractedText = extractTextUsingGoogleVision(wordData, DOCX_MIME_TYPE);
-            
-            // Jeśli Google Vision API zadziałało, zwróć wynik
-            if (String.isNotBlank(extractedText)) {
-                return extractedText;
-            }
-            
-            // Jeśli Google Vision API nie zadziałało, próbujemy alternatywnej metody
-            return extractTextUsingWordParserService(wordData);
-        } catch (Exception e) {
-            Logger.error('Error parsing Word document', e);
-            
-            // Próba użycia alternatywnej metody w przypadku błędu
-            try {
-                return extractTextUsingWordParserService(wordData);
-            } catch (Exception ex) {
-                throw new AuraHandledException('Word parsing error: ' + e.getMessage() + '. Alternative method also failed: ' + ex.getMessage());
-            }
+            throw new AuraHandledException('Błąd podczas przetwarzania pliku PDF: ' + e.getMessage() + '. Sprawdź, czy plik PDF jest poprawny i zawiera tekst możliwy do odczytania.');
         }
     }
     
@@ -424,22 +391,50 @@ public with sharing class CVAnalysisHelper {
      * @return Odpowiedź HTTP z Google Vision API
      */
     private static HttpResponse callGoogleVisionAPI(Blob documentData, String contentType) {
-        // Przygotuj zapytanie do Google Vision API
-        HttpRequest req = new HttpRequest();
-        req.setEndpoint('callout:Vision/v1/documents:processDocument');
-        req.setMethod('POST');
-        req.setHeader('Content-Type', 'application/json');
-        
-        // Konwersja dokumentu do Base64
-        String base64Data = EncodingUtil.base64Encode(documentData);
-        
-        // Przygotuj ciało zapytania zgodnie z dokumentacją Google Vision API
-        Map<String, Object> requestBody = prepareVisionAPIRequestBody(contentType, base64Data);
-        req.setBody(JSON.serialize(requestBody));
-        
-        // Wykonaj zapytanie
-        Http http = new Http();
-        return http.send(req);
+        try {
+            // Pobierz ustawienia Google Vision API
+            Google_Vision_API_Settings__c settings = Google_Vision_API_Settings__c.getInstance();
+            if (settings == null || String.isBlank(settings.Vision_API_Key__c)) {
+                Logger.warn('Google Vision API settings not configured');
+                throw new AuraHandledException('Brak skonfigurowanego klucza API dla Google Vision. Skontaktuj się z administratorem.');
+            }
+            
+            // Przygotuj zapytanie do Google Vision API
+            HttpRequest req = new HttpRequest();
+            req.setEndpoint('callout:Vision/v1/images:annotate?key=' + settings.Vision_API_Key__c);
+            req.setMethod('POST');
+            req.setHeader('Content-Type', 'application/json');
+            req.setTimeout(120000); // Zwiększamy timeout do 120 sekund
+            
+            // Konwersja dokumentu do Base64
+            String base64Data = EncodingUtil.base64Encode(documentData);
+            
+            // Przygotuj ciało zapytania zgodnie z dokumentacją Google Vision API
+            Map<String, Object> requestBody = prepareVisionAPIRequestBody(contentType, base64Data);
+            req.setBody(JSON.serialize(requestBody));
+            
+            // Wykonaj zapytanie
+            Http http = new Http();
+            HttpResponse res;
+            
+            try {
+                res = http.send(req);
+                
+                // Logowanie dla celów diagnostycznych
+                Logger.info('Google Vision API response status: ' + res.getStatusCode());
+                Logger.info('Google Vision API response body: ' + res.getBody());
+                
+                return res;
+            } catch (System.CalloutException e) {
+                Logger.error('Błąd podczas wywołania Google Vision API: ' + e.getMessage(), e);
+                throw new AuraHandledException('Błąd podczas wywołania Google Vision API. Sprawdź, czy Named Credential "Vision" jest poprawnie skonfigurowany. Szczegóły: ' + e.getMessage());
+            }
+        } catch (AuraHandledException e) {
+            throw e;
+        } catch (Exception e) {
+            Logger.error('Error calling Google Vision API: ' + e.getMessage(), e);
+            throw new AuraHandledException('Błąd podczas wywołania Google Vision API: ' + e.getMessage());
+        }
     }
     
     /**
@@ -449,16 +444,18 @@ public with sharing class CVAnalysisHelper {
      * @return Mapa zawierająca ciało zapytania
      */
     private static Map<String, Object> prepareVisionAPIRequestBody(String contentType, String base64Data) {
+        // Przygotuj ciało zapytania zgodnie z dokumentacją Google Vision API
+        // https://cloud.google.com/vision/docs/reference/rest/v1/images/annotate
         return new Map<String, Object>{
             'requests' => new List<Object>{
                 new Map<String, Object>{
-                    'inputConfig' => new Map<String, Object>{
-                        'mimeType' => contentType,
+                    'image' => new Map<String, Object>{
                         'content' => base64Data
                     },
                     'features' => new List<Object>{
                         new Map<String, Object>{
-                            'type' => 'DOCUMENT_TEXT_DETECTION'
+                            'type' => 'DOCUMENT_TEXT_DETECTION',
+                            'maxResults' => 1
                         }
                     }
                 }
@@ -472,104 +469,64 @@ public with sharing class CVAnalysisHelper {
      * @return Wyekstrahowany tekst lub null w przypadku niepowodzenia
      */
     private static String processVisionAPIResponse(HttpResponse res) {
-        // Jeśli odpowiedź nie jest sukcesem, zwróć null
-        if (res.getStatusCode() != 200) {
-            Logger.error('Google Vision API error: ' + res.getStatusCode() + ' - ' + res.getBody());
-            return null;
-        }
-        
-        // Przetwórz odpowiedź
-        Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
-        
-        // Ekstrakcja tekstu z odpowiedzi zgodnie z dokumentacją Google Vision API
-        List<Object> responses = (List<Object>) responseMap.get('responses');
-        if (responses == null || responses.isEmpty()) {
-            Logger.warn('Google Vision API returned empty responses array');
-            return null;
-        }
-        
-        Map<String, Object> firstResponse = (Map<String, Object>) responses[0];
-        Map<String, Object> fullTextAnnotation = (Map<String, Object>) firstResponse.get('fullTextAnnotation');
-        
-        if (fullTextAnnotation == null) {
-            Logger.warn('Google Vision API returned success but no text was extracted');
-            return null;
-        }
-        
-        return (String) fullTextAnnotation.get('text');
-    }
-    
-    /**
-     * @description Ekstrahuje tekst z dokumentu PDF używając zewnętrznego serwisu parsowania
-     * @param pdfData Dane dokumentu PDF w formacie Blob
-     * @return Wyekstrahowany tekst z dokumentu PDF
-     */
-    private static String extractTextUsingPDFParserService(Blob pdfData) {
         try {
-            // Próba użycia zewnętrznego serwisu
-            try {
-                HttpRequest req = new HttpRequest();
-                req.setEndpoint('callout:PDF_Parser_Service');
-                req.setMethod('POST');
-                req.setHeader('Content-Type', 'application/pdf');
-                req.setBodyAsBlob(pdfData);
-                
-                Http http = new Http();
-                HttpResponse res = http.send(req);
-                
-                if (res.getStatusCode() == 200) {
-                    return res.getBody();
-                } else {
-                    Logger.warn('PDF parsing service returned status code: ' + res.getStatusCode());
-                }
-            } catch (CalloutException ce) {
-                // Jeśli Named Credential nie istnieje lub wystąpił inny problem z calloutem
-                Logger.warn('Callout error: ' + ce.getMessage() + '. Using mock data instead.');
+            // Jeśli odpowiedź nie jest sukcesem, zwróć null
+            if (res.getStatusCode() != 200) {
+                Logger.error('Google Vision API error: ' + res.getStatusCode() + ' - ' + res.getBody());
+                throw new AuraHandledException('Błąd odpowiedzi z Google Vision API. Kod statusu: ' + res.getStatusCode());
             }
             
-            // Jeśli callout się nie powiódł, zwróć mockowane dane
-            return 'Sample CV content for testing purposes. This text represents extracted content from a PDF document. It contains information about the candidate, their skills, education, and work experience. This is used when the PDF Parser Service is not available.';
+            // Przetwórz odpowiedź
+            Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+            
+            // Sprawdź, czy odpowiedź zawiera wyniki
+            if (!responseMap.containsKey('responses') || ((List<Object>)responseMap.get('responses')).isEmpty()) {
+                Logger.warn('Google Vision API response does not contain responses');
+                throw new AuraHandledException('Odpowiedź z Google Vision API nie zawiera wyników.');
+            }
+            
+            // Pobierz pierwszą odpowiedź
+            Map<String, Object> firstResponse = (Map<String, Object>)((List<Object>)responseMap.get('responses'))[0];
+            
+            // Sprawdź, czy odpowiedź zawiera pełny tekst dokumentu
+            if (firstResponse.containsKey('fullTextAnnotation')) {
+                Map<String, Object> fullTextAnnotation = (Map<String, Object>)firstResponse.get('fullTextAnnotation');
+                if (fullTextAnnotation.containsKey('text')) {
+                    String extractedText = (String)fullTextAnnotation.get('text');
+                    if (String.isNotBlank(extractedText)) {
+                        Logger.info('Extracted text from fullTextAnnotation: ' + extractedText.substring(0, Math.min(100, extractedText.length())) + '...');
+                        return extractedText;
+                    }
+                }
+            }
+            
+            // Alternatywnie, sprawdź czy odpowiedź zawiera adnotacje tekstowe
+            if (firstResponse.containsKey('textAnnotations') && !((List<Object>)firstResponse.get('textAnnotations')).isEmpty()) {
+                Map<String, Object> firstTextAnnotation = (Map<String, Object>)((List<Object>)firstResponse.get('textAnnotations'))[0];
+                if (firstTextAnnotation.containsKey('description')) {
+                    String extractedText = (String)firstTextAnnotation.get('description');
+                    if (String.isNotBlank(extractedText)) {
+                        Logger.info('Extracted text from textAnnotations: ' + extractedText.substring(0, Math.min(100, extractedText.length())) + '...');
+                        return extractedText;
+                    }
+                }
+            }
+            
+            Logger.warn('Google Vision API response does not contain text');
+            throw new AuraHandledException('Odpowiedź z Google Vision API nie zawiera tekstu. Sprawdź, czy plik PDF zawiera tekst możliwy do odczytania.');
+        } catch (AuraHandledException e) {
+            throw e;
         } catch (Exception e) {
-            Logger.error('Error using PDF Parser Service', e);
-            // Zwróć mockowane dane w przypadku błędu
-            return 'Sample CV content for testing purposes. This text represents extracted content from a PDF document. It contains information about the candidate, their skills, education, and work experience. This is used when the PDF Parser Service is not available.';
+            Logger.error('Error processing Google Vision API response', e);
+            throw new AuraHandledException('Błąd podczas przetwarzania odpowiedzi z Google Vision API: ' + e.getMessage());
         }
     }
     
     /**
-     * @description Ekstrahuje tekst z dokumentu Word używając zewnętrznego serwisu parsowania
-     * @param wordData Dane dokumentu Word w formacie Blob
-     * @return Wyekstrahowany tekst z dokumentu Word
+     * @description Ta metoda została zmodyfikowana, aby zapobiec używaniu mockowanych danych
+     * @throws AuraHandledException zawsze rzuca wyjątek, aby zapobiec używaniu mockowanych danych
      */
-    private static String extractTextUsingWordParserService(Blob wordData) {
-        try {
-            // Próba użycia zewnętrznego serwisu
-            try {
-                HttpRequest req = new HttpRequest();
-                req.setEndpoint('callout:DOCX_Parser_Service');
-                req.setMethod('POST');
-                req.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-                req.setBodyAsBlob(wordData);
-                
-                Http http = new Http();
-                HttpResponse res = http.send(req);
-                
-                if (res.getStatusCode() == 200) {
-                    return res.getBody();
-                } else {
-                    Logger.warn('Word parsing service returned status code: ' + res.getStatusCode());
-                }
-            } catch (CalloutException ce) {
-                // Jeśli Named Credential nie istnieje lub wystąpił inny problem z calloutem
-                Logger.warn('Callout error: ' + ce.getMessage() + '. Using mock data instead.');
-            }
-            
-            // Jeśli callout się nie powiódł, zwróć mockowane dane
-            return 'Sample CV content for testing purposes. This text represents extracted content from a Word document. It contains information about the candidate, their skills, education, and work experience. This is used when the Word Parser Service is not available.';
-        } catch (Exception e) {
-            Logger.error('Error using Word Parser Service', e);
-            // Zwróć mockowane dane w przypadku błędu
-            return 'Sample CV content for testing purposes. This text represents extracted content from a Word document. It contains information about the candidate, their skills, education, and work experience. This is used when the Word Parser Service is not available.';
-        }
+    private static String getMockPDFContent() {
+        throw new AuraHandledException('Funkcja mockowania danych została wyłączona. Aplikacja obsługuje tylko rzeczywiste dane z plików PDF.');
     }
 }
