@@ -1,0 +1,741 @@
+[1m63.0 APEX_CODE,FINEST;APEX_PROFILING,FINEST;CALLOUT,FINEST;DATA_ACCESS,INFO;DB,FINEST;NBA,INFO;SYSTEM,FINE;VALIDATION,INFO;VISUALFORCE,INFO;WAVE,INFO;WORKFLOW,INFO[22m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m2327534[39m)[1m[32m|USER_INFO|[39m[22m[EXTERNAL]|005d2000004rL7F|[94manna.polanczykhgp1[39m@[94mgmail.com[39m|(GMT+[94m01[39m:[94m00[39m) Central European Standard Time (Europe/Warsaw)|GMT+[94m01[39m:[94m00[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m2380711[39m)|EXECUTION_STARTED
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m2418472[39m)|CODE_UNIT_STARTED|[EXTERNAL]|apex://CVAnalysisController/ACTION$saveAnalysisResults
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m3772965[39m)|CODE_UNIT_STARTED|[EXTERNAL]|01pd2000004RRJd|[94mCVAnalysisController.saveAnalysisResults[39m(Id, String)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4030921[39m)|HEAP_ALLOCATE|[[94m93[39m]|Bytes:[94m3[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4157281[39m)|HEAP_ALLOCATE|[[94m98[39m]|Bytes:[94m152[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4177501[39m)|HEAP_ALLOCATE|[[94m415[39m]|Bytes:[94m408[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4192894[39m)|HEAP_ALLOCATE|[[94m428[39m]|Bytes:[94m408[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4206550[39m)|HEAP_ALLOCATE|[[94m536[39m]|Bytes:[94m48[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4237282[39m)|HEAP_ALLOCATE|[[94m247[39m]|Bytes:[94m6[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4337729[39m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m28[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4343389[39m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m250[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4372983[39m)[34m|METHOD_ENTRY|[39m[[94m4[39m]|01pd2000004RRJd|[94mCVAnalysisController.CVAnalysisController[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4380577[39m)|STATEMENT_EXECUTE|[[94m4[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4384714[39m)|STATEMENT_EXECUTE|[[94m4[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4412503[39m)|HEAP_ALLOCATE|[[94m68[39m]|Bytes:[94m5[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4442442[39m)|HEAP_ALLOCATE|[[94m74[39m]|Bytes:[94m5[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4450448[39m)|HEAP_ALLOCATE|[[94m82[39m]|Bytes:[94m7[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4480213[39m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m5[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4494759[39m)[34m|METHOD_EXIT|[39m[[94m4[39m]|CVAnalysisController
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4501149[39m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m4[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4504325[39m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m864[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4510747[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m29[39m]|recordId|Id|[94mfalse[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4783227[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m29[39m]|recordId|[1m[31m"a0Ad2000000xjfREAQ"[39m[22m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4792298[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m29[39m]|analysisResults|String|[94mfalse[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m4808673[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m29[39m]|analysisResults|[1m[31m"{\"[39m[22mDane osobowe\[1m[31m":{\"[39m[22mim ([94m844[39m more) ...[1m[31m"[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m4830564[31m)|HEAP_ALLOCATE|[[94m30[31m]|Bytes:[94m5[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m4836988[31m)|STATEMENT_EXECUTE|[[94m29[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m4838529[31m)|STATEMENT_EXECUTE|[[94m30[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m4839588[31m)|STATEMENT_EXECUTE|[[94m30[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m4841228[31m)|STATEMENT_EXECUTE|[[94m32[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m4905383[31m)|HEAP_ALLOCATE|[[94m32[31m]|Bytes:[94m35[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m4966092[31m)|SYSTEM_METHOD_ENTRY|[[94m32[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5004985[31m)[1m[32m|USER_DEBUG|[39m[22m[[94m32[31m]|[1m[32mINFO[39m[22m|=== saveAnalysisResults - START ===[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5018723[31m)|SYSTEM_METHOD_EXIT|[[94m32[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5024580[31m)|STATEMENT_EXECUTE|[[94m33[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5027935[31m)|HEAP_ALLOCATE|[[94m33[31m]|Bytes:[94m32[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5118817[31m)|SYSTEM_METHOD_ENTRY|[[94m33[31m]|[94mString.valueOf[39m(Object)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5140428[31m)|HEAP_ALLOCATE|[[94m33[31m]|Bytes:[94m18[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5155225[31m)|SYSTEM_METHOD_EXIT|[[94m33[31m]|[94mString.valueOf[39m(Object)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5166373[31m)|HEAP_ALLOCATE|[[94m33[31m]|Bytes:[94m50[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5180282[31m)|SYSTEM_METHOD_ENTRY|[[94m33[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5186256[31m)[1m[32m|USER_DEBUG|[39m[22m[[94m33[31m]|[1m[32mINFO[39m[22m|saveAnalysisResults - recordId: a0Ad2000000xjfREAQ[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5191703[31m)|SYSTEM_METHOD_EXIT|[[94m33[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5194837[31m)|STATEMENT_EXECUTE|[[94m34[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5197273[31m)|HEAP_ALLOCATE|[[94m34[31m]|Bytes:[94m46[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5209555[31m)|SYSTEM_METHOD_ENTRY|[[94m34[31m]|[94mString.length[39m()[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5221125[31m)|SYSTEM_METHOD_EXIT|[[94m34[31m]|[94mString.length[39m()[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5229873[31m)|SYSTEM_METHOD_ENTRY|[[94m34[31m]|[94mString.valueOf[39m(Object)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5232977[31m)|HEAP_ALLOCATE|[[94m34[31m]|Bytes:[94m3[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5238703[31m)|SYSTEM_METHOD_EXIT|[[94m34[31m]|[94mString.valueOf[39m(Object)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5243239[31m)|HEAP_ALLOCATE|[[94m34[31m]|Bytes:[94m49[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5248472[31m)|SYSTEM_METHOD_ENTRY|[[94m34[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5251640[31m)[1m[32m|USER_DEBUG|[39m[22m[[94m34[31m]|[1m[32mINFO[39m[22m|saveAnalysisResults - analysisResults length: [94m864[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5255812[31m)|SYSTEM_METHOD_EXIT|[[94m34[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5258602[31m)|STATEMENT_EXECUTE|[[94m37[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5269916[31m)|SYSTEM_METHOD_ENTRY|[[94m37[31m]|[94mId.getSobjectType[39m(Id)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5356185[31m)|SYSTEM_METHOD_EXIT|[[94m37[31m]|[94mId.getSobjectType[39m(Id)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5365966[31m)|SYSTEM_METHOD_ENTRY|[[94m37[31m]|[94mString.valueOf[39m(Object)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5368997[31m)|HEAP_ALLOCATE|[[94m37[31m]|Bytes:[94m18[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5375073[31m)|SYSTEM_METHOD_EXIT|[[94m37[31m]|[94mString.valueOf[39m(Object)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5391144[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m37[31m]|objectType|String|[94mfalse[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5402807[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m37[31m]|objectType|"[39m[22mJob_Application__c[1m[31m"[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5405885[31m)|STATEMENT_EXECUTE|[[94m38[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5407848[31m)|HEAP_ALLOCATE|[[94m38[31m]|Bytes:[94m34[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5411264[31m)|HEAP_ALLOCATE|[[94m38[31m]|Bytes:[94m52[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5418313[31m)|SYSTEM_METHOD_ENTRY|[[94m38[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5431395[31m)[1m[32m|USER_DEBUG|[39m[22m[[94m38[31m]|[1m[32mINFO[39m[22m|saveAnalysisResults - objectType: Job_Application__c[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5436902[31m)|SYSTEM_METHOD_EXIT|[[94m38[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5439691[31m)|STATEMENT_EXECUTE|[[94m40[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5440507[31m)|STATEMENT_EXECUTE|[[94m40[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5441658[31m)|STATEMENT_EXECUTE|[[94m42[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5443718[31m)|HEAP_ALLOCATE|[[94m42[31m]|Bytes:[94m52[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5448645[31m)|SYSTEM_METHOD_ENTRY|[[94m42[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5453095[31m)[1m[32m|USER_DEBUG|[39m[22m[[94m42[31m]|[1m[32mINFO[39m[22m|saveAnalysisResults - attempting to deserialize JSON[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5457459[31m)|SYSTEM_METHOD_EXIT|[[94m42[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5460402[31m)|STATEMENT_EXECUTE|[[94m43[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5492666[31m)|HEAP_ALLOCATE|[[94m43[31m]|Bytes:[94m24[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5501543[31m)|SYSTEM_METHOD_ENTRY|[[94m1[31m]|[94mJSON.JSON[39m()[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5503452[31m)|STATEMENT_EXECUTE|[[94m1[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5509243[31m)|SYSTEM_METHOD_EXIT|[[94m1[31m]|JSON[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m5519117[31m)[34m|METHOD_ENTRY|[39m[[94m43[31m]||[94mSystem.JSON.deserializeUntyped[39m(String)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32561543[31m)[34m|METHOD_EXIT|[39m[[94m43[31m]||[94mSystem.JSON.deserializeUntyped[39m(String)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32591002[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m43[31m]|results|Map<String,ANY>|[94mtrue[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32624564[31m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m16[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32632854[31m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m12[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32634650[31m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m12[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32639025[31m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m24[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32644870[31m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m12[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32648182[31m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m4[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32691782[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m43[31m]|results|"[39m[22mMap of size [94m8[39m too large to display[1m[31m"|0x6836157f[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32696954[31m)|STATEMENT_EXECUTE|[[94m44[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32704721[31m)|HEAP_ALLOCATE|[[94m44[31m]|Bytes:[94m61[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32726488[31m)|SYSTEM_METHOD_ENTRY|[[94m44[31m]|Map<String,ANY>.size()[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32747519[31m)|SYSTEM_METHOD_EXIT|[[94m44[31m]|Map<String,ANY>.size()[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32771551[31m)|SYSTEM_METHOD_ENTRY|[[94m44[31m]|[94mString.valueOf[39m(Object)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32777574[31m)|HEAP_ALLOCATE|[[94m44[31m]|Bytes:[94m1[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32785246[31m)|SYSTEM_METHOD_EXIT|[[94m44[31m]|[94mString.valueOf[39m(Object)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32788709[31m)|HEAP_ALLOCATE|[[94m44[31m]|Bytes:[94m5[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32800578[31m)|HEAP_ALLOCATE|[[94m44[31m]|Bytes:[94m67[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32821040[31m)|SYSTEM_METHOD_ENTRY|[[94m44[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32836045[31m)[1m[32m|USER_DEBUG|[39m[22m[[94m44[31m]|[1m[32mINFO[39m[22m|saveAnalysisResults - results deserialized successfully with [94m8[31m keys[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32841631[31m)|SYSTEM_METHOD_EXIT|[[94m44[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32844806[31m)|STATEMENT_EXECUTE|[[94m47[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32846500[31m)|HEAP_ALLOCATE|[[94m47[31m]|Bytes:[94m35[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32885801[31m)|SYSTEM_METHOD_ENTRY|[[94m47[31m]|Map<String,ANY>.keySet()[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32919884[31m)|HEAP_ALLOCATE|[[94m47[31m]|Bytes:[94m150[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32924484[31m)|SYSTEM_METHOD_EXIT|[[94m47[31m]|Map<String,ANY>.keySet()[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32935044[31m)|SYSTEM_METHOD_ENTRY|[[94m47[31m]|[94mString.valueOf[39m(Object)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32968303[31m)|HEAP_ALLOCATE|[[94m47[31m]|Bytes:[94m130[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32975715[31m)|SYSTEM_METHOD_EXIT|[[94m47[31m]|[94mString.valueOf[39m(Object)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32982216[31m)|HEAP_ALLOCATE|[[94m47[31m]|Bytes:[94m165[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32988159[31m)|SYSTEM_METHOD_ENTRY|[[94m47[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32992001[31m)[1m[32m|USER_DEBUG|[39m[22m[[94m47[31m]|[1m[32mINFO[39m[22m|saveAnalysisResults - result keys: {Certyfikaty, Dane osobowe, Doświadczenie zawodowe, Języki obce, Umiejętności techniczne, Wykształcenie, positionId, positionName}[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m32999876[31m)|SYSTEM_METHOD_EXIT|[[94m47[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m33006612[31m)|HEAP_ALLOCATE|[[94m49[31m]|Bytes:[94m18[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m33044739[31m)|STATEMENT_EXECUTE|[[94m49[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m33045941[31m)|STATEMENT_EXECUTE|[[94m50[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m33048007[31m)|HEAP_ALLOCATE|[[94m50[31m]|Bytes:[94m55[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m33053805[31m)|SYSTEM_METHOD_ENTRY|[[94m50[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m33062136[31m)[1m[32m|USER_DEBUG|[39m[22m[[94m50[31m]|[1m[32mINFO[39m[22m|saveAnalysisResults - calling saveJobApplicationResults[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m33066804[31m)|SYSTEM_METHOD_EXIT|[[94m50[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m33069657[31m)|STATEMENT_EXECUTE|[[94m51[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m33082676[31m)[34m|METHOD_ENTRY|[39m[[94m51[31m]|01pd2000004RRJd|[94mCVAnalysisController.saveJobApplicationResults[39m(Id, String, Map<String,ANY>)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m33094993[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m84[31m]|recordId|Id|[94mfalse[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m33193238[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m84[31m]|recordId|"[39m[22ma0Ad2000000xjfREAQ[1m[31m"[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m33196950[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m84[31m]|analysisResults|String|[94mfalse[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m33205740[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m84[31m]|analysisResults|"[39m[22m{\[1m[31m"Dane osobowe\"[39m[22m:{\[1m[31m"im ([94m844[31m more) ..."[39m[22m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33208419[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m84[39m]|results|Map<String,ANY>|[94mtrue[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33221411[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m84[39m]|results|[1m[31m"Map of size [94m8[31m too large to display"[39m[22m|0x6836157f
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33240050[39m)|HEAP_ALLOCATE|[[94m85[39m]|Bytes:[94m5[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33243351[39m)|STATEMENT_EXECUTE|[[94m84[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33244573[39m)|STATEMENT_EXECUTE|[[94m85[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33245420[39m)|STATEMENT_EXECUTE|[[94m85[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33246550[39m)|STATEMENT_EXECUTE|[[94m86[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33248720[39m)|HEAP_ALLOCATE|[[94m86[39m]|Bytes:[94m41[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33256816[39m)|SYSTEM_METHOD_ENTRY|[[94m86[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33264854[39m)[1m[32m|USER_DEBUG|[39m[22m[[94m86[39m]|[1m[32mINFO[39m[22m|=== saveJobApplicationResults - START ===
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33269370[39m)|SYSTEM_METHOD_EXIT|[[94m86[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33272528[39m)|STATEMENT_EXECUTE|[[94m87[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33274138[39m)|HEAP_ALLOCATE|[[94m87[39m]|Bytes:[94m48[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33284650[39m)|SYSTEM_METHOD_ENTRY|[[94m87[39m]|[94mString.valueOf[39m(Object)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33293867[39m)|HEAP_ALLOCATE|[[94m87[39m]|Bytes:[94m18[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33300529[39m)|SYSTEM_METHOD_EXIT|[[94m87[39m]|[94mString.valueOf[39m(Object)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33304767[39m)|HEAP_ALLOCATE|[[94m87[39m]|Bytes:[94m66[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33309992[39m)|SYSTEM_METHOD_ENTRY|[[94m87[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33313260[39m)[1m[32m|USER_DEBUG|[39m[22m[[94m87[39m]|[1m[32mINFO[39m[22m|saveJobApplicationResults - start for recordId: a0Ad2000000xjfREAQ
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33317534[39m)|SYSTEM_METHOD_EXIT|[[94m87[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33320755[39m)|STATEMENT_EXECUTE|[[94m90[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33322485[39m)|HEAP_ALLOCATE|[[94m90[39m]|Bytes:[94m50[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33329024[39m)|SYSTEM_METHOD_ENTRY|[[94m90[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33333928[39m)[1m[32m|USER_DEBUG|[39m[22m[[94m90[39m]|[1m[32mINFO[39m[22m|saveJobApplicationResults - checking update access
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33338213[39m)|SYSTEM_METHOD_EXIT|[[94m90[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33341205[39m)|STATEMENT_EXECUTE|[[94m91[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33417785[39m)|HEAP_ALLOCATE|[[94m92[39m]|Bytes:[94m4[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33438647[39m)|SYSTEM_CONSTRUCTOR_ENTRY|[[94m92[39m]|<init>()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33452948[39m)|SYSTEM_CONSTRUCTOR_EXIT|[[94m92[39m]|<init>()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33456113[39m)|HEAP_ALLOCATE|[[94m92[39m]|Bytes:[94m19[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m33462310[39m)|HEAP_ALLOCATE|[[94m92[39m]|Bytes:[94m16[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35615118[39m)|HEAP_ALLOCATE|[[94m91[39m]|Bytes:[94m17[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35632580[39m)|HEAP_ALLOCATE|[[94m91[39m]|Bytes:[94m14[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35657589[39m)[34m|METHOD_ENTRY|[39m[[94m6[39m]|01pd2000004RRJv|[94mSecurityUtils.SecurityUtils[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35664045[39m)|STATEMENT_EXECUTE|[[94m6[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35669191[39m)|STATEMENT_EXECUTE|[[94m6[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35683264[39m)|HEAP_ALLOCATE|[[94m91[39m]|Bytes:[94m5[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35686029[39m)|STATEMENT_EXECUTE|[[94m118[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35699231[39m)[34m|METHOD_EXIT|[39m[[94m6[39m]|SecurityUtils
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35760941[39m)[34m|METHOD_ENTRY|[39m[[94m91[39m]|01pd2000004RRJv|[94mSecurityUtils.checkUpdateAccess[39m([94mSchema.SObjectType[39m, List<String>)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35779339[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m51[39m]|objectType|[94mSchema.SObjectType[39m|[94mtrue[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35881834[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m51[39m]|objectType|[1m[31m"[94mcommon.apex.runtime.impl.ApexSObjectTypeToken[39m@6deefab4"[39m[22m|0x6deefab4
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35892057[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m51[39m]|fields|List<String>|[94mtrue[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35921775[39m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m12[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35944580[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m51[39m]|fields|[[1m[31m"Analysis_Results__c"[39m[22m,[1m[31m"Analysis_Date__c"[39m[22m]|0x11922109
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35955164[39m)|HEAP_ALLOCATE|[[94m52[39m]|Bytes:[94m5[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35959333[39m)|STATEMENT_EXECUTE|[[94m51[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35960654[39m)|STATEMENT_EXECUTE|[[94m52[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m35998535[39m)|SYSTEM_METHOD_ENTRY|[[94m52[39m]|[94mSchema.SObjectType.getDescribe[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m36400701[39m)|HEAP_ALLOCATE|[[94m52[39m]|Bytes:[94m4[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m36417520[39m)|SYSTEM_METHOD_EXIT|[[94m52[39m]|[94mSchema.SObjectType.getDescribe[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m36426323[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m52[39m]|objectDescribe|[94mSchema.DescribeSObjectResult[39m|[94mtrue[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m36512910[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m52[39m]|objectDescribe|[1m[31m"[94mcommon.api.soap.wsdl.DescribeSObjectResult[39m@4b745ba3"[39m[22m|0x53eef46b
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m36542730[39m)|STATEMENT_EXECUTE|[[94m53[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m36544603[39m)|STATEMENT_EXECUTE|[[94m57[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m36565332[39m)|LIMIT_USAGE|[[94m57[39m]|FIELDS_DESCRIBES|[94m1[39m|[94m100[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m36618312[39m)|SYSTEM_METHOD_ENTRY|[[94m57[39m]|[94mSchema.SObjectTypeFields.getMap[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37024245[39m)|HEAP_ALLOCATE|[[94m57[39m]|Bytes:[94m96[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37033975[39m)|SYSTEM_METHOD_EXIT|[[94m57[39m]|[94mSchema.SObjectTypeFields.getMap[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37039541[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m57[39m]|fieldMap|Map<String,[94mSchema.SObjectField[39m>|[94mtrue[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37205710[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m57[39m]|fieldMap|[1m[31m"{analysis_date__c=Analysis_Date__c, analysis_results__c=Analysis_Results__c, analysis_score__c=Analysis_Score__c, application_date__c=Application_Date__c, assigned_reviewer__c=Assigned_Reviewer__c, candidate__c=Candidate__c, createdbyid=CreatedById, createddate=CreatedDate, evaluation_notes__c=Evaluation_Notes__c, id=Id, ...}"[39m[22m|0x60ec00e9
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37230041[39m)|SYSTEM_METHOD_ENTRY|[[94m58[39m]|List<String>.iterator()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37288683[39m)|SYSTEM_METHOD_EXIT|[[94m58[39m]|List<String>.iterator()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37302710[39m)|SYSTEM_METHOD_ENTRY|[[94m58[39m]|[94msystem.ListIterator.hasNext[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37312198[39m)|HEAP_ALLOCATE|[[94m58[39m]|Bytes:[94m5[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37318693[39m)|SYSTEM_METHOD_EXIT|[[94m58[39m]|[94msystem.ListIterator.hasNext[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37328355[39m)|HEAP_ALLOCATE|[[94m58[39m]|Bytes:[94m19[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37335947[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m58[39m]|field|String|[94mfalse[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37344665[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m58[39m]|field|[1m[31m"Analysis_Results__c"[39m[22m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37348450[39m)|STATEMENT_EXECUTE|[[94m58[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37365116[39m)|SYSTEM_METHOD_ENTRY|[[94m59[39m]|Map<String,[94mSchema.SObjectField[39m>.get(Object)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37384420[39m)|SYSTEM_METHOD_EXIT|[[94m59[39m]|Map<String,[94mSchema.SObjectField[39m>.get(Object)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37398084[39m)|SYSTEM_METHOD_ENTRY|[[94m59[39m]|[94mSchema.SObjectField.getDescribe[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37410240[39m)|SYSTEM_MODE_ENTER|[94mtrue[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37705064[39m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m4[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37792714[39m)|HEAP_ALLOCATE|[[94m59[39m]|Bytes:[94m8[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37802697[39m)|SYSTEM_METHOD_EXIT|[[94m59[39m]|[94mSchema.SObjectField.getDescribe[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37820239[39m)|STATEMENT_EXECUTE|[[94m59[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37829826[39m)|SYSTEM_METHOD_ENTRY|[[94m58[39m]|[94msystem.ListIterator.hasNext[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37837451[39m)|HEAP_ALLOCATE|[[94m58[39m]|Bytes:[94m5[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37842837[39m)|SYSTEM_METHOD_EXIT|[[94m58[39m]|[94msystem.ListIterator.hasNext[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37901558[39m)|HEAP_ALLOCATE|[[94m58[39m]|Bytes:[94m16[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37909492[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m58[39m]|field|String|[94mfalse[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37921206[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m58[39m]|field|[1m[31m"Analysis_Date__c"[39m[22m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37924476[39m)|STATEMENT_EXECUTE|[[94m58[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37938479[39m)|SYSTEM_METHOD_ENTRY|[[94m59[39m]|Map<String,[94mSchema.SObjectField[39m>.get(Object)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37949849[39m)|SYSTEM_METHOD_EXIT|[[94m59[39m]|Map<String,[94mSchema.SObjectField[39m>.get(Object)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37955227[39m)|SYSTEM_METHOD_ENTRY|[[94m59[39m]|[94mSchema.SObjectField.getDescribe[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m37963510[39m)|SYSTEM_MODE_ENTER|[94mtrue[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38055385[39m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m4[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38098086[39m)|HEAP_ALLOCATE|[[94m59[39m]|Bytes:[94m8[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38104751[39m)|SYSTEM_METHOD_EXIT|[[94m59[39m]|[94mSchema.SObjectField.getDescribe[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38111829[39m)|STATEMENT_EXECUTE|[[94m59[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38117683[39m)|SYSTEM_METHOD_ENTRY|[[94m58[39m]|[94msystem.ListIterator.hasNext[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38122508[39m)|HEAP_ALLOCATE|[[94m58[39m]|Bytes:[94m5[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38126715[39m)|SYSTEM_METHOD_EXIT|[[94m58[39m]|[94msystem.ListIterator.hasNext[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38135333[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m58[39m]|field|[94mnull[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38148183[39m)[34m|METHOD_EXIT|[39m[[94m91[39m]|01pd2000004RRJv|[94mSecurityUtils.checkUpdateAccess[39m([94mSchema.SObjectType[39m, List<String>)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38152343[39m)|STATEMENT_EXECUTE|[[94m93[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38157693[39m)|HEAP_ALLOCATE|[[94m93[39m]|Bytes:[94m60[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38177386[39m)|SYSTEM_METHOD_ENTRY|[[94m93[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38199829[39m)[1m[32m|USER_DEBUG|[39m[22m[[94m93[39m]|[1m[32mINFO[39m[22m|saveJobApplicationResults - permissions checked successfully
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38205725[39m)|SYSTEM_METHOD_EXIT|[[94m93[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38236788[39m)|SYSTEM_METHOD_ENTRY|[[94m96[39m]|[94mSchema.SObjectType.getDescribe[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38255673[39m)|HEAP_ALLOCATE|[[94m96[39m]|Bytes:[94m4[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38259581[39m)|SYSTEM_METHOD_EXIT|[[94m96[39m]|[94mSchema.SObjectType.getDescribe[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38268131[39m)|STATEMENT_EXECUTE|[[94m96[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38269372[39m)|STATEMENT_EXECUTE|[[94m102[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38272081[39m)|HEAP_ALLOCATE|[[94m102[39m]|Bytes:[94m53[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38278179[39m)|SYSTEM_METHOD_ENTRY|[[94m102[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38284538[39m)[1m[32m|USER_DEBUG|[39m[22m[[94m102[39m]|[1m[32mINFO[39m[22m|saveJobApplicationResults - preparing data for update
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38291904[39m)|SYSTEM_METHOD_EXIT|[[94m102[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38295125[39m)|STATEMENT_EXECUTE|[[94m103[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38328543[39m)|HEAP_ALLOCATE|[[94m103[39m]|Bytes:[94m4[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38431115[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m103[39m]|[94mthis.Id[39m|[1m[31m"a0Ad2000000xjfREAQ"[39m[22m|0x5a879f5
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38450466[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m103[39m]|[94mthis.Analysis_Results__c[39m|[1m[31m"{\"[39m[22mDane osobowe\[1m[31m":{\"[39m[22mim ([94m844[39m more) ...[1m[31m"|0x5a879f5[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m38473429[31m)|SYSTEM_METHOD_ENTRY|[[94m106[31m]|[94mcom.salesforce.api.interop.apex.bcl.DatetimeMethods.now[39m()[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m38514672[31m)|HEAP_ALLOCATE|[[94m106[31m]|Bytes:[94m56[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m38520007[31m)|SYSTEM_METHOD_EXIT|[[94m106[31m]|[94mcom.salesforce.api.interop.apex.bcl.DatetimeMethods.now[39m()[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m38551897[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m103[31m]|[94mthis.Analysis_Date__c[39m|"[39m[22m[94m2025[39m-[94m03[39m-12T14:[94m31[39m:[94m49[[94m39m.024Z[39m[1m[31m"|0x5a879f5[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m38577177[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m103[31m]|app|Job_Application__c|[94mtrue[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m38602327[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m103[31m]|app|{"[39m[22mId[1m[31m":"[39m[22ma0Ad2000000xjfREAQ[1m[31m","[39m[22mAnalysis_Results__c[1m[31m":"[39m[22m{\[1m[31m"Dane osobowe\"[39m[22m:{\[1m[31m"im ([94m844[31m more) ..."[39m[22m,[1m[31m"Analysis_Date__c"[39m[22m:[1m[31m"[94m2025[31m-[94m03[31m-12T14:[94m31[31m:[94m49[[94m31m.024Z[39m"[39m[22m}|0x5a879f5
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38608978[39m)|STATEMENT_EXECUTE|[[94m110[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38612778[39m)|HEAP_ALLOCATE|[[94m110[39m]|Bytes:[94m98[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38651330[39m)|SYSTEM_METHOD_ENTRY|[[94m111[39m]|[94mString.length[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38670473[39m)|SYSTEM_METHOD_EXIT|[[94m111[39m]|[94mString.length[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38685788[39m)|SYSTEM_METHOD_ENTRY|[[94m111[39m]|[94mString.valueOf[39m(Object)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38691766[39m)|HEAP_ALLOCATE|[[94m111[39m]|Bytes:[94m3[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38700922[39m)|SYSTEM_METHOD_EXIT|[[94m111[39m]|[94mString.valueOf[39m(Object)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38705399[39m)|HEAP_ALLOCATE|[[94m111[39m]|Bytes:[94m21[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38726205[39m)|SYSTEM_METHOD_ENTRY|[[94m112[39m]|[94mString.valueOf[39m(Object)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38740542[39m)|HEAP_ALLOCATE|[[94m112[39m]|Bytes:[94m19[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38749382[39m)|SYSTEM_METHOD_EXIT|[[94m112[39m]|[94mString.valueOf[39m(Object)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38761000[39m)|HEAP_ALLOCATE|[[94m110[39m]|Bytes:[94m141[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38775989[39m)|SYSTEM_METHOD_ENTRY|[[94m110[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38790917[39m)[1m[32m|USER_DEBUG|[39m[22m[[94m110[39m]|[1m[32mINFO[39m[22m|saveJobApplicationResults - attempting to update record with fields: Analysis_Results__c (length: [94m864[39m), Analysis_Date__c: [94m2025[39m-[94m03[39m-[94m12[39m [94m14[39m:[94m31[39m:[94m49[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38798641[39m)|SYSTEM_METHOD_EXIT|[[94m110[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38803552[39m)|STATEMENT_EXECUTE|[[94m114[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38850345[39m)|HEAP_ALLOCATE|[[94m114[39m]|Bytes:[94m52[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38856007[39m)|HEAP_ALLOCATE|[[94m114[39m]|Bytes:[94m288[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38859443[39m)|HEAP_ALLOCATE|[[94m114[39m]|Bytes:[94m23[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38873762[39m)|SYSTEM_METHOD_ENTRY|[[94m12[39m]|[94mDMLOptions.DMLOptions[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38876987[39m)|STATEMENT_EXECUTE|[[94m12[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38886116[39m)|SYSTEM_METHOD_EXIT|[[94m12[39m]|DMLOptions
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38896610[39m)|HEAP_ALLOCATE|[[94m114[39m]|Bytes:[94m32[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38917097[39m)|SYSTEM_CONSTRUCTOR_ENTRY|[[94m114[39m]|<init>()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38967586[39m)|SYSTEM_CONSTRUCTOR_EXIT|[[94m114[39m]|<init>()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m38972426[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m114[39m]|dmlOptions|[94mDatabase.DMLOptions[39m|[94mtrue[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m39009709[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m114[39m]|dmlOptions|{}|0x4378b81c
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m39016429[39m)|STATEMENT_EXECUTE|[[94m115[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m39033927[39m)|SYSTEM_METHOD_ENTRY|[[94m115[39m]|[94mDatabase.DMLOptions.__sfdc_OptAllOrNone[39m(Boolean)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m39063516[39m)|SYSTEM_METHOD_EXIT|[[94m115[39m]|[94mDatabase.DMLOptions.__sfdc_OptAllOrNone[39m(Boolean)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m39068618[39m)|STATEMENT_EXECUTE|[[94m116[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m39090056[39m)|SYSTEM_METHOD_ENTRY|[[94m116[39m]|[94mDatabase.update[39m(SObject, APEX_OBJECT)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m39154745[39m)|HEAP_ALLOCATE|[[94m116[39m]|Bytes:[94m32[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m39179981[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[EXTERNAL]|this|{[1m[31m"OptAllOrNone"[39m[22m:[94mtrue[39m}|0x4378b81c
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m39284399[39m)|HEAP_ALLOCATE|[[94m116[39m]|Bytes:[94m32[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m39304723[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[EXTERNAL]|this|{[1m[31m"DuplicateRuleHeader"[39m[22m:[1m[31m"0x1fb39643"[39m[22m,[1m[31m"OptAllOrNone"[39m[22m:[94mtrue[39m}|0x4378b81c
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m39357674[39m)|HEAP_ALLOCATE|[[94m116[39m]|Bytes:[94m32[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m39373575[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[EXTERNAL]|this|{[1m[31m"AssignmentRuleHeader"[39m[22m:[1m[31m"0x7eb48a35"[39m[22m,[1m[31m"DuplicateRuleHeader"[39m[22m:[1m[31m"0x1fb39643"[39m[22m,[1m[31m"OptAllOrNone"[39m[22m:[94mtrue[39m}|0x4378b81c
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m39423999[39m)|HEAP_ALLOCATE|[[94m116[39m]|Bytes:[94m8[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m39458677[39m)|DML_BEGIN|[[94m116[39m]|Op:Update|Type:Job_Application__c|Rows:[94m1[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m39491765[39m)|LIMIT_USAGE|[[94m116[39m]|DML|[94m1[39m|[94m150[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m39496871[39m)|LIMIT_USAGE|[[94m116[39m]|DML_ROWS|[94m1[39m|[94m10000[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m39511606[39m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m8[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m60156111[39m)|CODE_UNIT_STARTED|[EXTERNAL]|01qd2000001e6Kf|JobApplicationObjectTrigger on Job_Application trigger event BeforeUpdate|__sfdc_trigger/JobApplicationObjectTrigger
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m60213641[39m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m8[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m60267942[39m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m8[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m60394752[39m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m8[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m60407191[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m4[39m]|this|JobApplicationObjectTrigger|[94mtrue[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m60452600[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m4[39m]|this|{}|0x6912061f
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m60485450[39m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m8[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m60489879[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m4[39m]|this|JobApplicationObjectTrigger|[94mtrue[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m60497940[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m4[39m]|this|{}|0x6912061f
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m60503201[39m)|STATEMENT_EXECUTE|[[94m4[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m60504325[39m)|STATEMENT_EXECUTE|[[94m8[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61131014[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m10[39m]|[94mJobApplicationTriggerHandler.CLASS_NAME[39m|String|[94mfalse[39m|[94mtrue[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61151674[39m)|HEAP_ALLOCATE|[[94m8[39m]|Bytes:[94m20[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61158613[39m)|HEAP_ALLOCATE|[[94m8[39m]|Bytes:[94m28[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61172448[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m8[39m]|[94mJobApplicationTriggerHandler.CLASS_NAME[39m|[1m[31m"JobApplicationTrigge ([94m8[31m more) ..."[39m[22m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61204382[39m)[34m|METHOD_ENTRY|[39m[[94m8[39m]|01pd2000004RRJm|[94mJobApplicationTriggerHandler.JobApplicationTriggerHandler[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61210068[39m)|STATEMENT_EXECUTE|[[94m8[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61213611[39m)|STATEMENT_EXECUTE|[[94m8[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61220453[39m)[34m|METHOD_EXIT|[39m[[94m8[39m]|JobApplicationTriggerHandler
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61229138[39m)|HEAP_ALLOCATE|[[94m8[39m]|Bytes:[94m4[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61256841[39m)[35m|CONSTRUCTOR_ENTRY|[39m[[94m8[39m]|01pd2000004RRJm|<init>()|JobApplicationTriggerHandler
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61275091[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m8[39m]|this|JobApplicationTriggerHandler|[94mtrue[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61296253[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m8[39m]|this|{}|0x2525832c
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61314313[39m)|STATEMENT_EXECUTE|[[94m8[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61319646[39m)[35m|CONSTRUCTOR_EXIT|[39m[[94m8[39m]|01pd2000004RRJm|<init>()|JobApplicationTriggerHandler
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61352036[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m8[39m]|[94mthis.handler[39m|0x2525832c|0x6912061f
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61355248[39m)|STATEMENT_EXECUTE|[[94m11[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61358559[39m)|HEAP_ALLOCATE|[[94m11[39m]|Bytes:[94m21[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61362003[39m)|HEAP_ALLOCATE|[[94m11[39m]|Bytes:[94m7[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61364182[39m)|HEAP_ALLOCATE|[[94m11[39m]|Bytes:[94m21[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61382068[39m)|SYSTEM_METHOD_ENTRY|[[94m11[39m]|[94mSystem.TriggerContext.operationType[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61484159[39m)|HEAP_ALLOCATE|[[94m11[39m]|Bytes:[94m12[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61491029[39m)|SYSTEM_METHOD_EXIT|[[94m11[39m]|[94mSystem.TriggerContext.operationType[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61519313[39m)|SYSTEM_METHOD_ENTRY|[[94m11[39m]|[94mString.valueOf[39m(Object)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61530953[39m)|HEAP_ALLOCATE|[[94m11[39m]|Bytes:[94m13[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61538194[39m)|SYSTEM_METHOD_EXIT|[[94m11[39m]|[94mString.valueOf[39m(Object)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m61544886[39m)|HEAP_ALLOCATE|[[94m11[39m]|Bytes:[94m34[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63544940[39m)|HEAP_ALLOCATE|[[94m11[39m]|Bytes:[94m8[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63556906[39m)|HEAP_ALLOCATE|[[94m11[39m]|Bytes:[94m32[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63559638[39m)|HEAP_ALLOCATE|[[94m11[39m]|Bytes:[94m26[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63579995[39m)[34m|METHOD_ENTRY|[39m[[94m6[39m]|01pd2000004RRJn|[94mLogger.Logger[39m()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63586582[39m)|STATEMENT_EXECUTE|[[94m6[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63590284[39m)|STATEMENT_EXECUTE|[[94m6[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63600862[39m)|SYSTEM_MODE_ENTER|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63614212[39m)|HEAP_ALLOCATE|[[94m11[39m]|Bytes:[94m5[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63616481[39m)|STATEMENT_EXECUTE|[[94m186[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63622204[39m)|SYSTEM_MODE_EXIT|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63632003[39m)[34m|METHOD_EXIT|[39m[[94m6[39m]|Logger
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63651989[39m)[34m|METHOD_ENTRY|[39m[[94m11[39m]|01pd2000004RRJn|[94mLogger.info[39m(String, String, String)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63657474[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m169[39m]|className|String|[94mfalse[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63670881[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m169[39m]|className|[1m[31m"JobApplicationTrigge ([94m1[31m more) ..."[39m[22m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63673668[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m169[39m]|methodName|String|[94mfalse[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63678892[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m169[39m]|methodName|[1m[31m"execute"[39m[22m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63681090[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m169[39m]|message|String|[94mfalse[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63686716[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m169[39m]|message|[1m[31m"Trigger executed for ([94m14[31m more) ..."[39m[22m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63694535[39m)|SYSTEM_MODE_ENTER|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63697626[39m)|HEAP_ALLOCATE|[[94m170[39m]|Bytes:[94m5[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63701199[39m)|STATEMENT_EXECUTE|[[94m169[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63702083[39m)|STATEMENT_EXECUTE|[[94m170[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63704957[39m)|HEAP_ALLOCATE|[[94m170[39m]|Bytes:[94m22[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63722499[39m)|HEAP_ALLOCATE|[[94m171[39m]|Bytes:[94m4[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63739548[39m)|SYSTEM_CONSTRUCTOR_ENTRY|[[94m171[39m]|<init>()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63759051[39m)|SYSTEM_CONSTRUCTOR_EXIT|[[94m171[39m]|<init>()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63800172[39m)|SYSTEM_METHOD_ENTRY|[[94m170[39m]|[94mString.format[39m(String, List<ANY>)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63821705[39m)|HEAP_ALLOCATE|[[94m170[39m]|Bytes:[94m75[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63830743[39m)|SYSTEM_METHOD_EXIT|[[94m170[39m]|[94mString.format[39m(String, List<ANY>)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63834977[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m170[39m]|fullMessage|String|[94mfalse[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63842472[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m170[39m]|fullMessage|[1m[31m"Info from JobApplica ([94m55[31m more) ..."[39m[22m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63845352[39m)|STATEMENT_EXECUTE|[[94m174[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63865590[39m)|SYSTEM_METHOD_ENTRY|[[94m174[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63884922[39m)[1m[32m|USER_DEBUG|[39m[22m[[94m174[39m]|[1m[32mINFO[39m[22m|Info from [94mJobApplicationTrigger.execute[39m: Trigger executed for BEFORE_UPDATE
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63890371[39m)|SYSTEM_METHOD_EXIT|[[94m174[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63894589[39m)|SYSTEM_MODE_EXIT|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63900527[39m)[34m|METHOD_EXIT|[39m[[94m11[39m]|01pd2000004RRJn|[94mLogger.info[39m(String, String, String)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63916208[39m)|STATEMENT_EXECUTE|[[94m14[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63926295[39m)|STATEMENT_EXECUTE|[[94m17[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m63927296[39m)|STATEMENT_EXECUTE|[[94m18[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m64025887[39m)[34m|METHOD_ENTRY|[39m[[94m18[39m]|01pd2000004RRJm|[94mJobApplicationTriggerHandler.onBeforeUpdate[39m(List<Job_Application__c>, Map<Id,Job_Application__c>)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m64035917[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m19[39m]|this|JobApplicationTriggerHandler|[94mtrue[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m64055454[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m19[39m]|this|{}|0x2525832c
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m64058979[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m19[39m]|newList|List<Job_Application__c>|[94mtrue[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m66618747[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m19[39m]|newList|[{[1m[31m"LastModifiedDate"[39m[22m:[1m[31m"[94m2025[31m-[94m03[31m-12T14:[94m31[31m:[94m30[[94m31m.000Z[39m"[39m[22m,[1m[31m"IsDeleted"[39m[22m:[94mfalse[39m,[1m[31m"Position__c"[39m[22m:[1m[31m"a0Bd200000Ab9OMEAZ"[39m[22m,[1m[31m"Name"[39m[22m:[1m[31m"APP-[94m0015[31m"[39m[22m,[1m[31m"SystemModstamp"[39m[22m:[1m[31m"[94m2025[31m-[94m03[31m-12T14:[94m31[31m:[94m30[[94m31m.000Z[39m"[39m[22m,[1m[31m"Application_Date__c"[39m[22m:[1m[31m"[94m2025[31m-[94m03[31m-12T00:[94m00[31m:[94m00[[94m31m.000Z[39m"[39m[22m,[1m[31m"Candidate__c"[39m[22m:[1m[31m"a07d2000009UTVxAAO"[39m[22m,[1m[31m"Analysis_Results__c"[39m[22m:[1m[31m"{\"[39m[22mDane osobowe\[1m[31m":{\"[39m[22mim ([94m844[39m more) ...[1m[31m","[39m[22mAnalysis_Date__c[1m[31m":"[39m[22m[94m2025[39m-[94m03[39m-12T14:[94m31[39m:[94m49[[94m39m.000Z[39m[1m[31m","[39m[22mOwnerId[1m[31m":"[39m[22m005d2000004rL7FAAU[1m[31m","[39m[22mCreatedById[1m[31m":"[39m[22m005d2000004rL7FAAU[1m[31m","[39m[22mCreatedDate[1m[31m":"[39m[22m[94m2025[39m-[94m03[39m-12T14:[94m31[39m:[94m30[[94m39m.000Z[39m[1m[31m","[39m[22mId[1m[31m":"[39m[22ma0Ad2000000xjfREAQ[1m[31m","[39m[22mStatus__c[1m[31m":"[39m[22mNew[1m[31m","[39m[22mLastModifiedById[1m[31m":"[39m[22m005d2000004rL7FAAU[1m[31m"}]|0x819d4e0[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m66643120[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m19[31m]|oldMap|Map<Id,Job_Application__c>|[94mtrue[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m66947215[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m19[31m]|oldMap|{"[39m[22ma0Ad2000000xjfREAQ[1m[31m":{"[39m[22mLastModifiedDate[1m[31m":"[39m[22m[94m2025[39m-[94m03[39m-12T14:[94m31[39m:[94m30[[94m39m.000Z[39m[1m[31m","[39m[22mIsDeleted[1m[31m":[94mfalse[31m,"[39m[22mPosition__c[1m[31m":"[39m[22ma0Bd200000Ab9OMEAZ[1m[31m","[39m[22mName[1m[31m":"[39m[22mAPP-[94m0015[39m[1m[31m","[39m[22mSystemModstamp[1m[31m":"[39m[22m[94m2025[39m-[94m03[39m-12T14:[94m31[39m:[94m30[[94m39m.000Z[39m[1m[31m","[39m[22mApplication_Date__c[1m[31m":"[39m[22m[94m2025[39m-[94m03[39m-12T00:[94m00[39m:[94m00[[94m39m.000Z[39m[1m[31m","[39m[22mCandidate__c[1m[31m":"[39m[22ma07d2000009UTVxAAO[1m[31m","[39m[22mOwnerId[1m[31m":"[39m[22m005d2000004rL7FAAU[1m[31m","[39m[22mCreatedById[1m[31m":"[39m[22m005d2000004rL7FAAU[1m[31m","[39m[22mCreatedDate[1m[31m":"[39m[22m[94m2025[39m-[94m03[39m-12T14:[94m31[39m:[94m30[[94m39m.000Z[39m[1m[31m","[39m[22mId[1m[31m":"[39m[22ma0Ad2000000xjfREAQ[1m[31m","[39m[22mStatus__c[1m[31m":"[39m[22mNew[1m[31m","[39m[22mLastModifiedById[1m[31m":"[39m[22m005d2000004rL7FAAU[1m[31m"}}|0x270f977c[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m66968485[31m)|STATEMENT_EXECUTE|[[94m19[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m66970303[31m)|STATEMENT_EXECUTE|[[94m20[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m66981176[31m)|HEAP_ALLOCATE|[[94m20[31m]|Bytes:[94m14[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m66989215[31m)|HEAP_ALLOCATE|[[94m20[31m]|Bytes:[94m17[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67021945[31m)[34m|METHOD_ENTRY|[39m[[94m20[31m]|01pd2000004RRJn|[94mLogger.info[39m(String, String, String)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67047529[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m169[31m]|className|String|[94mfalse[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67057123[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m169[31m]|className|"[39m[22mJobApplicationTrigge ([94m8[39m more) ...[1m[31m"[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67059702[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m169[31m]|methodName|String|[94mfalse[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67064432[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m169[31m]|methodName|"[39m[22monBeforeUpdate[1m[31m"[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67066878[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m169[31m]|message|String|[94mfalse[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67071764[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m169[31m]|message|"[39m[22mTrigger executed.[1m[31m"[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67083679[31m)|SYSTEM_MODE_ENTER|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67095867[31m)|HEAP_ALLOCATE|[[94m170[31m]|Bytes:[94m5[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67099114[31m)|STATEMENT_EXECUTE|[[94m169[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67100076[31m)|STATEMENT_EXECUTE|[[94m170[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67112685[31m)|HEAP_ALLOCATE|[[94m171[31m]|Bytes:[94m4[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67131376[31m)|SYSTEM_CONSTRUCTOR_ENTRY|[[94m171[31m]|<init>()[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67139914[31m)|SYSTEM_CONSTRUCTOR_EXIT|[[94m171[31m]|<init>()[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67174058[31m)|SYSTEM_METHOD_ENTRY|[[94m170[31m]|[94mString.format[39m(String, List<ANY>)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67187339[31m)|HEAP_ALLOCATE|[[94m170[31m]|Bytes:[94m72[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67197457[31m)|SYSTEM_METHOD_EXIT|[[94m170[31m]|[94mString.format[39m(String, List<ANY>)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67202685[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m170[31m]|fullMessage|String|[94mfalse[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67210613[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m170[31m]|fullMessage|"[39m[22mInfo from JobApplica ([94m52[39m more) ...[1m[31m"[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67213536[31m)|STATEMENT_EXECUTE|[[94m174[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67228189[31m)|SYSTEM_METHOD_ENTRY|[[94m174[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67240993[31m)[1m[32m|USER_DEBUG|[39m[22m[[94m174[31m]|[1m[32mINFO[39m[22m|Info from [94mJobApplicationTriggerHandler.onBeforeUpdate[39m: Trigger executed.[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67246824[31m)|SYSTEM_METHOD_EXIT|[[94m174[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67252688[31m)|SYSTEM_MODE_EXIT|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67260719[31m)[34m|METHOD_EXIT|[39m[[94m20[31m]|01pd2000004RRJn|[94mLogger.info[39m(String, String, String)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67268220[31m)[34m|METHOD_EXIT|[39m[[94m18[31m]|01pd2000004RRJm|[94mJobApplicationTriggerHandler.onBeforeUpdate[39m(List<Job_Application__c>, Map<Id,Job_Application__c>)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m67[31m ([94m67285371[31m)|CUMULATIVE_LIMIT_USAGE[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m67[31m ([94m67285371[31m)|LIMIT_USAGE_FOR_NS|(default)|[39m[22m
+[1m[31m  Number of SOQL queries: [94m0[31m out of [94m100[31m[39m[22m
+[1m[31m  Number of query rows: [94m0[31m out of [94m50000[31m[39m[22m
+[1m[31m  Number of SOSL queries: [94m0[31m out of [94m20[31m[39m[22m
+[1m[31m  Number of DML statements: [94m1[31m out of [94m150[31m[39m[22m
+[1m[31m  Number of Publish Immediate DML: [94m0[31m out of [94m150[31m[39m[22m
+[1m[31m  Number of DML rows: [94m1[31m out of [94m10000[31m[39m[22m
+[1m[31m  Maximum CPU time: [94m0[31m out of [94m10000[31m[39m[22m
+[1m[31m  Maximum heap size: [94m0[31m out of [94m6000000[31m[39m[22m
+[1m[31m  Number of callouts: [94m0[31m out of [94m100[31m[39m[22m
+[1m[31m  Number of Email Invocations: [94m0[31m out of [94m10[31m[39m[22m
+[1m[31m  Number of future calls: [94m0[31m out of [94m50[31m[39m[22m
+[1m[31m  Number of queueable jobs added to the queue: [94m0[31m out of [94m50[31m[39m[22m
+[1m[31m  Number of Mobile Apex push calls: [94m0[31m out of [94m10[31m[39m[22m
+[1m[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m67[31m ([94m67285371[31m)|TOTAL_EMAIL_RECIPIENTS_QUEUED|[94m0[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m67[31m ([94m67285371[31m)|STATIC_VARIABLE_LIST|[39m[22m
+[1m[31m  int:BYTES:[94m0[31m[39m[22m
+[1m[31m  int:BYTES:[94m0[31m[39m[22m
+[1m[31m  byte[]:DigitOnes:[94m0[31m[39m[22m
+[1m[31m  byte[]:DigitTens:[94m0[31m[39m[22m
+[1m[31m  Boolean:FALSE:[94m0[31m[39m[22m
+[1m[31m  int:MAX_EXPONENT:[94m0[31m[39m[22m
+[1m[31m  double:MAX_VALUE:[94m0[31m[39m[22m
+[1m[31m  int:MAX_VALUE:[94m0[31m[39m[22m
+[1m[31m  int:MIN_EXPONENT:[94m0[31m[39m[22m
+[1m[31m  double:MIN_NORMAL:[94m0[31m[39m[22m
+[1m[31m  double:MIN_VALUE:[94m0[31m[39m[22m
+[1m[31m  int:MIN_VALUE:[94m0[31m[39m[22m
+[1m[31m  double:NEGATIVE_INFINITY:[94m0[31m[39m[22m
+[1m[31m  double:NaN:[94m0[31m[39m[22m
+[1m[31m  double:POSITIVE_INFINITY:[94m0[31m[39m[22m
+[1m[31m  int:SIZE:[94m0[31m[39m[22m
+[1m[31m  int:SIZE:[94m0[31m[39m[22m
+[1m[31m  Boolean:TRUE:[94m0[31m[39m[22m
+[1m[31m  String:__sfdcInnerTypes:[94m0[31m[39m[22m
+[1m[31m  String:__sfdcInnerTypes:[94m0[31m[39m[22m
+[1m[31m  String:__sfdcInnerTypes:[94m0[31m[39m[22m
+[1m[31m  String:__sfdcProperties:[94m0[31m[39m[22m
+[1m[31m  String:__sfdcProperties:[94m0[31m[39m[22m
+[1m[31m  String:__sfdcProperties:[94m0[31m[39m[22m
+[1m[31m  String:__sfdcProperties:[94m0[31m[39m[22m
+[1m[31m  String:_sfdcAdditionalCodeLocations:[94m0[31m[39m[22m
+[1m[31m  String:_sfdcAdditionalCodeLocations:[94m0[31m[39m[22m
+[1m[31m  String:_sfdcAdditionalCodeLocations:[94m0[31m[39m[22m
+[1m[31m  String:_sfdcAdditionalCodeLocations:[94m0[31m[39m[22m
+[1m[31m  String:_sfdcAdditionalCodeLocations:[94m0[31m[39m[22m
+[1m[31m  String:_sfdcAdditionalCodeLocations:[94m0[31m[39m[22m
+[1m[31m  String:_sfdcAdditionalCodeLocations:[94m0[31m[39m[22m
+[1m[31m  String:_sfdcAdditionalCodeLocations:[94m0[31m[39m[22m
+[1m[31m  String:_sfdcAdditionalCodeLocations:[94m0[31m[39m[22m
+[1m[31m  String:_sfdcAdditionalCodeLocations:[94m0[31m[39m[22m
+[1m[31m  String:_sfdcSuppressedCodeLocations:[94m0[31m[39m[22m
+[1m[31m  String:_sfdcSuppressedCodeLocations:[94m0[31m[39m[22m
+[1m[31m  String:_static_CLASS_NAME:[94m0[31m[39m[22m
+[1m[31m  char[]:digits:[94m0[31m[39m[22m
+[1m[31m  long:serialVersionUID:[94m0[31m[39m[22m
+[1m[31m  long:serialVersionUID:[94m0[31m[39m[22m
+[1m[31m  long:serialVersionUID:[94m0[31m[39m[22m
+[1m[31m  int[]:sizeTable:[94m0[31m[39m[22m
+[1m[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m67[31m ([94m67285371[31m)|CUMULATIVE_LIMIT_USAGE_END[39m[22m
+[1m[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m67735543[31m)|CODE_UNIT_FINISHED|JobApplicationObjectTrigger on Job_Application trigger event BeforeUpdate|__sfdc_trigger/JobApplicationObjectTrigger[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111083231[31m)|CODE_UNIT_STARTED|[EXTERNAL]|01qd2000001e6Kf|JobApplicationObjectTrigger on Job_Application trigger event AfterUpdate|__sfdc_trigger/JobApplicationObjectTrigger[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111157527[31m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m8[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111219513[31m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m8[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111329820[31m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m8[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111341447[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m4[31m]|this|JobApplicationObjectTrigger|[94mtrue[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111382844[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m4[31m]|this|{}|0x7734feba[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111413649[31m)|HEAP_ALLOCATE|[EXTERNAL]|Bytes:[94m8[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111417838[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m4[31m]|this|JobApplicationObjectTrigger|[94mtrue[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111425081[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m4[31m]|this|{}|0x7734feba[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111430773[31m)|STATEMENT_EXECUTE|[[94m4[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111431800[31m)|STATEMENT_EXECUTE|[[94m8[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111435971[31m)|HEAP_ALLOCATE|[[94m8[31m]|Bytes:[94m4[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111467375[31m)[35m|CONSTRUCTOR_ENTRY|[39m[[94m8[31m]|01pd2000004RRJm|<init>()|JobApplicationTriggerHandler[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111475142[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m8[31m]|this|JobApplicationTriggerHandler|[94mtrue[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111484004[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m8[31m]|this|{}|0x1fac3999[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111505189[31m)|STATEMENT_EXECUTE|[[94m8[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111510629[31m)[35m|CONSTRUCTOR_EXIT|[39m[[94m8[31m]|01pd2000004RRJm|<init>()|JobApplicationTriggerHandler[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111538016[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m8[31m]|[94mthis.handler[39m|0x1fac3999|0x7734feba[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111541507[31m)|STATEMENT_EXECUTE|[[94m11[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111561949[31m)|SYSTEM_METHOD_ENTRY|[[94m11[31m]|[94mSystem.TriggerContext.operationType[39m()[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111628474[31m)|HEAP_ALLOCATE|[[94m11[31m]|Bytes:[94m12[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111635219[31m)|SYSTEM_METHOD_EXIT|[[94m11[31m]|[94mSystem.TriggerContext.operationType[39m()[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111664387[31m)|SYSTEM_METHOD_ENTRY|[[94m11[31m]|[94mString.valueOf[39m(Object)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111678051[31m)|HEAP_ALLOCATE|[[94m11[31m]|Bytes:[94m12[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111686786[31m)|SYSTEM_METHOD_EXIT|[[94m11[31m]|[94mString.valueOf[39m(Object)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111696521[31m)|HEAP_ALLOCATE|[[94m11[31m]|Bytes:[94m33[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111707378[31m)[34m|METHOD_ENTRY|[39m[[94m11[31m]|01pd2000004RRJn|[94mLogger.info[39m(String, String, String)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111712476[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m169[31m]|className|String|[94mfalse[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111726075[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m169[31m]|className|"[39m[22mJobApplicationTrigge ([94m1[39m more) ...[1m[31m"[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111730336[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m169[31m]|methodName|String|[94mfalse[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111737622[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m169[31m]|methodName|"[39m[22mexecute[1m[31m"[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111741324[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m169[31m]|message|String|[94mfalse[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111749341[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m169[31m]|message|"[39m[22mTrigger executed for ([94m13[39m more) ...[1m[31m"[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111766091[31m)|SYSTEM_MODE_ENTER|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111779912[31m)|HEAP_ALLOCATE|[[94m170[31m]|Bytes:[94m5[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111784212[31m)|STATEMENT_EXECUTE|[[94m169[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111785429[31m)|STATEMENT_EXECUTE|[[94m170[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111803352[31m)|HEAP_ALLOCATE|[[94m171[31m]|Bytes:[94m4[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111817065[31m)|SYSTEM_CONSTRUCTOR_ENTRY|[[94m171[31m]|<init>()[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111824864[31m)|SYSTEM_CONSTRUCTOR_EXIT|[[94m171[31m]|<init>()[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111845396[31m)|SYSTEM_METHOD_ENTRY|[[94m170[31m]|[94mString.format[39m(String, List<ANY>)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111863030[31m)|HEAP_ALLOCATE|[[94m170[31m]|Bytes:[94m74[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111869751[31m)|SYSTEM_METHOD_EXIT|[[94m170[31m]|[94mString.format[39m(String, List<ANY>)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111874786[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m170[31m]|fullMessage|String|[94mfalse[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111883397[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m170[31m]|fullMessage|"[39m[22mInfo from JobApplica ([94m54[39m more) ...[1m[31m"[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111887372[31m)|STATEMENT_EXECUTE|[[94m174[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111901187[31m)|SYSTEM_METHOD_ENTRY|[[94m174[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111916007[31m)[1m[32m|USER_DEBUG|[39m[22m[[94m174[31m]|[1m[32mINFO[39m[22m|Info from [94mJobApplicationTrigger.execute[39m: Trigger executed for AFTER_UPDATE[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111922403[31m)|SYSTEM_METHOD_EXIT|[[94m174[31m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111928961[31m)|SYSTEM_MODE_EXIT|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111936991[31m)[34m|METHOD_EXIT|[39m[[94m11[31m]|01pd2000004RRJn|[94mLogger.info[39m(String, String, String)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111960240[31m)|STATEMENT_EXECUTE|[[94m22[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111967182[31m)|STATEMENT_EXECUTE|[[94m28[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m111968311[31m)|STATEMENT_EXECUTE|[[94m29[31m][39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m112025377[31m)[34m|METHOD_ENTRY|[39m[[94m29[31m]|01pd2000004RRJm|[94mJobApplicationTriggerHandler.onAfterUpdate[39m(List<Job_Application__c>, Map<Id,Job_Application__c>)[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m112039433[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m37[31m]|this|JobApplicationTriggerHandler|[94mtrue[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m112051866[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m37[31m]|this|{}|0x1fac3999[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m112055062[31m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m37[31m]|newList|List<Job_Application__c>|[94mtrue[31m|[94mfalse[31m[39m[22m
+[1m[31m[94m15[31m:[94m31[31m:[94m48[31m.[94m2[31m ([94m112422467[31m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m37[31m]|newList|[{"[39m[22mLastModifiedDate[1m[31m":"[39m[22m[94m2025[39m-[94m03[39m-12T14:[94m31[39m:[94m49[[94m39m.000Z[39m[1m[31m","[39m[22mIsDeleted[1m[31m":[94mfalse[31m,"[39m[22mPosition__c[1m[31m":"[39m[22ma0Bd200000Ab9OMEAZ[1m[31m","[39m[22mName[1m[31m":"[39m[22mAPP-[94m0015[39m[1m[31m","[39m[22mSystemModstamp[1m[31m":"[39m[22m[94m2025[39m-[94m03[39m-12T14:[94m31[39m:[94m49[[94m39m.000Z[39m[1m[31m","[39m[22mApplication_Date__c[1m[31m":"[39m[22m[94m2025[39m-[94m03[39m-12T00:[94m00[39m:[94m00[[94m39m.000Z[39m[1m[31m","[39m[22mCandidate__c[1m[31m":"[39m[22ma07d2000009UTVxAAO[1m[31m","[39m[22mAnalysis_Results__c[1m[31m":"[39m[22m{\[1m[31m"Dane osobowe\"[39m[22m:{\[1m[31m"im ([94m844[31m more) ..."[39m[22m,[1m[31m"Analysis_Date__c"[39m[22m:[1m[31m"[94m2025[31m-[94m03[31m-12T14:[94m31[31m:[94m49[[94m31m.000Z[39m"[39m[22m,[1m[31m"OwnerId"[39m[22m:[1m[31m"005d2000004rL7FAAU"[39m[22m,[1m[31m"CreatedById"[39m[22m:[1m[31m"005d2000004rL7FAAU"[39m[22m,[1m[31m"CreatedDate"[39m[22m:[1m[31m"[94m2025[31m-[94m03[31m-12T14:[94m31[31m:[94m30[[94m31m.000Z[39m"[39m[22m,[1m[31m"Id"[39m[22m:[1m[31m"a0Ad2000000xjfREAQ"[39m[22m,[1m[31m"Status__c"[39m[22m:[1m[31m"New"[39m[22m,[1m[31m"LastModifiedById"[39m[22m:[1m[31m"005d2000004rL7FAAU"[39m[22m}]|0x47ba4c3a
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112440385[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m37[39m]|oldMap|Map<Id,Job_Application__c>|[94mtrue[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112665404[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m37[39m]|oldMap|{[1m[31m"a0Ad2000000xjfREAQ"[39m[22m:{[1m[31m"LastModifiedDate"[39m[22m:[1m[31m"[94m2025[31m-[94m03[31m-12T14:[94m31[31m:[94m30[[94m31m.000Z[39m"[39m[22m,[1m[31m"IsDeleted"[39m[22m:[94mfalse[39m,[1m[31m"Position__c"[39m[22m:[1m[31m"a0Bd200000Ab9OMEAZ"[39m[22m,[1m[31m"Name"[39m[22m:[1m[31m"APP-[94m0015[31m"[39m[22m,[1m[31m"SystemModstamp"[39m[22m:[1m[31m"[94m2025[31m-[94m03[31m-12T14:[94m31[31m:[94m30[[94m31m.000Z[39m"[39m[22m,[1m[31m"Application_Date__c"[39m[22m:[1m[31m"[94m2025[31m-[94m03[31m-12T00:[94m00[31m:[94m00[[94m31m.000Z[39m"[39m[22m,[1m[31m"Candidate__c"[39m[22m:[1m[31m"a07d2000009UTVxAAO"[39m[22m,[1m[31m"OwnerId"[39m[22m:[1m[31m"005d2000004rL7FAAU"[39m[22m,[1m[31m"CreatedById"[39m[22m:[1m[31m"005d2000004rL7FAAU"[39m[22m,[1m[31m"CreatedDate"[39m[22m:[1m[31m"[94m2025[31m-[94m03[31m-12T14:[94m31[31m:[94m30[[94m31m.000Z[39m"[39m[22m,[1m[31m"Id"[39m[22m:[1m[31m"a0Ad2000000xjfREAQ"[39m[22m,[1m[31m"Status__c"[39m[22m:[1m[31m"New"[39m[22m,[1m[31m"LastModifiedById"[39m[22m:[1m[31m"005d2000004rL7FAAU"[39m[22m}}|0x316e970d
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112689936[39m)|STATEMENT_EXECUTE|[[94m37[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112691396[39m)|STATEMENT_EXECUTE|[[94m38[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112702309[39m)|HEAP_ALLOCATE|[[94m38[39m]|Bytes:[94m13[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112735461[39m)[34m|METHOD_ENTRY|[39m[[94m38[39m]|01pd2000004RRJn|[94mLogger.info[39m(String, String, String)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112755950[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m169[39m]|className|String|[94mfalse[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112764130[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m169[39m]|className|[1m[31m"JobApplicationTrigge ([94m8[31m more) ..."[39m[22m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112767039[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m169[39m]|methodName|String|[94mfalse[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112772462[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m169[39m]|methodName|[1m[31m"onAfterUpdate"[39m[22m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112774918[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m169[39m]|message|String|[94mfalse[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112779851[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m169[39m]|message|[1m[31m"Trigger executed."[39m[22m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112790274[39m)|SYSTEM_MODE_ENTER|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112801714[39m)|HEAP_ALLOCATE|[[94m170[39m]|Bytes:[94m5[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112804769[39m)|STATEMENT_EXECUTE|[[94m169[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112805629[39m)|STATEMENT_EXECUTE|[[94m170[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112817261[39m)|HEAP_ALLOCATE|[[94m171[39m]|Bytes:[94m4[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112834146[39m)|SYSTEM_CONSTRUCTOR_ENTRY|[[94m171[39m]|<init>()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112842479[39m)|SYSTEM_CONSTRUCTOR_EXIT|[[94m171[39m]|<init>()
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112877155[39m)|SYSTEM_METHOD_ENTRY|[[94m170[39m]|[94mString.format[39m(String, List<ANY>)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112889197[39m)|HEAP_ALLOCATE|[[94m170[39m]|Bytes:[94m71[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112898867[39m)|SYSTEM_METHOD_EXIT|[[94m170[39m]|[94mString.format[39m(String, List<ANY>)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112904116[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m170[39m]|fullMessage|String|[94mfalse[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112911173[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m170[39m]|fullMessage|[1m[31m"Info from JobApplica ([94m51[31m more) ..."[39m[22m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112913909[39m)|STATEMENT_EXECUTE|[[94m174[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112928146[39m)|SYSTEM_METHOD_ENTRY|[[94m174[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112939834[39m)[1m[32m|USER_DEBUG|[39m[22m[[94m174[39m]|[1m[32mINFO[39m[22m|Info from [94mJobApplicationTriggerHandler.onAfterUpdate[39m: Trigger executed.
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112945666[39m)|SYSTEM_METHOD_EXIT|[[94m174[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112951829[39m)|SYSTEM_MODE_EXIT|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112959997[39m)[34m|METHOD_EXIT|[39m[[94m38[39m]|01pd2000004RRJn|[94mLogger.info[39m(String, String, String)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m112967008[39m)[34m|METHOD_EXIT|[39m[[94m29[39m]|01pd2000004RRJm|[94mJobApplicationTriggerHandler.onAfterUpdate[39m(List<Job_Application__c>, Map<Id,Job_Application__c>)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m112[39m ([94m112984244[39m)|CUMULATIVE_LIMIT_USAGE
+[94m15[39m:[94m31[39m:[94m48[39m.[94m112[39m ([94m112984244[39m)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: [94m0[39m out of [94m100[39m
+  Number of query rows: [94m0[39m out of [94m50000[39m
+  Number of SOSL queries: [94m0[39m out of [94m20[39m
+  Number of DML statements: [94m1[39m out of [94m150[39m
+  Number of Publish Immediate DML: [94m0[39m out of [94m150[39m
+  Number of DML rows: [94m1[39m out of [94m10000[39m
+  Maximum CPU time: [94m0[39m out of [94m10000[39m
+  Maximum heap size: [94m0[39m out of [94m6000000[39m
+  Number of callouts: [94m0[39m out of [94m100[39m
+  Number of Email Invocations: [94m0[39m out of [94m10[39m
+  Number of future calls: [94m0[39m out of [94m50[39m
+  Number of queueable jobs added to the queue: [94m0[39m out of [94m50[39m
+  Number of Mobile Apex push calls: [94m0[39m out of [94m10[39m
+
+[94m15[39m:[94m31[39m:[94m48[39m.[94m112[39m ([94m112984244[39m)|TOTAL_EMAIL_RECIPIENTS_QUEUED|[94m0[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m112[39m ([94m112984244[39m)|STATIC_VARIABLE_LIST|
+  int:BYTES:[94m0[39m
+  int:BYTES:[94m0[39m
+  byte[]:DigitOnes:[94m0[39m
+  byte[]:DigitTens:[94m0[39m
+  Boolean:FALSE:[94m0[39m
+  int:MAX_EXPONENT:[94m0[39m
+  double:MAX_VALUE:[94m0[39m
+  int:MAX_VALUE:[94m0[39m
+  int:MIN_EXPONENT:[94m0[39m
+  double:MIN_NORMAL:[94m0[39m
+  double:MIN_VALUE:[94m0[39m
+  int:MIN_VALUE:[94m0[39m
+  double:NEGATIVE_INFINITY:[94m0[39m
+  double:NaN:[94m0[39m
+  double:POSITIVE_INFINITY:[94m0[39m
+  int:SIZE:[94m0[39m
+  int:SIZE:[94m0[39m
+  Boolean:TRUE:[94m0[39m
+  String:__sfdcInnerTypes:[94m0[39m
+  String:__sfdcInnerTypes:[94m0[39m
+  String:__sfdcInnerTypes:[94m0[39m
+  String:__sfdcProperties:[94m0[39m
+  String:__sfdcProperties:[94m0[39m
+  String:__sfdcProperties:[94m0[39m
+  String:__sfdcProperties:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcSuppressedCodeLocations:[94m0[39m
+  String:_sfdcSuppressedCodeLocations:[94m0[39m
+  String:_static_CLASS_NAME:[94m0[39m
+  char[]:digits:[94m0[39m
+  long:serialVersionUID:[94m0[39m
+  long:serialVersionUID:[94m0[39m
+  long:serialVersionUID:[94m0[39m
+  int[]:sizeTable:[94m0[39m
+
+[94m15[39m:[94m31[39m:[94m48[39m.[94m112[39m ([94m112984244[39m)|CUMULATIVE_LIMIT_USAGE_END
+
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m113453314[39m)|CODE_UNIT_FINISHED|JobApplicationObjectTrigger on Job_Application trigger event AfterUpdate|__sfdc_trigger/JobApplicationObjectTrigger
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m118512182[39m)|DML_END|[[94m116[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119729548[39m)|HEAP_ALLOCATE|[[94m116[39m]|Bytes:[94m4[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119778958[39m)|SYSTEM_METHOD_EXIT|[[94m116[39m]|[94mDatabase.update[39m(SObject, APEX_OBJECT)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119799897[39m)[1m[36m|VARIABLE_SCOPE_BEGIN|[39m[22m[[94m116[39m]|result|[94mDatabase.SaveResult[39m|[94mtrue[39m|[94mfalse[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119839344[39m)[1m[36m|VARIABLE_ASSIGNMENT|[39m[22m[[94m116[39m]|result|{[1m[31m"success"[39m[22m:[94mtrue[39m,[1m[31m"id"[39m[22m:[1m[31m"a0Ad2000000xjfREAQ"[39m[22m}|0x125aa476
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119875730[39m)|STATEMENT_EXECUTE|[[94m117[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119877418[39m)|STATEMENT_EXECUTE|[[94m128[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119885489[39m)|HEAP_ALLOCATE|[[94m128[39m]|Bytes:[94m45[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119909486[39m)|SYSTEM_METHOD_ENTRY|[[94m128[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119937034[39m)[1m[32m|USER_DEBUG|[39m[22m[[94m128[39m]|[1m[32mINFO[39m[22m|saveJobApplicationResults - update successful
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119943899[39m)|SYSTEM_METHOD_EXIT|[[94m128[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119947189[39m)|STATEMENT_EXECUTE|[[94m129[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119950036[39m)|STATEMENT_EXECUTE|[[94m135[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119951156[39m)|STATEMENT_EXECUTE|[[94m136[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119953611[39m)|HEAP_ALLOCATE|[[94m136[39m]|Bytes:[94m39[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119961512[39m)|SYSTEM_METHOD_ENTRY|[[94m136[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119967221[39m)[1m[32m|USER_DEBUG|[39m[22m[[94m136[39m]|[1m[32mINFO[39m[22m|=== saveJobApplicationResults - END ===
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119971865[39m)|SYSTEM_METHOD_EXIT|[[94m136[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119988173[39m)[34m|METHOD_EXIT|[39m[[94m51[39m]|01pd2000004RRJd|[94mCVAnalysisController.saveJobApplicationResults[39m(Id, String, Map<String,ANY>)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119994222[39m)|STATEMENT_EXECUTE|[[94m72[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119995534[39m)|STATEMENT_EXECUTE|[[94m73[39m]
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m119997852[39m)|HEAP_ALLOCATE|[[94m73[39m]|Bytes:[94m33[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m120002990[39m)|SYSTEM_METHOD_ENTRY|[[94m73[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m120008870[39m)[1m[32m|USER_DEBUG|[39m[22m[[94m73[39m]|[1m[32mINFO[39m[22m|=== saveAnalysisResults - END ===
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m120012912[39m)|SYSTEM_METHOD_EXIT|[[94m73[39m]|[94mSystem.debug[39m(APEX_OBJECT, ANY)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m147[39m ([94m147036651[39m)|CUMULATIVE_LIMIT_USAGE
+[94m15[39m:[94m31[39m:[94m48[39m.[94m147[39m ([94m147036651[39m)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: [94m0[39m out of [94m100[39m
+  Number of query rows: [94m0[39m out of [94m50000[39m
+  Number of SOSL queries: [94m0[39m out of [94m20[39m
+  Number of DML statements: [94m1[39m out of [94m150[39m
+  Number of Publish Immediate DML: [94m0[39m out of [94m150[39m
+  Number of DML rows: [94m1[39m out of [94m10000[39m
+  Maximum CPU time: [94m0[39m out of [94m10000[39m
+  Maximum heap size: [94m0[39m out of [94m6000000[39m
+  Number of callouts: [94m0[39m out of [94m100[39m
+  Number of Email Invocations: [94m0[39m out of [94m10[39m
+  Number of future calls: [94m0[39m out of [94m50[39m
+  Number of queueable jobs added to the queue: [94m0[39m out of [94m50[39m
+  Number of Mobile Apex push calls: [94m0[39m out of [94m10[39m
+
+[94m15[39m:[94m31[39m:[94m48[39m.[94m147[39m ([94m147036651[39m)|TOTAL_EMAIL_RECIPIENTS_QUEUED|[94m0[39m
+[94m15[39m:[94m31[39m:[94m48[39m.[94m147[39m ([94m147036651[39m)|STATIC_VARIABLE_LIST|
+  int:BYTES:[94m0[39m
+  int:BYTES:[94m0[39m
+  byte[]:DigitOnes:[94m0[39m
+  byte[]:DigitTens:[94m0[39m
+  Boolean:FALSE:[94m0[39m
+  int:MAX_EXPONENT:[94m0[39m
+  double:MAX_VALUE:[94m0[39m
+  int:MAX_VALUE:[94m0[39m
+  int:MIN_EXPONENT:[94m0[39m
+  double:MIN_NORMAL:[94m0[39m
+  double:MIN_VALUE:[94m0[39m
+  int:MIN_VALUE:[94m0[39m
+  double:NEGATIVE_INFINITY:[94m0[39m
+  double:NaN:[94m0[39m
+  double:POSITIVE_INFINITY:[94m0[39m
+  int:SIZE:[94m0[39m
+  int:SIZE:[94m0[39m
+  Boolean:TRUE:[94m0[39m
+  String:__sfdcInnerTypes:[94m0[39m
+  String:__sfdcInnerTypes:[94m0[39m
+  String:__sfdcInnerTypes:[94m0[39m
+  String:__sfdcProperties:[94m0[39m
+  String:__sfdcProperties:[94m0[39m
+  String:__sfdcProperties:[94m0[39m
+  String:__sfdcProperties:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcAdditionalCodeLocations:[94m0[39m
+  String:_sfdcSuppressedCodeLocations:[94m0[39m
+  String:_sfdcSuppressedCodeLocations:[94m0[39m
+  String:_static_CLASS_NAME:[94m0[39m
+  char[]:digits:[94m0[39m
+  long:serialVersionUID:[94m0[39m
+  long:serialVersionUID:[94m0[39m
+  long:serialVersionUID:[94m0[39m
+  int[]:sizeTable:[94m0[39m
+
+[94m15[39m:[94m31[39m:[94m48[39m.[94m147[39m ([94m147036651[39m)|CUMULATIVE_LIMIT_USAGE_END
+
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m147406101[39m)|CODE_UNIT_FINISHED|[94mCVAnalysisController.saveAnalysisResults[39m(Id, String)
+[94m15[39m:[94m31[39m:[94m48[39m.[94m147[39m ([94m147448625[39m)|CUMULATIVE_PROFILING_BEGIN
+[94m15[39m:[94m31[39m:[94m48[39m.[94m147[39m ([94m147448625[39m)|CUMULATIVE_PROFILING|No profiling information for SOQL operations
+[94m15[39m:[94m31[39m:[94m48[39m.[94m147[39m ([94m147448625[39m)|CUMULATIVE_PROFILING|No profiling information for SOSL operations
+[94m15[39m:[94m31[39m:[94m48[39m.[94m147[39m ([94m147448625[39m)|CUMULATIVE_PROFILING|DML operations|
+[94mClass.CVAnalysisController.saveJobApplicationResults[39m: line [94m116[39m, column [94m1[39m: [94mcom.salesforce.api.Database.update[39m(Job_Application__c, [94mDatabase.DMLOptions[39m): executed [94m1[39m time in [94m81[39m ms
+
+[94m15[39m:[94m31[39m:[94m48[39m.[94m147[39m ([94m147448625[39m)|CUMULATIVE_PROFILING|method invocations|
+External entry point: public static Id saveAnalysisResults(Id, String): executed [94m1[39m time in [94m116[39m ms
+[94mClass.CVAnalysisController.saveAnalysisResults[39m: line [94m51[39m, column [94m1[39m: private static Id saveJobApplicationResults(Id, String, Map<String,ANY>): executed [94m1[39m time in [94m87[39m ms
+[94mClass.CVAnalysisController.saveAnalysisResults[39m: line [94m43[39m, column [94m1[39m: global static Object deserializeUntyped(String): executed [94m1[39m time in [94m27[39m ms
+[94mTrigger.JobApplicationObjectTrigger[39m: line [94m18[39m, column [94m1[39m: public void onBeforeUpdate(List<Job_Application__c>, Map<Id,Job_Application__c>): executed [94m1[39m time in [94m3[39m ms
+External entry point: public void invoke(): executed [94m1[39m time in [94m2[39m ms
+[94mClass.CVAnalysisController.saveJobApplicationResults[39m: line [94m91[39m, column [94m1[39m: public static void checkUpdateAccess([94mSchema.SObjectType[39m, List<String>): executed [94m1[39m time in [94m2[39m ms
+[94mTrigger.JobApplicationObjectTrigger[39m: line [94m11[39m, column [94m1[39m: public static [94mSystem.TriggerOperation[39m operationType(): executed [94m6[39m times in [94m1[39m ms
+[94mTrigger.JobApplicationObjectTrigger[39m: line [94m29[39m, column [94m1[39m: public void onAfterUpdate(List<Job_Application__c>, Map<Id,Job_Application__c>): executed [94m1[39m time in [94m1[39m ms
+[94mClass.SecurityUtils.checkUpdateAccess[39m: line [94m59[39m, column [94m1[39m: global public Object get(Object): executed [94m4[39m times in [94m1[39m ms
+[94mClass.Logger.info[39m: line [94m170[39m, column [94m1[39m: public static String format(String, List<ANY>): executed [94m4[39m times in [94m0[39m ms
+[94mClass.Logger.info[39m: line [94m171[39m, column [94m1[39m: global public List<String>(): executed [94m4[39m times in [94m0[39m ms
+
+[94m15[39m:[94m31[39m:[94m48[39m.[94m147[39m ([94m147448625[39m)|CUMULATIVE_PROFILING_END
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m147976826[39m)|CODE_UNIT_FINISHED|apex://CVAnalysisController/ACTION$saveAnalysisResults
+[94m15[39m:[94m31[39m:[94m48[39m.[94m2[39m ([94m148001529[39m)|EXECUTION_FINISHED
+
