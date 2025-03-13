@@ -165,6 +165,22 @@ export default class CvAnalyzer extends LightningElement {
             bypassCache: bypassCache 
         })
         .then(result => {
+            // Dodajemy logowanie wyników
+            console.log('Analysis Results:', JSON.stringify(result));
+            
+            // Sprawdzamy, czy mamy matchedSkills i missingSkills
+            console.log('Has matchedSkills:', result.hasOwnProperty('matchedSkills'));
+            console.log('matchedSkills type:', result.matchedSkills ? typeof result.matchedSkills : 'undefined');
+            console.log('matchedSkills value:', result.matchedSkills);
+            
+            console.log('Has missingSkills:', result.hasOwnProperty('missingSkills'));
+            console.log('missingSkills type:', result.missingSkills ? typeof result.missingSkills : 'undefined');
+            console.log('missingSkills value:', result.missingSkills);
+            
+            console.log('Has skills:', result.hasOwnProperty('skills'));
+            console.log('skills type:', result.skills ? typeof result.skills : 'undefined');
+            console.log('skills value:', result.skills);
+            
             this.analysisResults = result;
             this.error = undefined;
             this.isLoading = false;

@@ -204,34 +204,184 @@ public with sharing class CVAnalysisHelper {
      */
     private static Map<String, Object> parseAIResponse(String aiResponse) {
         try {
+            // Logowanie oryginalnej odpowiedzi dla celów diagnostycznych
+            System.debug(LoggingLevel.INFO, 'Oryginalna odpowiedź z OpenAI (pierwsze 200 znaków): ' + 
+                (aiResponse != null && aiResponse.length() > 200 ? aiResponse.substring(0, 200) + '...' : aiResponse));
+            
+            // Czyszczenie odpowiedzi przed parsowaniem
+            String cleanedResponse = cleanJsonResponse(aiResponse);
+            
             // Próba bezpośredniego parsowania JSON
-            Map<String, Object> parsedResponse = (Map<String, Object>) JSON.deserializeUntyped(aiResponse);
-            return parsedResponse;
-        } catch (Exception e) {
-            Logger.error('Error parsing AI response as JSON', e);
-            
-            // Jeśli odpowiedź nie jest czystym JSON, próbujemy wyodrębnić JSON z tekstu
-            String jsonPattern = '\\{[\\s\\S]*\\}';
-            Pattern p = Pattern.compile(jsonPattern);
-            Matcher m = p.matcher(aiResponse);
-            
-            if (m.find()) {
-                String jsonStr = m.group(0);
-                try {
-                    Map<String, Object> extractedJson = (Map<String, Object>) JSON.deserializeUntyped(jsonStr);
-                    return extractedJson;
-                } catch (Exception ex) {
-                    Logger.error('Error parsing extracted JSON', ex);
+            try {
+                Map<String, Object> parsedResponse = (Map<String, Object>) JSON.deserializeUntyped(cleanedResponse);
+                System.debug(LoggingLevel.INFO, 'Pomyślnie sparsowano odpowiedź jako JSON');
+                return parsedResponse;
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'Error parsing cleaned AI response as JSON: ' + e.getMessage());
+                
+                // Jeśli odpowiedź nie jest czystym JSON, próbujemy wyodrębnić JSON z tekstu
+                String jsonPattern = '\\{[\\s\\S]*\\}';
+                Pattern p = Pattern.compile(jsonPattern);
+                Matcher m = p.matcher(cleanedResponse);
+                
+                if (m.find()) {
+                    String jsonStr = m.group(0);
+                    try {
+                        Map<String, Object> extractedJson = (Map<String, Object>) JSON.deserializeUntyped(jsonStr);
+                        System.debug(LoggingLevel.INFO, 'Pomyślnie wyodrębniono i sparsowano JSON z odpowiedzi');
+                        return extractedJson;
+                    } catch (Exception ex) {
+                        System.debug(LoggingLevel.ERROR, 'Error parsing extracted JSON: ' + ex.getMessage());
+                    }
                 }
             }
             
-            // Jeśli nie udało się sparsować JSON, zwracamy podstawową strukturę z oryginalną odpowiedzią
+            // Jeśli nie udało się sparsować JSON, próbujemy ręcznie wyodrębnić kluczowe informacje
+            Map<String, Object> manuallyExtractedData = extractDataManually(aiResponse);
+            if (!manuallyExtractedData.isEmpty()) {
+                System.debug(LoggingLevel.INFO, 'Pomyślnie wyodrębniono dane ręcznie');
+                return manuallyExtractedData;
+            }
+            
+            // Jeśli wszystkie metody zawiodły, zwracamy podstawową strukturę z oryginalną odpowiedzią
             Map<String, Object> fallbackResponse = new Map<String, Object>{
                 'rawResponse' => aiResponse,
                 'education' => 'Nie udało się wyodrębnić danych z CV',
-                'matchScore' => 0
+                'matchScore' => 0,
+                'skills' => new List<String>(),
+                'matchedSkills' => new List<String>(),
+                'missingSkills' => new List<String>()
             };
             return fallbackResponse;
+        } catch (Exception e) {
+            Logger.error('Unexpected error in parseAIResponse', e);
+            
+            // Zwracamy podstawową strukturę w przypadku nieoczekiwanego błędu
+            Map<String, Object> errorResponse = new Map<String, Object>{
+                'error' => 'Wystąpił nieoczekiwany błąd podczas przetwarzania odpowiedzi: ' + e.getMessage(),
+                'education' => 'Nie udało się wyodrębnić danych z CV',
+                'matchScore' => 0,
+                'skills' => new List<String>(),
+                'matchedSkills' => new List<String>(),
+                'missingSkills' => new List<String>()
+            };
+            return errorResponse;
+        }
+    }
+    
+    /**
+     * @description Czyści odpowiedź JSON z nieprawidłowych znaków i formatowania
+     * @param jsonResponse Odpowiedź JSON do wyczyszczenia
+     * @return Wyczyszczona odpowiedź JSON
+     */
+    private static String cleanJsonResponse(String jsonResponse) {
+        if (String.isBlank(jsonResponse)) {
+            return '{}';
+        }
+        
+        // Usuwanie znaczników kodu markdown
+        String cleaned = jsonResponse.replaceAll('```json', '').replaceAll('```', '');
+        
+        // Usuwanie znaków specjalnych na początku i końcu
+        cleaned = cleaned.trim();
+        if (cleaned.startsWith('`')) {
+            cleaned = cleaned.substring(1);
+        }
+        if (cleaned.endsWith('`')) {
+            cleaned = cleaned.substring(0, cleaned.length() - 1);
+        }
+        
+        // Upewniamy się, że odpowiedź zaczyna się od { i kończy na }
+        if (!cleaned.startsWith('{')) {
+            Integer startIdx = cleaned.indexOf('{');
+            if (startIdx >= 0) {
+                cleaned = cleaned.substring(startIdx);
+            } else {
+                return '{}';
+            }
+        }
+        
+        if (!cleaned.endsWith('}')) {
+            Integer endIdx = cleaned.lastIndexOf('}');
+            if (endIdx >= 0) {
+                cleaned = cleaned.substring(0, endIdx + 1);
+            } else {
+                return '{}';
+            }
+        }
+        
+        return cleaned;
+    }
+    
+    /**
+     * @description Ręcznie wyodrębnia dane z odpowiedzi tekstowej, gdy parsowanie JSON zawodzi
+     * @param response Odpowiedź tekstowa
+     * @return Mapa z wyodrębnionymi danymi
+     */
+    private static Map<String, Object> extractDataManually(String response) {
+        Map<String, Object> result = new Map<String, Object>();
+        
+        try {
+            // Próba wyodrębnienia matchedSkills
+            List<String> matchedSkills = new List<String>();
+            Pattern matchedPattern = Pattern.compile('"matchedSkills"\\s*:\\s*\\[([^\\]]+)\\]');
+            Matcher matchedMatcher = matchedPattern.matcher(response);
+            if (matchedMatcher.find()) {
+                String matchedStr = matchedMatcher.group(1);
+                for (String skill : matchedStr.split(',')) {
+                    skill = skill.replaceAll('"', '').trim();
+                    if (String.isNotBlank(skill)) {
+                        matchedSkills.add(skill);
+                    }
+                }
+                result.put('matchedSkills', matchedSkills);
+            }
+            
+            // Próba wyodrębnienia missingSkills
+            List<String> missingSkills = new List<String>();
+            Pattern missingPattern = Pattern.compile('"missingSkills"\\s*:\\s*\\[([^\\]]+)\\]');
+            Matcher missingMatcher = missingPattern.matcher(response);
+            if (missingMatcher.find()) {
+                String missingStr = missingMatcher.group(1);
+                for (String skill : missingStr.split(',')) {
+                    skill = skill.replaceAll('"', '').trim();
+                    if (String.isNotBlank(skill)) {
+                        missingSkills.add(skill);
+                    }
+                }
+                result.put('missingSkills', missingSkills);
+            }
+            
+            // Próba wyodrębnienia matchScore
+            Pattern scorePattern = Pattern.compile('"matchScore"\\s*:\\s*(\\d+)');
+            Matcher scoreMatcher = scorePattern.matcher(response);
+            if (scoreMatcher.find()) {
+                String scoreStr = scoreMatcher.group(1);
+                try {
+                    Integer score = Integer.valueOf(scoreStr);
+                    result.put('matchScore', score);
+                } catch (Exception e) {
+                    result.put('matchScore', 0);
+                }
+            }
+            
+            // Próba wyodrębnienia recommendations
+            Pattern recPattern = Pattern.compile('"recommendations"\\s*:\\s*"([^"]+)"');
+            Matcher recMatcher = recPattern.matcher(response);
+            if (recMatcher.find()) {
+                String recommendations = recMatcher.group(1);
+                result.put('recommendations', recommendations);
+            }
+            
+            // Jeśli nie znaleziono żadnych danych, zwróć pustą mapę
+            if (result.isEmpty()) {
+                return new Map<String, Object>();
+            }
+            
+            return result;
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Error in extractDataManually: ' + e.getMessage());
+            return new Map<String, Object>();
         }
     }
     
