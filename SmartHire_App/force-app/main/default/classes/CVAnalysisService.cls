@@ -1,339 +1,334 @@
 /**
- * @description       : 
- * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
- * @group             : 
- * @last modified on  : 03-12-2025
- * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
-**/
+ * Klasa usługowa do analizy CV kandydatów
+ * @author SmartHire Team
+ */
 public with sharing class CVAnalysisService {
     
-    private static final String CACHE_PARTITION_NAME = 'local.SmartHireCache';
-    private static final Integer CACHE_TTL = 86400; // 24 godziny
+    // Stałe dla cache
+    private static final String CACHE_PARTITION_NAME = 'SmartHireCache';
+    private static final Integer ORG_CACHE_TTL = 86400; // 24 godziny
+    private static final Integer SESSION_CACHE_TTL = 7200; // 2 godziny
+    private static final Integer MAX_CACHE_SIZE = 100000; // Maksymalny rozmiar danych w cache (w bajtach)
     
+    /**
+     * Analizuje CV kandydata i zwraca wyniki analizy
+     * @param contentDocumentId Id dokumentu CV
+     * @param positionId Id stanowiska (opcjonalnie)
+     * @param bypassCache Czy pominąć cache
+     * @return Map<String, Object> Wyniki analizy CV
+     */
     public static Map<String, Object> analyzeCandidateResume(Id contentDocumentId, Id positionId, Boolean bypassCache) {
-        // Walidacja parametrów
-        if (contentDocumentId == null || String.isBlank(String.valueOf(contentDocumentId))) {
-            System.debug(LoggingLevel.ERROR, '❌ ERROR: contentDocumentId is NULL or empty.');
-            throw new AuraHandledException('contentDocumentId cannot be null or empty.');
-        }
-
-        // Generowanie klucza cache
-        String cacheKey = generateCacheKey(contentDocumentId);
-        
-        // Próba odczytu z cache
-        Map<String, Object> cachedResults = getCachedResults(cacheKey, bypassCache);
-        if (cachedResults != null) {
-            return cachedResults;
-        }
-
-        // Pobierz dane CV i stanowiska
-        ContentVersion cv = getContentVersion(contentDocumentId);
-        if (cv == null) {
-            throw new AuraHandledException('CV document not found');
-        }
-        
-        // Analiza CV
-        Map<String, Object> analysisResults = CVAnalysisHelper.analyzeResume(cv, positionId);
-        
-        // Zapisz wyniki do cache
-        saveToCache(cacheKey, analysisResults);
-
-        return analysisResults;
-    }
-    
-    // Generuje klucz cache dla dokumentu CV
-    private static String generateCacheKey(Id contentDocumentId) {
-        String cacheKey = '';
-        
         try {
+            // Walidacja parametru wejściowego
             if (contentDocumentId == null) {
-                // Jeśli contentDocumentId jest null, użyj timestampa jako klucza
-                cacheKey = 'CV_' + String.valueOf(Datetime.now().getTime()).replaceAll('[^a-zA-Z0-9]', '');
-                System.debug(LoggingLevel.WARN, '⚠️ Using timestamp-based cache key due to null contentDocumentId: ' + cacheKey);
-                return cacheKey;
+                System.debug(LoggingLevel.ERROR, 'Błąd: contentDocumentId nie może być null');
+                throw new CVAnalysisException('Nie podano ID dokumentu CV');
             }
             
-            // Usuń wszystkie znaki niealfanumeryczne z ID dokumentu
-            cacheKey = String.valueOf(contentDocumentId).replaceAll('[^a-zA-Z0-9]', '');
+            System.debug(LoggingLevel.INFO, 'Rozpoczynam analizę CV dla dokumentu: ' + contentDocumentId);
             
-            // Jeśli po usunięciu znaków niealfanumerycznych klucz jest pusty, użyj timestampa
-            if (String.isBlank(cacheKey)) {
-                cacheKey = String.valueOf(Datetime.now().getTime()).replaceAll('[^a-zA-Z0-9]', '');
-                System.debug(LoggingLevel.WARN, '⚠️ Using timestamp-based cache key due to empty cleaned contentDocumentId: ' + cacheKey);
+            // Pobierz informacje o dokumencie CV
+            ContentVersion cv = getContentVersion(contentDocumentId);
+            if (cv == null) {
+                throw new CVAnalysisException('Nie znaleziono dokumentu CV o ID: ' + contentDocumentId);
             }
             
-            // Dodaj prefiks CV_ do klucza
-            cacheKey = 'CV_' + cacheKey;
+            System.debug(LoggingLevel.INFO, 'Znaleziono dokument CV: ' + cv.Title + ', typ: ' + cv.FileType + ', rozmiar: ' + cv.ContentSize);
             
-            // Ogranicz długość klucza do 40 znaków
-            if (cacheKey.length() > 40) { 
-                cacheKey = cacheKey.substring(0, 40);
+            // Generuj klucz cache
+            String cacheKey = generateCacheKey(contentDocumentId);
+            if (positionId != null) {
+                cacheKey += '_' + positionId;
+            }
+            System.debug(LoggingLevel.INFO, 'Wygenerowany klucz cache: ' + cacheKey);
+            
+            // Próba pobrania wyników z cache, jeśli nie pomijamy cache
+            if (!bypassCache) {
+                Map<String, Object> cachedResults = getCachedResults(cacheKey);
+                if (cachedResults != null) {
+                    System.debug(LoggingLevel.INFO, 'Znaleziono wyniki w cache dla klucza: ' + cacheKey);
+                    return cachedResults;
+                }
+            } else {
+                System.debug(LoggingLevel.INFO, 'Pomijam cache zgodnie z parametrem bypassCache');
             }
             
-            // Ostateczna walidacja - jeśli z jakiegoś powodu klucz jest nadal pusty lub zawiera niedozwolone znaki,
-            // użyj bezpiecznego klucza opartego na timestampie
-            if (String.isBlank(cacheKey) || !Pattern.matches('^[a-zA-Z0-9_]+$', cacheKey)) {
-                cacheKey = 'CV_' + String.valueOf(Datetime.now().getTime()).replaceAll('[^a-zA-Z0-9]', '');
-                System.debug(LoggingLevel.WARN, '⚠️ Using fallback timestamp-based cache key: ' + cacheKey);
+            System.debug(LoggingLevel.INFO, 'Brak wyników w cache lub cache pominięty, wykonuję analizę CV...');
+            
+            // Wykonaj analizę CV
+            Map<String, Object> results = CVAnalysisHelper.analyzeResume(cv, positionId);
+            
+            // Zapisz wyniki do cache, jeśli nie pomijamy cache
+            if (results != null && !bypassCache) {
+                saveToCache(cacheKey, results);
             }
             
-            System.debug(LoggingLevel.INFO, '✅ Final Cache Key: ' + cacheKey);
-            return cacheKey;
+            return results;
+        } catch (CVAnalysisHelper.CVAnalysisException e) {
+            System.debug(LoggingLevel.ERROR, 'Błąd podczas analizy CV: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
+            throw new CVAnalysisException('Błąd podczas analizy CV: ' + e.getMessage());
         } catch (Exception e) {
-            // W przypadku jakiegokolwiek błędu, zwróć bezpieczny klucz oparty na timestampie
-            cacheKey = 'CV_' + String.valueOf(Datetime.now().getTime()).replaceAll('[^a-zA-Z0-9]', '');
-            System.debug(LoggingLevel.ERROR, '❌ Error generating cache key: ' + e.getMessage() + '. Using fallback key: ' + cacheKey);
-            return cacheKey;
+            System.debug(LoggingLevel.ERROR, 'Błąd podczas analizy CV: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
+            throw new CVAnalysisException('Błąd podczas analizy CV: ' + e.getMessage());
         }
     }
     
-    // Pobiera wyniki z cache
-    private static Map<String, Object> getCachedResults(String cacheKey, Boolean bypassCache) {
-        if (bypassCache) {
-            return null;
-        }
-        
-        Cache.OrgPartition cachePart;
-        try {
-            cachePart = Cache.Org.getPartition(CACHE_PARTITION_NAME);
-            if (cachePart == null) {
-                System.debug(LoggingLevel.ERROR, '❌ Cache partition not found: ' + CACHE_PARTITION_NAME);
-                return null;
-            }
-            
-            Object cachedObj = cachePart.get(cacheKey);
-            if (cachedObj != null) {
-                Map<String, Object> cachedResults = (Map<String, Object>)cachedObj;
-                System.debug(LoggingLevel.INFO, '✅ Returning cached data for key: ' + cacheKey);
-                return cachedResults;
-            }
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, '❌ Error retrieving from cache: ' + e.getMessage());
-        }
-        return null;
+    /**
+     * Analizuje CV kandydata i zwraca wyniki analizy
+     * @param contentDocumentId Id dokumentu CV
+     * @return Map<String, Object> Wyniki analizy CV
+     */
+    public static Map<String, Object> analyzeCandidateResume(Id contentDocumentId) {
+        return analyzeCandidateResume(contentDocumentId, null, false);
     }
     
-    // Zapisuje wyniki do cache
-    private static void saveToCache(String cacheKey, Map<String, Object> analysisResults) {
-        try {
-            Cache.OrgPartition cachePart = Cache.Org.getPartition(CACHE_PARTITION_NAME);
-            if (cachePart != null) {
-                cachePart.put(cacheKey, analysisResults, CACHE_TTL);
-                System.debug(LoggingLevel.INFO, '✅ Cache zapisany dla klucza: ' + cacheKey);
-            }
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, '❌ Error saving to cache: ' + e.getMessage());
-        }
-    }
-
-    // Pobiera wersję zawartości dokumentu
-    private static ContentVersion getContentVersion(Id contentDocumentId) {
-        try {
-            // Walidacja uprawnień CRUD
-            if (!Schema.SObjectType.ContentVersion.isAccessible()) {
-                throw new AuraHandledException('Brak uprawnień do odczytu obiektów ContentVersion');
-            }
-            
-            List<ContentVersion> cvList = [
-                SELECT VersionData, Title, FileType 
-                FROM ContentVersion 
-                WHERE ContentDocumentId = :contentDocumentId 
-                  AND IsLatest = true 
-                WITH SECURITY_ENFORCED
-                LIMIT 1
-            ];
-            return cvList.isEmpty() ? null : cvList[0];
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, '❌ Error fetching ContentVersion: ' + e.getMessage());
-            return null;
-        }
-    }
-
     /**
      * Tworzy zadanie dla rekrutera na podstawie wyników analizy CV
-     * @param applicationId - Id aplikacji/zgłoszenia kandydata
-     * @param analysisResults - Wyniki analizy CV z AI
+     * @param applicationId Id aplikacji
+     * @param analysisResults Wyniki analizy CV
      */
     public static void createRecruiterTaskFromAnalysis(Id applicationId, Map<String, Object> analysisResults) {
-        if (applicationId == null || analysisResults == null) {
-            System.debug(LoggingLevel.ERROR, '❌ ERROR: Nieprawidłowe parametry dla zadania rekrutera');
-            return;
-        }
-        
         try {
-            // Pobierz dane o aplikacji
-            Job_Application__c application = getApplicationForTask(applicationId);
-            if (application == null) {
+            if (applicationId == null || analysisResults == null) {
+                System.debug(LoggingLevel.ERROR, 'Błąd: applicationId lub analysisResults nie może być null');
                 return;
             }
             
-            // Przygotuj dane zadania
-            TaskParams params = new TaskParams();
-            params.relatedRecordId = applicationId;
-            params.subject = 'Przegląd CV: ' + application.Candidate__r.Name;
-            params.priority = determineTaskPriority(analysisResults);
-            params.description = buildTaskDescription(application, analysisResults);
+            // Sprawdź uprawnienia
+            SecurityUtils.checkReadAccess(Job_Application__c.SObjectType, 
+                new List<String>{'Id', 'Name', 'Candidate__c', 'Position__c'});
+            SecurityUtils.checkCreateAccess(Task.SObjectType, 
+                new List<String>{'Subject', 'Description', 'WhatId', 'Status', 'Priority', 'ActivityDate'});
             
-            // Utwórz zadanie
-            createTask(params);
-            
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, '❌ ERROR: Nie udało się utworzyć zadania rekrutera: ' + e.getMessage());
-        }
-    }
-
-    /**
-     * Klasa pomocnicza do przechowywania parametrów zadania
-     */
-    private class TaskParams {
-        public Id relatedRecordId;
-        public String subject;
-        public String description;
-        public String priority;
-    }
-
-    /**
-     * Pobiera dane aplikacji dla zadania
-     */
-    private static Job_Application__c getApplicationForTask(Id applicationId) {
-        try {
-            // Walidacja uprawnień CRUD
-            if (!Schema.SObjectType.Job_Application__c.isAccessible()) {
-                throw new AuraHandledException('Brak uprawnień do odczytu obiektów Job_Application__c');
-            }
-            
-            return [
-                SELECT Id, Name, Candidate__c, Position__c, Candidate__r.Name, Position__r.Name 
-                FROM Job_Application__c 
-                WHERE Id = :applicationId 
-                WITH SECURITY_ENFORCED
+            // Pobierz dane aplikacji
+            Job_Application__c app = [
+                SELECT Id, Name, Candidate__c, Position__c, Position__r.Name
+                FROM Job_Application__c
+                WHERE Id = :applicationId
                 LIMIT 1
             ];
+            
+            // Przygotuj opis zadania
+            String taskDescription = 'Wyniki analizy CV dla aplikacji: ' + app.Name + '\n\n';
+            
+            // Dodaj informacje o dopasowaniu, jeśli istnieją
+            if (analysisResults.containsKey('matchScore')) {
+                Object matchScore = analysisResults.get('matchScore');
+                taskDescription += 'Dopasowanie do stanowiska: ' + matchScore + '\n\n';
+            }
+            
+            // Dodaj informacje o umiejętnościach, jeśli istnieją
+            if (analysisResults.containsKey('skills')) {
+                Object skills = analysisResults.get('skills');
+                if (skills instanceof List<Object>) {
+                    List<Object> skillsList = (List<Object>)skills;
+                    taskDescription += 'Umiejętności kandydata:\n';
+                    for (Object skill : skillsList) {
+                        taskDescription += '- ' + String.valueOf(skill) + '\n';
+                    }
+                    taskDescription += '\n';
+                }
+            }
+            
+            // Dodaj informacje o doświadczeniu, jeśli istnieją
+            if (analysisResults.containsKey('experience')) {
+                Object experience = analysisResults.get('experience');
+                taskDescription += 'Doświadczenie zawodowe:\n' + String.valueOf(experience) + '\n\n';
+            }
+            
+            // Utwórz zadanie
+            Task task = new Task(
+                Subject = 'Przegląd CV - ' + app.Position__r.Name,
+                Description = taskDescription,
+                WhatId = applicationId,
+                Status = 'Not Started',
+                Priority = 'Normal',
+                ActivityDate = Date.today().addDays(2)
+            );
+            
+            insert task;
+            System.debug(LoggingLevel.INFO, 'Utworzono zadanie dla rekrutera: ' + task.Id);
         } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, '❌ ERROR: Nie udało się pobrać danych aplikacji: ' + e.getMessage());
-            return null;
+            System.debug(LoggingLevel.ERROR, 'Błąd podczas tworzenia zadania dla rekrutera: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
         }
-    }
-
-    /**
-     * Określa priorytet zadania na podstawie wyniku dopasowania
-     */
-    private static String determineTaskPriority(Map<String, Object> analysisResults) {
-        String taskPriority = 'Normal';
-        if (analysisResults.containsKey('matchScore')) {
-            Object scoreObj = analysisResults.get('matchScore');
-            Decimal matchScore = scoreObj instanceof Decimal ? (Decimal)scoreObj : 0;
-            if (matchScore > 80) {
-                taskPriority = 'High';
-            } else if (matchScore < 40) {
-                taskPriority = 'Low';
-            }
-        }
-        return taskPriority;
-    }
-
-    /**
-     * Buduje opis zadania na podstawie wyników analizy
-     */
-    private static String buildTaskDescription(Job_Application__c application, Map<String, Object> analysisResults) {
-        String taskDescription = 'Automatyczna analiza CV kandydata ' + application.Candidate__r.Name + 
-                                ' dla stanowiska ' + application.Position__r.Name + '.\n\n';
-        
-        // Dodaj informacje o umiejętnościach
-        taskDescription += buildSkillsSection(analysisResults);
-        
-        // Dodaj informacje o doświadczeniu
-        if (analysisResults.containsKey('experienceYears')) {
-            taskDescription += 'Lata doświadczenia: ' + analysisResults.get('experienceYears') + '\n';
-        }
-        
-        // Dodaj informacje o wykształceniu
-        if (analysisResults.containsKey('education')) {
-            taskDescription += 'Wykształcenie: ' + analysisResults.get('education') + '\n';
-        }
-        
-        return taskDescription;
-    }
-
-    /**
-     * Buduje sekcję umiejętności dla opisu zadania
-     */
-    private static String buildSkillsSection(Map<String, Object> analysisResults) {
-        // Jeśli nie ma umiejętności, zwróć pusty string
-        if (!analysisResults.containsKey('skills')) {
-            return '';
-        }
-        
-        Object skillsObj = analysisResults.get('skills');
-        if (!(skillsObj instanceof List<Object>)) {
-            return '';
-        }
-        
-        List<Object> skills = (List<Object>)skillsObj;
-        if (skills.isEmpty()) {
-            return '';
-        }
-        
-        // Buduj sekcję umiejętności
-        String skillsSection = 'Kluczowe umiejętności:\n';
-        
-        // Przetwórz każdą umiejętność
-        for (Object skillObj : skills) {
-            String skillLine = formatSkillLine(skillObj);
-            if (String.isNotBlank(skillLine)) {
-                skillsSection += skillLine;
-            }
-        }
-        
-        return skillsSection + '\n';
     }
     
     /**
-     * Formatuje linię dla pojedynczej umiejętności
-     * @param skillObj Obiekt reprezentujący umiejętność
-     * @return Sformatowana linia tekstu dla umiejętności
+     * Pobiera wersję zawartości dokumentu
+     * @param contentDocumentId Id dokumentu
+     * @return ContentVersion Wersja zawartości dokumentu
      */
-    private static String formatSkillLine(Object skillObj) {
-        if (!(skillObj instanceof Map<String, Object>)) {
-            return '';
-        }
+    private static ContentVersion getContentVersion(Id contentDocumentId) {
+        List<ContentVersion> versions = [
+            SELECT Id, Title, FileType, ContentSize, VersionData
+            FROM ContentVersion
+            WHERE ContentDocumentId = :contentDocumentId
+            AND IsLatest = true
+            LIMIT 1
+        ];
         
-        Map<String, Object> skill = (Map<String, Object>)skillObj;
-        if (!skill.containsKey('name')) {
-            return '';
-        }
-        
-        Boolean found = skill.get('found') == true;
-        String foundIcon = found ? '✅' : '❌';
-        return '- ' + foundIcon + ' ' + skill.get('name') + '\n';
+        return versions.isEmpty() ? null : versions[0];
     }
-
+    
     /**
-     * Tworzy zadanie w systemie
-     * @param params Parametry zadania
+     * Generuje klucz cache dla dokumentu CV
+     * @param contentDocumentId Id dokumentu CV
+     * @return String Klucz cache
      */
-    private static void createTask(TaskParams params) {
-        // Walidacja uprawnień CRUD
-        if (!Schema.SObjectType.Task.isCreateable()) {
-            System.debug(LoggingLevel.ERROR, '❌ ERROR: Brak uprawnień do tworzenia zadań');
-            return;
+    private static String generateCacheKey(Id contentDocumentId) {
+        // Prefiks CV + ID dokumentu, usunięcie znaków niealfanumerycznych
+        String rawKey = 'CV' + contentDocumentId;
+        return sanitizeCacheKey(rawKey);
+    }
+    
+    /**
+     * Sanityzuje klucz cache, usuwając znaki niealfanumeryczne
+     * @param key Oryginalny klucz
+     * @return String Sanityzowany klucz
+     */
+    private static String sanitizeCacheKey(String key) {
+        if (String.isBlank(key)) {
+            return '';
         }
         
-        Task newTask = new Task(
-            Subject = params.subject,
-            Description = params.description,
-            Priority = params.priority,
-            Status = 'Not Started',
-            WhatId = params.relatedRecordId,
-            ActivityDate = Date.today().addDays(2)
-        );
-        
-        // Użyj Database.insert z opcją sprawdzania uprawnień
-        Database.SaveResult result = Database.insert(newTask, true);
-        if (result.isSuccess()) {
-            System.debug(LoggingLevel.INFO, '✅ Utworzono zadanie rekrutera: ' + newTask.Id);
-        } else {
-            System.debug(LoggingLevel.ERROR, '❌ ERROR: Nie udało się utworzyć zadania: ' + result.getErrors()[0].getMessage());
+        // Usuń wszystkie znaki niealfanumeryczne
+        return key.replaceAll('[^a-zA-Z0-9]', '');
+    }
+    
+    /**
+     * Pobiera wyniki analizy CV z cache
+     * @param cacheKey Klucz cache
+     * @return Map<String, Object> Wyniki analizy CV z cache lub null jeśli nie znaleziono
+     */
+    private static Map<String, Object> getCachedResults(String cacheKey) {
+        try {
+            // Walidacja klucza cache
+            if (String.isBlank(cacheKey)) {
+                System.debug(LoggingLevel.WARN, 'Pusty klucz cache, pomijam odczyt z cache');
+                return null;
+            }
+            
+            // Sanityzacja klucza cache
+            String sanitizedKey = sanitizeCacheKey(cacheKey);
+            if (String.isBlank(sanitizedKey)) {
+                System.debug(LoggingLevel.WARN, 'Klucz cache po sanityzacji jest pusty, pomijam odczyt z cache');
+                return null;
+            }
+            
+            System.debug(LoggingLevel.INFO, 'Próba odczytu z cache dla klucza: ' + sanitizedKey);
+            
+            // Próba odczytu z Trial cache (zamiast Organization)
+            try {
+                Cache.OrgPartition orgPart = Cache.Org.getPartition(CACHE_PARTITION_NAME);
+                if (orgPart != null) {
+                    // Używamy typu Trial zamiast Organization, ale bez parametru Cache.Visibility
+                    Object cachedValue = orgPart.get(sanitizedKey);
+                    if (cachedValue != null) {
+                        System.debug(LoggingLevel.INFO, 'Znaleziono wyniki w Trial cache');
+                        return (Map<String, Object>)cachedValue;
+                    }
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.WARN, 'Błąd podczas odczytu z Trial cache: ' + e.getMessage());
+                // Kontynuuj do Session cache
+            }
+            
+            // Próba odczytu z Session cache
+            try {
+                Cache.SessionPartition sessionPart = Cache.Session.getPartition(CACHE_PARTITION_NAME);
+                if (sessionPart != null) {
+                    Object cachedValue = sessionPart.get(sanitizedKey);
+                    if (cachedValue != null) {
+                        System.debug(LoggingLevel.INFO, 'Znaleziono wyniki w Session cache');
+                        return (Map<String, Object>)cachedValue;
+                    }
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.WARN, 'Błąd podczas odczytu z Session cache: ' + e.getMessage());
+            }
+            
+            System.debug(LoggingLevel.INFO, 'Nie znaleziono wyników w cache');
+            return null;
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Błąd podczas pobierania wyników z cache: ' + e.getMessage());
+            return null; // Zwróć null, aby kontynuować analizę bez cache
         }
     }
+    
+    /**
+     * Zapisuje wyniki analizy CV do cache
+     * @param cacheKey Klucz cache
+     * @param results Wyniki analizy CV
+     */
+    private static void saveToCache(String cacheKey, Map<String, Object> results) {
+        try {
+            // Walidacja parametrów
+            if (String.isBlank(cacheKey) || results == null) {
+                System.debug(LoggingLevel.WARN, 'Pusty klucz cache lub wyniki, pomijam zapis do cache');
+                return;
+            }
+            
+            // Sanityzacja klucza cache
+            String sanitizedKey = sanitizeCacheKey(cacheKey);
+            if (String.isBlank(sanitizedKey)) {
+                System.debug(LoggingLevel.WARN, 'Klucz cache po sanityzacji jest pusty, pomijam zapis do cache');
+                return;
+            }
+            
+            System.debug(LoggingLevel.INFO, 'Próba zapisu do cache dla klucza: ' + sanitizedKey);
+            
+            // Optymalizacja danych przed zapisem do cache
+            Map<String, Object> optimizedResults = optimizeDataForCache(results);
+            
+            // Próba zapisu do Trial cache (zamiast Organization)
+            boolean savedToTrialCache = false;
+            try {
+                Cache.OrgPartition orgPart = Cache.Org.getPartition(CACHE_PARTITION_NAME);
+                if (orgPart != null) {
+                    // Używamy typu Trial zamiast Organization, ale bez parametru Cache.Visibility
+                    orgPart.put(sanitizedKey, optimizedResults, ORG_CACHE_TTL);
+                    savedToTrialCache = true;
+                    System.debug(LoggingLevel.INFO, 'Zapisano wyniki do Trial cache');
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.WARN, 'Błąd podczas zapisu do Trial cache: ' + e.getMessage());
+                // Kontynuuj do Session cache
+            }
+            
+            // Jeśli nie udało się zapisać do Trial cache, spróbuj Session cache
+            if (!savedToTrialCache) {
+                try {
+                    Cache.SessionPartition sessionPart = Cache.Session.getPartition(CACHE_PARTITION_NAME);
+                    if (sessionPart != null) {
+                        sessionPart.put(sanitizedKey, optimizedResults, SESSION_CACHE_TTL);
+                        System.debug(LoggingLevel.INFO, 'Zapisano wyniki do Session cache');
+                    }
+                } catch (Exception e) {
+                    System.debug(LoggingLevel.WARN, 'Błąd podczas zapisu do Session cache: ' + e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Błąd podczas zapisywania wyników do cache: ' + e.getMessage());
+            // Kontynuuj bez cache
+        }
+    }
+    
+    /**
+     * Optymalizuje dane przed zapisem do cache
+     * @param results Wyniki analizy CV
+     * @return Map<String, Object> Zoptymalizowane wyniki
+     */
+    private static Map<String, Object> optimizeDataForCache(Map<String, Object> results) {
+        // Implementacja optymalizacji danych, np. usunięcie zbędnych danych
+        // lub konwersja do mniejszego formatu
+        return results;
+    }
+    
+    /**
+     * Klasa wyjątku dla błędów analizy CV
+     */
+    public class CVAnalysisException extends Exception {}
 }

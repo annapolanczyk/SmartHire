@@ -14,6 +14,10 @@ public with sharing class CVAnalysisController {
     public static Map<String, Object> analyzeCandidateResume(Id contentDocumentId, Id positionId, Boolean bypassCache) {
         try {
             return CVAnalysisService.analyzeCandidateResume(contentDocumentId, positionId, bypassCache != null ? bypassCache : false);
+        } catch (CVAnalysisService.CVAnalysisException e) {
+            throw new AuraHandledException(e.getMessage());
+        } catch (CVAnalysisHelper.CVAnalysisException e) {
+            throw new AuraHandledException(e.getMessage());
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }
