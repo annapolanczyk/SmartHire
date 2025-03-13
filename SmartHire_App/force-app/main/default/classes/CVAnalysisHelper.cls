@@ -39,14 +39,16 @@ public with sharing class CVAnalysisHelper {
             // Walidacja uprawnień do ContentVersion
             validateContentVersionAccess();
             
-        // Konwersja CV na tekst
-        String resumeText = extractTextFromCV(cv);
+            // Konwersja CV na tekst
+            String resumeText = extractTextFromCV(cv);
             
             // Pobierz dane stanowiska i utwórz kontekst analizy
             AnalysisContext context = createAnalysisContext(resumeText, positionId);
             
             // Przygotuj prompt dla OpenAI
-            String systemPrompt = 'Jesteś ekspertem HR analizującym CV kandydatów. Twoim zadaniem jest dokładna analiza CV i wyodrębnienie kluczowych informacji.';
+            String systemPrompt = 'Jesteś ekspertem HR analizującym CV kandydatów, ze szczególną specjalizacją w technologiach Salesforce. '
+                + 'Twoim zadaniem jest dokładna analiza CV i wyodrębnienie kluczowych informacji, ze szczególnym uwzględnieniem umiejętności technicznych '
+                + 'związanych z platformą Salesforce, takich jak Apex, LWC, Visualforce, SOQL, Flow, integracje API, itp.';
             String prompt = buildPrompt(context);
             
             // Wywołaj OpenAI API
@@ -161,20 +163,34 @@ public with sharing class CVAnalysisHelper {
      * @return Prompt dla API OpenAI
      */
     private static String buildPrompt(AnalysisContext context) {
-        String prompt = 'Przeanalizuj poniższe CV i wyodrębnij następujące informacje w formacie JSON:\n'
+        String prompt = 'Przeprowadź zaawansowaną analizę semantyczną poniższego CV. Działaj jako doświadczony rekruter ze specjalizacją w technologiach Salesforce. '
+            + 'Szczegółowo zidentyfikuj wszystkie umiejętności, kompetencje, kwalifikacje i doświadczenie zawodowe wymienione w dokumencie.\n\n'
+            + 'Zwróć szczególną uwagę na:\n'
+            + '1. Umiejętności techniczne związane z Salesforce (Apex, LWC, Visualforce, SOQL, Flow, itp.)\n'
+            + '2. Umiejętności programistyczne i integracyjne (REST/SOAP API, JavaScript, HTML/CSS, itp.)\n'
+            + '3. Umiejętności miękkie i interpersonalne\n'
+            + '4. Certyfikaty i kwalifikacje, szczególnie związane z Salesforce\n'
+            + '5. Poziom doświadczenia zawodowego\n'
+            + '6. Pośrednie umiejętności, które nie są wymienione wprost, ale wynikają z kontekstu\n\n'
+            + 'Wyodrębnij następujące informacje w formacie JSON:\n'
             + '1. Dane osobowe (imię, nazwisko, email, telefon)\n'
             + '2. Wykształcenie (stopień, kierunek, uczelnia, rok ukończenia)\n'
             + '3. Doświadczenie zawodowe (lista stanowisk, firm, okresów zatrudnienia, obowiązków)\n'
-            + '4. Umiejętności techniczne (lista)\n'
+            + '4. Umiejętności techniczne (lista, zwróć szczególną uwagę na technologie Salesforce)\n'
             + '5. Języki obce (lista z poziomem znajomości)\n'
             + '6. Certyfikaty (lista)\n\n';
         
         // Dodaj informacje o stanowisku jeśli są dostępne
         if (context.hasPositionDetails()) {
             prompt += 'Dodatkowo, oceń dopasowanie kandydata do stanowiska "' + context.positionName + '" na podstawie poniższego opisu i wymaganych umiejętności. '
-                + 'Podaj procentowy wynik dopasowania (0-100%) oraz krótkie uzasadnienie.\n\n'
+                + 'Podaj procentowy wynik dopasowania (0-100%) oraz szczegółowe uzasadnienie, wymieniając konkretne umiejętności, które pasują do wymagań.\n\n'
                 + 'Opis stanowiska: ' + context.jobDescription + '\n\n'
-                + 'Wymagane umiejętności: ' + String.join(context.requiredSkills, ', ') + '\n\n';
+                + 'Wymagane umiejętności: ' + String.join(context.requiredSkills, ', ') + '\n\n'
+                + 'W odpowiedzi uwzględnij następujące sekcje:\n'
+                + '1. "matchedSkills" (tablica umiejętności, które odpowiadają wymaganym umiejętnościom)\n'
+                + '2. "missingSkills" (tablica wymaganych umiejętności, których brakuje w CV)\n'
+                + '3. "matchScore" (liczba od 0 do 100 określająca ogólne dopasowanie)\n'
+                + '4. "recommendations" (tekst z rekomendacjami dla rekrutera)\n\n';
         }
         
         prompt += 'CV do analizy:\n' + context.resumeText;
