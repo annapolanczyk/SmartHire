@@ -41,6 +41,24 @@ export default class CvAnalyzer extends LightningElement {
         return null;
     }
     
+    get matchedSkills() {
+        if (this.analysisResults && this.analysisResults.matchedSkills) {
+            if (Array.isArray(this.analysisResults.matchedSkills)) {
+                return this.analysisResults.matchedSkills;
+            }
+        }
+        return null;
+    }
+    
+    get missingSkills() {
+        if (this.analysisResults && this.analysisResults.missingSkills) {
+            if (Array.isArray(this.analysisResults.missingSkills)) {
+                return this.analysisResults.missingSkills;
+            }
+        }
+        return null;
+    }
+    
     get matchScore() {
         if (this.analysisResults && this.analysisResults.matchScore !== undefined) {
             // Upewnij się, że matchScore jest liczbą
