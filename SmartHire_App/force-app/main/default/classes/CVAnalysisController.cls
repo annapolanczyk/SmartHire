@@ -171,20 +171,20 @@ public with sharing class CVAnalysisController {
                         skillName.containsIgnoreCase('SOQL') ||
                         skillName.containsIgnoreCase('SOSL') ||
                         skillName.containsIgnoreCase('Flow')) {
-                        skill.Category__c = 'Salesforce';
+                        skill.Category__c = 'Technical';
                     } else if (skillName.containsIgnoreCase('Java') || 
                                skillName.containsIgnoreCase('JavaScript') || 
                                skillName.containsIgnoreCase('Python') ||
                                skillName.containsIgnoreCase('C#') ||
                                skillName.containsIgnoreCase('C++')) {
-                        skill.Category__c = 'Programming';
+                        skill.Category__c = 'Technical';
                     } else if (skillName.containsIgnoreCase('English') || 
                                skillName.containsIgnoreCase('French') || 
                                skillName.containsIgnoreCase('German') ||
                                skillName.containsIgnoreCase('Spanish')) {
                         skill.Category__c = 'Language';
                     } else {
-                        skill.Category__c = 'Other';
+                        skill.Category__c = 'Soft Skills';
                     }
                     
                     // Domyślny poziom biegłości
