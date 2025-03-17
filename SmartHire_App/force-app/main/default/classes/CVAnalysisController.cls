@@ -168,6 +168,191 @@ public with sharing class CVAnalysisController {
                 System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error setting RawAnalysisResults__c: ' + e.getMessage());
             }
             
+            // Ustaw MatchScore
+            try {
+                if (results.containsKey('matchScore') && Schema.SObjectType.AiAnalysisResult__c.fields.MatchScore__c.isCreateable()) {
+                    Object matchScoreObj = results.get('matchScore');
+                    Decimal matchScore = extractMatchScore(matchScoreObj);
+                    aiResult.MatchScore__c = matchScore;
+                    System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set MatchScore__c: ' + matchScore);
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error setting MatchScore__c: ' + e.getMessage());
+            }
+            
+            // Ustaw MatchingSkills
+            try {
+                if (results.containsKey('matchedSkills') && Schema.SObjectType.AiAnalysisResult__c.fields.MatchingSkills__c.isCreateable()) {
+                    Object matchedSkillsObj = results.get('matchedSkills');
+                    String matchedSkills = '';
+                    
+                    if (matchedSkillsObj instanceof List<Object>) {
+                        matchedSkills = extractSkillsAsString((List<Object>)matchedSkillsObj);
+                    }
+                    
+                    if (matchedSkills.length() <= 32768) { // Sprawdź limit długości pola
+                        aiResult.MatchingSkills__c = matchedSkills;
+                        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set MatchingSkills__c');
+                    } else {
+                        System.debug(LoggingLevel.WARN, 'createAiAnalysisResult - MatchingSkills__c exceeds field length limit, truncating');
+                        aiResult.MatchingSkills__c = matchedSkills.substring(0, 32768);
+                    }
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error setting MatchingSkills__c: ' + e.getMessage());
+            }
+            
+            // Ustaw MissingSkills
+            try {
+                if (results.containsKey('missingSkills') && Schema.SObjectType.AiAnalysisResult__c.fields.MissingSkills__c.isCreateable()) {
+                    Object missingSkillsObj = results.get('missingSkills');
+                    String missingSkills = '';
+                    
+                    if (missingSkillsObj instanceof List<Object>) {
+                        missingSkills = extractSkillsAsString((List<Object>)missingSkillsObj);
+                    }
+                    
+                    if (missingSkills.length() <= 32768) {
+                        aiResult.MissingSkills__c = missingSkills;
+                        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set MissingSkills__c');
+                    } else {
+                        System.debug(LoggingLevel.WARN, 'createAiAnalysisResult - MissingSkills__c exceeds field length limit, truncating');
+                        aiResult.MissingSkills__c = missingSkills.substring(0, 32768);
+                    }
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error setting MissingSkills__c: ' + e.getMessage());
+            }
+            
+            // Ustaw AdditionalSkills
+            try {
+                if (Schema.SObjectType.AiAnalysisResult__c.fields.AdditionalSkills__c.isCreateable()) {
+                    String additionalSkills = '';
+                    
+                    if (results.containsKey('additionalSkills')) {
+                        Object additionalSkillsObj = results.get('additionalSkills');
+                        
+                        if (additionalSkillsObj instanceof List<Object>) {
+                            additionalSkills = extractSkillsAsString((List<Object>)additionalSkillsObj);
+                        }
+                    } else if (results.containsKey('skills')) {
+                        // Jeśli nie ma additionalSkills, ale są skills, użyj ich jako additionalSkills
+                        Object skillsObj = results.get('skills');
+                        
+                        if (skillsObj instanceof List<Object>) {
+                            additionalSkills = extractSkillsAsString((List<Object>)skillsObj);
+                        }
+                    }
+                    
+                    if (additionalSkills.length() <= 32768) {
+                        aiResult.AdditionalSkills__c = additionalSkills;
+                        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set AdditionalSkills__c');
+                    } else {
+                        System.debug(LoggingLevel.WARN, 'createAiAnalysisResult - AdditionalSkills__c exceeds field length limit, truncating');
+                        aiResult.AdditionalSkills__c = additionalSkills.substring(0, 32768);
+                    }
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error setting AdditionalSkills__c: ' + e.getMessage());
+            }
+            
+            // Ustaw AnalysisSummary
+            try {
+                if (results.containsKey('summary') && Schema.SObjectType.AiAnalysisResult__c.fields.AnalysisSummary__c.isCreateable()) {
+                    Object summaryObj = results.get('summary');
+                    if (summaryObj instanceof String) {
+                        String summary = (String)summaryObj;
+                        if (summary.length() <= 32768) {
+                            aiResult.AnalysisSummary__c = summary;
+                            System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set AnalysisSummary__c');
+                        } else {
+                            System.debug(LoggingLevel.WARN, 'createAiAnalysisResult - AnalysisSummary__c exceeds field length limit, truncating');
+                            aiResult.AnalysisSummary__c = summary.substring(0, 32768);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error setting AnalysisSummary__c: ' + e.getMessage());
+            }
+            
+            // Ustaw RecommendationLevel na podstawie matchScore
+            try {
+                if (aiResult.MatchScore__c != null && Schema.SObjectType.AiAnalysisResult__c.fields.RecommendationLevel__c.isCreateable()) {
+                    if (aiResult.MatchScore__c >= 0.75) {
+                        aiResult.RecommendationLevel__c = 'High';
+                    } else if (aiResult.MatchScore__c >= 0.5) {
+                        aiResult.RecommendationLevel__c = 'Medium';
+                    } else {
+                        aiResult.RecommendationLevel__c = 'Low';
+                    }
+                    System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set RecommendationLevel__c: ' + aiResult.RecommendationLevel__c);
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error setting RecommendationLevel__c: ' + e.getMessage());
+            }
+            
+            // Ustaw KeyHighlights
+            try {
+                if (results.containsKey('keyHighlights') && Schema.SObjectType.AiAnalysisResult__c.fields.KeyHighlights__c.isCreateable()) {
+                    Object keyHighlightsObj = results.get('keyHighlights');
+                    String keyHighlights = '';
+                    
+                    if (keyHighlightsObj instanceof String) {
+                        keyHighlights = (String)keyHighlightsObj;
+                    } else if (keyHighlightsObj instanceof List<Object>) {
+                        List<String> highlights = new List<String>();
+                        for (Object highlight : (List<Object>)keyHighlightsObj) {
+                            if (highlight instanceof String) {
+                                highlights.add((String)highlight);
+                            }
+                        }
+                        keyHighlights = String.join(highlights, '\n');
+                    }
+                    
+                    if (keyHighlights.length() <= 32768) {
+                        aiResult.KeyHighlights__c = keyHighlights;
+                        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set KeyHighlights__c');
+                    } else {
+                        System.debug(LoggingLevel.WARN, 'createAiAnalysisResult - KeyHighlights__c exceeds field length limit, truncating');
+                        aiResult.KeyHighlights__c = keyHighlights.substring(0, 32768);
+                    }
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error setting KeyHighlights__c: ' + e.getMessage());
+            }
+            
+            // Ustaw PotentialConcerns
+            try {
+                if ((results.containsKey('potentialConcerns') || results.containsKey('concerns')) && 
+                    Schema.SObjectType.AiAnalysisResult__c.fields.PotentialConcerns__c.isCreateable()) {
+                    Object concernsObj = results.containsKey('potentialConcerns') ? 
+                        results.get('potentialConcerns') : results.get('concerns');
+                    
+                    String concerns = '';
+                    if (concernsObj instanceof String) {
+                        concerns = (String)concernsObj;
+                    } else if (concernsObj instanceof List<Object>) {
+                        List<String> concernsList = new List<String>();
+                        for (Object concern : (List<Object>)concernsObj) {
+                            if (concern instanceof String) {
+                                concernsList.add((String)concern);
+                            }
+                        }
+                        concerns = String.join(concernsList, '\n');
+                    }
+                    
+                    if (concerns.length() <= 32768) {
+                        aiResult.PotentialConcerns__c = concerns;
+                        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set PotentialConcerns__c');
+                    } else {
+                        System.debug(LoggingLevel.WARN, 'createAiAnalysisResult - PotentialConcerns__c exceeds field length limit, truncating');
+                        aiResult.PotentialConcerns__c = concerns.substring(0, 32768);
+                    }
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error setting PotentialConcerns__c: ' + e.getMessage());
+            }
+            
             // Próba wstawienia rekordu
             try {
                 insert aiResult;
