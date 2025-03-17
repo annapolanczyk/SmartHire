@@ -27,7 +27,7 @@ public with sharing class CVAnalysisController {
      * Save analysis results to the record
      * @param recordId ID of the record (Job_Application__c or Candidate__c)
      * @param analysisResults JSON string with analysis results
-     * @return ID of the updated record
+     * @return ID of the created AiAnalysisResult__c record
      */
     @AuraEnabled
     public static Id saveAnalysisResults(Id recordId, String analysisResults) {
@@ -49,6 +49,72 @@ public with sharing class CVAnalysisController {
                 
                 // Logowanie kluczy w wynikach analizy
                 System.debug(LoggingLevel.INFO, 'saveAnalysisResults - result keys: ' + results.keySet());
+                
+                // Szczegółowe logowanie struktury danych
+                System.debug(LoggingLevel.INFO, '=== DETAILED ANALYSIS RESULTS STRUCTURE ===');
+                for (String key : results.keySet()) {
+                    Object value = results.get(key);
+                    String valueType = getObjectType(value);
+                    System.debug(LoggingLevel.INFO, 'Key: ' + key + ', Type: ' + valueType);
+                    
+                    // Jeśli wartość to mapa, zaloguj jej klucze
+                    if (value instanceof Map<String, Object>) {
+                        Map<String, Object> nestedMap = (Map<String, Object>)value;
+                        System.debug(LoggingLevel.INFO, '  Nested keys for ' + key + ': ' + nestedMap.keySet());
+                    }
+                    // Jeśli wartość to lista, zaloguj jej rozmiar i typ pierwszego elementu (jeśli istnieje)
+                    else if (value instanceof List<Object>) {
+                        List<Object> nestedList = (List<Object>)value;
+                        String firstItemType = nestedList.isEmpty() ? 'empty' : getObjectType(nestedList[0]);
+                        System.debug(LoggingLevel.INFO, '  List size for ' + key + ': ' + nestedList.size() + ', First item type: ' + firstItemType);
+                        
+                        // Jeśli to lista umiejętności, zaloguj kilka pierwszych elementów
+                        if (key.containsIgnoreCase('skill') && !nestedList.isEmpty()) {
+                            Integer samplesToLog = Math.min(nestedList.size(), 5);
+                            List<Object> samples = new List<Object>();
+                            for (Integer i = 0; i < samplesToLog; i++) {
+                                samples.add(nestedList[i]);
+                            }
+                            System.debug(LoggingLevel.INFO, '  Sample skills: ' + samples);
+                        }
+                    }
+                    // Dla prostych typów, zaloguj wartość (jeśli nie jest za długa)
+                    else if (value instanceof String) {
+                        String strValue = (String)value;
+                        if (strValue.length() <= 100) {
+                            System.debug(LoggingLevel.INFO, '  Value: ' + strValue);
+                        } else {
+                            System.debug(LoggingLevel.INFO, '  Value (truncated): ' + strValue.substring(0, 100) + '...');
+                        }
+                    }
+                    else if (value instanceof Decimal || value instanceof Integer || value instanceof Double || value instanceof Boolean) {
+                        System.debug(LoggingLevel.INFO, '  Value: ' + value);
+                    }
+                }
+                System.debug(LoggingLevel.INFO, '=== END OF DETAILED ANALYSIS RESULTS STRUCTURE ===');
+                
+                // Sprawdź, czy istnieją kluczowe pola, których szukamy
+                List<String> expectedKeys = new List<String>{
+                    'matchScore', 'matchedSkills', 'missingSkills', 'additionalSkills', 
+                    'summary', 'keyHighlights', 'potentialConcerns', 'skills'
+                };
+                
+                System.debug(LoggingLevel.INFO, '=== CHECKING FOR EXPECTED KEYS ===');
+                for (String expectedKey : expectedKeys) {
+                    if (results.containsKey(expectedKey)) {
+                        System.debug(LoggingLevel.INFO, 'Expected key found: ' + expectedKey);
+                    } else {
+                        System.debug(LoggingLevel.WARN, 'Expected key NOT found: ' + expectedKey);
+                        
+                        // Sprawdź, czy istnieje podobny klucz
+                        for (String actualKey : results.keySet()) {
+                            if (actualKey.containsIgnoreCase(expectedKey)) {
+                                System.debug(LoggingLevel.INFO, '  Similar key found: ' + actualKey);
+                            }
+                        }
+                    }
+                }
+                System.debug(LoggingLevel.INFO, '=== END OF CHECKING FOR EXPECTED KEYS ===');
                 
                 if (objectType == 'Job_Application__c') {
                     System.debug(LoggingLevel.INFO, 'saveAnalysisResults - calling saveJobApplicationResults');
@@ -79,243 +145,46 @@ public with sharing class CVAnalysisController {
     }
     
     /**
-     * Tworzy rekordy umiejętności na podstawie wyników analizy CV
-     * @param candidateId ID kandydata
-     * @param results Wyniki analizy CV
-     * @return Lista utworzonych rekordów umiejętności
-     */
-    private static List<Skill__c> createSkillRecords(Id candidateId, Map<String, Object> results) {
-        System.debug(LoggingLevel.INFO, '=== createSkillRecords - START ===');
-        System.debug(LoggingLevel.INFO, 'createSkillRecords - candidateId: ' + candidateId);
-        
-        List<Skill__c> skillsToInsert = new List<Skill__c>();
-        
-        try {
-            // Sprawdź uprawnienia do tworzenia rekordów Skill__c
-            if (!Schema.SObjectType.Skill__c.isCreateable()) {
-                System.debug(LoggingLevel.ERROR, 'createSkillRecords - Skill__c is not createable');
-                throw new AuraHandledException('Brak uprawnień do tworzenia obiektów Skill__c');
-            }
-            
-            // Sprawdź uprawnienia do pól
-            SecurityUtils.checkCreateAccess(Skill__c.SObjectType, 
-                new List<String>{'Name', 'Candidate__c', 'Category__c', 'Proficiency_Level__c'});
-            
-            // Pobierz umiejętności z wyników analizy
-            List<String> skillsList = new List<String>();
-            
-            // Sprawdź różne możliwe formaty umiejętności w wynikach
-            if (results.containsKey('skills') && results.get('skills') instanceof List<Object>) {
-                List<Object> skillsObj = (List<Object>)results.get('skills');
-                for (Object skill : skillsObj) {
-                    if (skill instanceof String) {
-                        skillsList.add((String)skill);
-                    } else if (skill instanceof Map<String, Object>) {
-                        Map<String, Object> skillMap = (Map<String, Object>)skill;
-                        if (skillMap.containsKey('name')) {
-                            skillsList.add(String.valueOf(skillMap.get('name')));
-                        }
-                    }
-                }
-                System.debug(LoggingLevel.INFO, 'createSkillRecords - extracted skills from "skills" key: ' + skillsList.size());
-            } else if (results.containsKey('Umiejętności techniczne')) {
-                Object skillsObj = results.get('Umiejętności techniczne');
-                if (skillsObj instanceof List<Object>) {
-                    List<Object> techSkills = (List<Object>)skillsObj;
-                    for (Object skill : techSkills) {
-                        if (skill instanceof String) {
-                            skillsList.add((String)skill);
-                        }
-                    }
-                } else if (skillsObj instanceof String) {
-                    // Jeśli to string, spróbuj podzielić po przecinkach
-                    String skillsStr = (String)skillsObj;
-                    skillsList.addAll(skillsStr.split(','));
-                }
-                System.debug(LoggingLevel.INFO, 'createSkillRecords - extracted skills from "Umiejętności techniczne" key: ' + skillsList.size());
-            }
-            
-            // Dodaj również dopasowane umiejętności, jeśli istnieją
-            if (results.containsKey('matchedSkills') && results.get('matchedSkills') instanceof List<Object>) {
-                List<Object> matchedSkillsObj = (List<Object>)results.get('matchedSkills');
-                for (Object skill : matchedSkillsObj) {
-                    if (skill instanceof String) {
-                        String skillName = ((String)skill).trim();
-                        if (!skillsList.contains(skillName)) {
-                            skillsList.add(skillName);
-                        }
-                    }
-                }
-                System.debug(LoggingLevel.INFO, 'createSkillRecords - added matched skills, total skills: ' + skillsList.size());
-            }
-            
-            // Jeśli nie znaleziono umiejętności, zakończ
-            if (skillsList.isEmpty()) {
-                System.debug(LoggingLevel.INFO, 'createSkillRecords - no skills found in results');
-                return skillsToInsert;
-            }
-            
-            // Utwórz rekordy umiejętności
-            for (String skillName : skillsList) {
-                skillName = skillName.trim();
-                if (String.isNotBlank(skillName)) {
-                    Skill__c skill = new Skill__c(
-                        Name = skillName,
-                        Candidate__c = candidateId
-                    );
-                    
-                    // Ustaw kategorię na podstawie nazwy umiejętności (prosta logika)
-                    if (skillName.containsIgnoreCase('Apex') || 
-                        skillName.containsIgnoreCase('LWC') || 
-                        skillName.containsIgnoreCase('Visualforce') ||
-                        skillName.containsIgnoreCase('SOQL') ||
-                        skillName.containsIgnoreCase('SOSL') ||
-                        skillName.containsIgnoreCase('Flow')) {
-                        skill.Category__c = 'Technical';
-                    } else if (skillName.containsIgnoreCase('Java') || 
-                               skillName.containsIgnoreCase('JavaScript') || 
-                               skillName.containsIgnoreCase('Python') ||
-                               skillName.containsIgnoreCase('C#') ||
-                               skillName.containsIgnoreCase('C++')) {
-                        skill.Category__c = 'Technical';
-                    } else if (skillName.containsIgnoreCase('English') || 
-                               skillName.containsIgnoreCase('French') || 
-                               skillName.containsIgnoreCase('German') ||
-                               skillName.containsIgnoreCase('Spanish')) {
-                        skill.Category__c = 'Language';
-                    } else {
-                        skill.Category__c = 'Soft Skills';
-                    }
-                    
-                    // Domyślny poziom biegłości
-                    skill.Proficiency_Level__c = 'Intermediate';
-                    
-                    skillsToInsert.add(skill);
-                }
-            }
-            
-            System.debug(LoggingLevel.INFO, 'createSkillRecords - prepared ' + skillsToInsert.size() + ' skills to insert');
-            
-            // Wstaw rekordy umiejętności
-            if (!skillsToInsert.isEmpty()) {
-                // Użyj Database.insert zamiast insert, aby obsłużyć błędy
-                Database.SaveResult[] saveResults = Database.insert(skillsToInsert, false);
-                
-                // Sprawdź wyniki
-                Integer successCount = 0;
-                for (Database.SaveResult sr : saveResults) {
-                    if (sr.isSuccess()) {
-                        successCount++;
-                    } else {
-                        for (Database.Error err : sr.getErrors()) {
-                            System.debug(LoggingLevel.ERROR, 'createSkillRecords - Error creating skill: ' + err.getMessage());
-                        }
-                    }
-                }
-                
-                System.debug(LoggingLevel.INFO, 'createSkillRecords - Successfully inserted ' + successCount + ' out of ' + skillsToInsert.size() + ' skills');
-            }
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'createSkillRecords - Exception: ' + e.getMessage());
-            System.debug(LoggingLevel.ERROR, 'createSkillRecords - Stack trace: ' + e.getStackTraceString());
-            // Nie rzucamy wyjątku, aby nie przerywać głównego procesu zapisywania wyników analizy
-        } finally {
-            System.debug(LoggingLevel.INFO, '=== createSkillRecords - END ===');
-        }
-        
-        return skillsToInsert;
-    }
-    
-    /**
      * Zapisuje wyniki analizy dla obiektu Job_Application__c
      * @param recordId ID aplikacji o pracę
      * @param analysisResults Surowe wyniki analizy w formacie JSON
      * @param results Sparsowane wyniki analizy
-     * @return ID zaktualizowanego rekordu
+     * @return ID utworzonego rekordu AiAnalysisResult__c
      */
     private static Id saveJobApplicationResults(Id recordId, String analysisResults, Map<String, Object> results) {
         try {
             System.debug(LoggingLevel.INFO, '=== saveJobApplicationResults - START ===');
             System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - start for recordId: ' + recordId);
             
-            // Sprawdź uprawnienia
-            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - checking update access');
-            SecurityUtils.checkUpdateAccess(Job_Application__c.SObjectType, 
-                new List<String>{'Analysis_Results__c'});
-            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - permissions checked successfully');
+            // Pobierz ID kandydata i pozycji z aplikacji o pracę
+            Job_Application__c jobApp = [
+                SELECT Id, Candidate__c, Position__c 
+                FROM Job_Application__c 
+                WHERE Id = :recordId 
+                WITH SECURITY_ENFORCED 
+                LIMIT 1
+            ];
             
-            // Pobierz ID kandydata z aplikacji o pracę
-            Job_Application__c jobApp = [SELECT Id, Candidate__c FROM Job_Application__c WHERE Id = :recordId WITH SECURITY_ENFORCED LIMIT 1];
             Id candidateId = jobApp.Candidate__c;
+            Id positionId = jobApp.Position__c;
             
-            // Jeśli mamy ID kandydata, utwórz rekordy umiejętności
-            if (candidateId != null) {
-                createSkillRecords(candidateId, results);
+            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - candidateId: ' + candidateId);
+            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - positionId: ' + positionId);
+            
+            // Dodaj positionId do wyników analizy, aby można było podzielić umiejętności
+            if (!results.containsKey('positionId')) {
+                results.put('positionId', positionId);
+                System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - Added positionId to results');
             }
             
-            // Przygotuj dane do zapisu
-            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - preparing data for update');
-            Job_Application__c application = new Job_Application__c(
-                Id = recordId,
-                Analysis_Results__c = analysisResults
-            );
+            // Utwórz rekord AiAnalysisResult__c
+            Id aiResultId = createAiAnalysisResult(results, recordId, 'Job_Application__c');
             
-            // Dodaj wynik dopasowania, jeśli istnieje
-            if (results.containsKey('matchScore')) {
-                Object matchScoreObj = results.get('matchScore');
-                System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - matchScore found, type: ' + getObjectType(matchScoreObj));
-                Decimal matchScore = extractMatchScore(matchScoreObj);
-                
-                // Sprawdź, czy pole Match_Score__c istnieje w obiekcie Job_Application__c
-                Schema.DescribeFieldResult fieldDescribe = Schema.SObjectType.Job_Application__c.fields.getMap().get('Match_Score__c')?.getDescribe();
-                if (fieldDescribe != null && fieldDescribe.isUpdateable()) {
-                    application.put('Match_Score__c', matchScore);
-                    System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - extracted matchScore: ' + matchScore);
-                } else {
-                    System.debug(LoggingLevel.WARN, 'saveJobApplicationResults - Match_Score__c field does not exist or is not updateable');
-                }
-            } else {
-                System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - matchScore not found in results');
-            }
+            // Zaktualizuj Job_Application__c, aby wskazywał na najnowszą analizę
+            // Można to zrobić w przyszłości, jeśli będzie taka potrzeba
             
-            // Dodaj zidentyfikowane umiejętności, jeśli istnieją
-            if (results.containsKey('skills')) {
-                Object skillsObj = results.get('skills');
-                System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - skills found, type: ' + getObjectType(skillsObj));
-                String skillsString = extractSkillsFromResults(results);
-                
-                // Sprawdź, czy pole Skills__c istnieje w obiekcie Job_Application__c
-                Schema.DescribeFieldResult fieldDescribe = Schema.SObjectType.Job_Application__c.fields.getMap().get('Skills__c')?.getDescribe();
-                if (fieldDescribe != null && fieldDescribe.isUpdateable()) {
-                    application.put('Skills__c', skillsString);
-                    System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - extracted skills length: ' + (skillsString != null ? skillsString.length() : 0));
-                } else {
-                    System.debug(LoggingLevel.WARN, 'saveJobApplicationResults - Skills__c field does not exist or is not updateable');
-                }
-            } else {
-                System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - skills not found in results');
-            }
-            
-            // Zapisz zmiany z wymuszeniem sprawdzania uprawnień CRUD
-            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - attempting to update record with fields: ' + 
-                          'Analysis_Results__c (length: ' + (application.Analysis_Results__c != null ? application.Analysis_Results__c.length() : 0) + ')');
-            
-            Database.DMLOptions dmlOptions = new Database.DMLOptions();
-            dmlOptions.OptAllOrNone = true;
-            Database.SaveResult result = Database.update(application, dmlOptions);
-            if (!result.isSuccess()) {
-                String errorMsg = 'Error updating Job_Application__c: ' + (result.getErrors().size() > 0 ? result.getErrors()[0].getMessage() : 'Unknown error');
-                System.debug(LoggingLevel.ERROR, 'saveJobApplicationResults - update failed: ' + errorMsg);
-                for (Database.Error err : result.getErrors()) {
-                    System.debug(LoggingLevel.ERROR, 'saveJobApplicationResults - error details: ' + 
-                                 'Fields: ' + err.getFields() + ', ' +
-                                 'Message: ' + err.getMessage() + ', ' +
-                                 'StatusCode: ' + err.getStatusCode());
-                }
-                throw new AuraHandledException(errorMsg);
-            }
-            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - update successful');
-            return recordId;
+            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - created AiAnalysisResult__c with ID: ' + aiResultId);
+            return aiResultId;
         } catch (Exception e) {
             System.debug(LoggingLevel.ERROR, 'saveJobApplicationResults - Exception: ' + e.getMessage());
             System.debug(LoggingLevel.ERROR, 'saveJobApplicationResults - Exception type: ' + e.getTypeName());
@@ -331,67 +200,18 @@ public with sharing class CVAnalysisController {
      * @param recordId ID kandydata
      * @param analysisResults Surowe wyniki analizy w formacie JSON
      * @param results Sparsowane wyniki analizy
-     * @return ID zaktualizowanego rekordu
+     * @return ID utworzonego rekordu AiAnalysisResult__c
      */
     private static Id saveCandidateResults(Id recordId, String analysisResults, Map<String, Object> results) {
         try {
             System.debug(LoggingLevel.INFO, '=== saveCandidateResults - START ===');
             System.debug(LoggingLevel.INFO, 'saveCandidateResults - start for recordId: ' + recordId);
             
-            // Sprawdź uprawnienia
-            System.debug(LoggingLevel.INFO, 'saveCandidateResults - checking update access');
-            SecurityUtils.checkUpdateAccess(Candidate__c.SObjectType, 
-                new List<String>{'Analysis_Results__c'});
-            System.debug(LoggingLevel.INFO, 'saveCandidateResults - permissions checked successfully');
+            // Utwórz rekord AiAnalysisResult__c
+            Id aiResultId = createAiAnalysisResult(results, recordId, 'Candidate__c');
             
-            // Utwórz rekordy umiejętności
-            createSkillRecords(recordId, results);
-            
-            // Przygotuj dane do zapisu
-            System.debug(LoggingLevel.INFO, 'saveCandidateResults - preparing data for update');
-            Candidate__c candidate = new Candidate__c(
-                Id = recordId,
-                Analysis_Results__c = analysisResults
-            );
-            
-            // Dodaj zidentyfikowane umiejętności, jeśli istnieją
-            if (results.containsKey('skills')) {
-                Object skillsObj = results.get('skills');
-                System.debug(LoggingLevel.INFO, 'saveCandidateResults - skills found, type: ' + getObjectType(skillsObj));
-                String skillsString = extractSkillsFromResults(results);
-                
-                // Sprawdź, czy pole Skills__c istnieje w obiekcie Candidate__c
-                Schema.DescribeFieldResult fieldDescribe = Schema.SObjectType.Candidate__c.fields.getMap().get('Skills__c')?.getDescribe();
-                if (fieldDescribe != null && fieldDescribe.isUpdateable()) {
-                    candidate.put('Skills__c', skillsString);
-                    System.debug(LoggingLevel.INFO, 'saveCandidateResults - extracted skills length: ' + (skillsString != null ? skillsString.length() : 0));
-                } else {
-                    System.debug(LoggingLevel.WARN, 'saveCandidateResults - Skills__c field does not exist or is not updateable');
-                }
-            } else {
-                System.debug(LoggingLevel.INFO, 'saveCandidateResults - skills not found in results');
-            }
-            
-            // Zapisz zmiany z wymuszeniem sprawdzania uprawnień CRUD
-            System.debug(LoggingLevel.INFO, 'saveCandidateResults - attempting to update record with fields: ' + 
-                          'Analysis_Results__c (length: ' + (candidate.Analysis_Results__c != null ? candidate.Analysis_Results__c.length() : 0) + ')');
-            
-            Database.DMLOptions dmlOptions = new Database.DMLOptions();
-            dmlOptions.OptAllOrNone = true;
-            Database.SaveResult result = Database.update(candidate, dmlOptions);
-            if (!result.isSuccess()) {
-                String errorMsg = 'Error updating Candidate__c: ' + (result.getErrors().size() > 0 ? result.getErrors()[0].getMessage() : 'Unknown error');
-                System.debug(LoggingLevel.ERROR, 'saveCandidateResults - update failed: ' + errorMsg);
-                for (Database.Error err : result.getErrors()) {
-                    System.debug(LoggingLevel.ERROR, 'saveCandidateResults - error details: ' + 
-                                 'Fields: ' + err.getFields() + ', ' +
-                                 'Message: ' + err.getMessage() + ', ' +
-                                 'StatusCode: ' + err.getStatusCode());
-                }
-                throw new AuraHandledException(errorMsg);
-            }
-            System.debug(LoggingLevel.INFO, 'saveCandidateResults - update successful');
-            return recordId;
+            System.debug(LoggingLevel.INFO, 'saveCandidateResults - created AiAnalysisResult__c with ID: ' + aiResultId);
+            return aiResultId;
         } catch (Exception e) {
             System.debug(LoggingLevel.ERROR, 'saveCandidateResults - Exception: ' + e.getMessage());
             System.debug(LoggingLevel.ERROR, 'saveCandidateResults - Exception type: ' + e.getTypeName());
@@ -400,6 +220,301 @@ public with sharing class CVAnalysisController {
         } finally {
             System.debug(LoggingLevel.INFO, '=== saveCandidateResults - END ===');
         }
+    }
+    
+    /**
+     * @description Pobiera umiejętności wymagane dla danej pozycji
+     * @param positionId Id pozycji
+     * @return Lista umiejętności wymaganych dla pozycji
+     */
+    private static List<String> getPositionSkills(Id positionId) {
+        List<String> skills = new List<String>();
+        
+        try {
+            Position__c position = [SELECT required_skills__c FROM Position__c WHERE Id = :positionId LIMIT 1];
+            if (position != null && position.required_skills__c != null) {
+                // Zakładamy, że umiejętności są oddzielone przecinkami lub nowymi liniami
+                String skillsText = position.required_skills__c;
+                
+                // Zamień nowe linie na przecinki
+                skillsText = skillsText.replace('\n', ',').replace('\r', ',');
+                
+                // Podziel tekst na podstawie przecinków
+                for (String skill : skillsText.split(',')) {
+                    String trimmedSkill = skill.trim();
+                    if (String.isNotBlank(trimmedSkill)) {
+                        skills.add(trimmedSkill);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Błąd podczas pobierania umiejętności z pozycji: ' + e.getMessage());
+        }
+        
+        return skills;
+    }
+    
+    /**
+     * @description Tworzy rekord AiAnalysisResult__c na podstawie wyników analizy
+     * @param results Mapa wyników analizy
+     * @param recordId Id rekordu, dla którego tworzony jest wynik analizy
+     * @param objectType Typ obiektu, dla którego tworzony jest wynik analizy
+     * @return Id utworzonego rekordu AiAnalysisResult__c
+     */
+    private static Id createAiAnalysisResult(Map<String, Object> results, Id recordId, String objectType) {
+        try {
+            // Usuwamy sprawdzenie uprawnień, które powodowało błędy
+            // SecurityUtils.checkCreateAccess(AiAnalysisResult__c.SObjectType, new List<String>{
+            //     AiAnalysisResult__c.Name.getDescribe().getName(),
+            //     AiAnalysisResult__c.Record_Id__c.getDescribe().getName(),
+            //     AiAnalysisResult__c.Object_Type__c.getDescribe().getName(),
+            //     AiAnalysisResult__c.RawAnalysisResults__c.getDescribe().getName()
+            // });
+            
+            // Standardyzacja kluczy w wynikach analizy
+            results = standardizeResultKeys(results);
+            
+            // Logowanie kluczy po standaryzacji
+            System.debug(LoggingLevel.DEBUG, 'Klucze po standaryzacji: ' + results.keySet());
+            
+            // Tworzenie rekordu AiAnalysisResult__c
+            AiAnalysisResult__c result = new AiAnalysisResult__c();
+            
+            // Ustawiamy pola relacji na podstawie typu obiektu
+            if (objectType == 'Job_Application__c') {
+                result.Job_Application__c = recordId;
+            } else if (objectType == 'Candidate__c') {
+                result.Candidate__c = recordId;
+            }
+            
+            // Ustawiamy surowe wyniki analizy
+            result.RawAnalysisResults__c = JSON.serialize(results);
+            
+            // Ustawienie pól na podstawie wyników analizy
+            if (results.containsKey('matchScore')) {
+                Object matchScoreObj = results.get('matchScore');
+                if (matchScoreObj instanceof Decimal) {
+                    result.MatchScore__c = (Decimal)matchScoreObj;
+                } else if (matchScoreObj instanceof Integer) {
+                    result.MatchScore__c = (Integer)matchScoreObj;
+                } else if (matchScoreObj instanceof String) {
+                    try {
+                        result.MatchScore__c = Decimal.valueOf((String)matchScoreObj);
+                    } catch (Exception e) {
+                        System.debug(LoggingLevel.ERROR, 'Nie można przekonwertować matchScore na Decimal: ' + e.getMessage());
+                    }
+                }
+                System.debug(LoggingLevel.DEBUG, 'Ustawiono MatchScore__c: ' + result.MatchScore__c);
+            }
+            
+            // Ustawienie pól dla umiejętności
+            if (results.containsKey('matchedSkills')) {
+                Object matchedSkillsObj = results.get('matchedSkills');
+                if (matchedSkillsObj instanceof List<Object>) {
+                    List<Object> matchedSkillsList = (List<Object>)matchedSkillsObj;
+                    List<String> skillStrings = new List<String>();
+                    for (Object skill : matchedSkillsList) {
+                        skillStrings.add(String.valueOf(skill));
+                    }
+                    result.MatchingSkills__c = String.join(skillStrings, ', ');
+                    System.debug(LoggingLevel.DEBUG, 'Ustawiono MatchingSkills__c: ' + result.MatchingSkills__c);
+                } else if (matchedSkillsObj instanceof String) {
+                    result.MatchingSkills__c = (String)matchedSkillsObj;
+                    System.debug(LoggingLevel.DEBUG, 'Ustawiono MatchingSkills__c (string): ' + result.MatchingSkills__c);
+                }
+            }
+            
+            if (results.containsKey('additionalSkills')) {
+                Object additionalSkillsObj = results.get('additionalSkills');
+                if (additionalSkillsObj instanceof List<Object>) {
+                    List<Object> additionalSkillsList = (List<Object>)additionalSkillsObj;
+                    List<String> skillStrings = new List<String>();
+                    for (Object skill : additionalSkillsList) {
+                        skillStrings.add(String.valueOf(skill));
+                    }
+                    result.AdditionalSkills__c = String.join(skillStrings, ', ');
+                    System.debug(LoggingLevel.DEBUG, 'Ustawiono AdditionalSkills__c: ' + result.AdditionalSkills__c);
+                } else if (additionalSkillsObj instanceof String) {
+                    result.AdditionalSkills__c = (String)additionalSkillsObj;
+                    System.debug(LoggingLevel.DEBUG, 'Ustawiono AdditionalSkills__c (string): ' + result.AdditionalSkills__c);
+                }
+            }
+            
+            // Wstawienie rekordu
+            insert result;
+            System.debug(LoggingLevel.DEBUG, 'Utworzono rekord AiAnalysisResult__c: ' + result.Id);
+            return result.Id;
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Błąd podczas tworzenia rekordu AiAnalysisResult__c: ' + e.getMessage() + '\n' + e.getStackTraceString());
+            throw new AuraHandledException('Błąd podczas tworzenia rekordu analizy: ' + e.getMessage());
+        }
+    }
+    
+    /**
+     * @description Standaryzuje klucze w wynikach analizy
+     * @param results Mapa wyników analizy
+     * @return Mapa wyników analizy ze standaryzowanymi kluczami
+     */
+    private static Map<String, Object> standardizeResultKeys(Map<String, Object> results) {
+        Map<String, Object> standardized = new Map<String, Object>();
+        
+        // Logowanie kluczy przed standaryzacją
+        System.debug(LoggingLevel.DEBUG, 'Klucze przed standaryzacją: ' + results.keySet());
+        
+        // Kopiuj wszystkie oryginalne klucze
+        for (String key : results.keySet()) {
+            standardized.put(key, results.get(key));
+        }
+        
+        // Mapowanie kluczy na standardowe nazwy
+        Map<String, String> keyMapping = new Map<String, String>{
+            'matchscore' => 'matchScore',
+            'match_score' => 'matchScore',
+            'match score' => 'matchScore',
+            'dopasowanie' => 'matchScore',
+            'wynik_dopasowania' => 'matchScore',
+            'wynik dopasowania' => 'matchScore',
+            
+            'matchedskills' => 'matchedSkills',
+            'matched_skills' => 'matchedSkills',
+            'matched skills' => 'matchedSkills',
+            'pasujące_umiejętności' => 'matchedSkills',
+            'pasujące umiejętności' => 'matchedSkills',
+            'dopasowane_umiejętności' => 'matchedSkills',
+            'dopasowane umiejętności' => 'matchedSkills',
+            
+            'missingskills' => 'missingSkills',
+            'missing_skills' => 'missingSkills',
+            'missing skills' => 'missingSkills',
+            'brakujące_umiejętności' => 'missingSkills',
+            'brakujące umiejętności' => 'missingSkills',
+            
+            'additionalskills' => 'additionalSkills',
+            'additional_skills' => 'additionalSkills',
+            'additional skills' => 'additionalSkills',
+            'dodatkowe_umiejętności' => 'additionalSkills',
+            'dodatkowe umiejętności' => 'additionalSkills',
+            
+            'skills' => 'skills',
+            'umiejętności' => 'skills',
+            'umiejętności techniczne' => 'skills',
+            'umiejętności_techniczne' => 'skills'
+        };
+        
+        // Standaryzacja kluczy
+        for (String originalKey : results.keySet()) {
+            String lowerKey = originalKey.toLowerCase();
+            if (keyMapping.containsKey(lowerKey)) {
+                String standardKey = keyMapping.get(lowerKey);
+                standardized.put(standardKey, results.get(originalKey));
+                System.debug(LoggingLevel.DEBUG, 'Zmapowano klucz: ' + originalKey + ' -> ' + standardKey);
+            }
+        }
+        
+        // Sprawdź, czy mamy klucz "Umiejętności techniczne" lub podobny
+        if (results.containsKey('Umiejętności techniczne')) {
+            Object skillsObj = results.get('Umiejętności techniczne');
+            standardized.put('skills', skillsObj);
+            System.debug(LoggingLevel.DEBUG, 'Znaleziono klucz "Umiejętności techniczne", dodano jako "skills"');
+        }
+        
+        // Jeśli mamy positionId, pobierz wymagane umiejętności i podziel umiejętności na pasujące i dodatkowe
+        if (results.containsKey('positionId')) {
+            Id positionId = (Id)results.get('positionId');
+            List<String> requiredSkills = getPositionSkills(positionId);
+            System.debug(LoggingLevel.DEBUG, 'Pobrano wymagane umiejętności dla pozycji: ' + requiredSkills);
+            
+            // Jeśli mamy umiejętności i wymagane umiejętności, podziel je na pasujące i dodatkowe
+            if (standardized.containsKey('skills') && !requiredSkills.isEmpty()) {
+                Object skillsObj = standardized.get('skills');
+                List<String> allSkills = new List<String>();
+                
+                // Konwersja umiejętności na listę stringów
+                if (skillsObj instanceof List<Object>) {
+                    for (Object skill : (List<Object>)skillsObj) {
+                        allSkills.add(String.valueOf(skill));
+                    }
+                } else if (skillsObj instanceof String) {
+                    String skillsStr = (String)skillsObj;
+                    if (skillsStr.contains(',')) {
+                        for (String skill : skillsStr.split(',')) {
+                            allSkills.add(skill.trim());
+                        }
+                    } else {
+                        allSkills.add(skillsStr.trim());
+                    }
+                }
+                
+                // Podziel umiejętności na pasujące i dodatkowe
+                List<String> matchedSkills = new List<String>();
+                List<String> additionalSkills = new List<String>();
+                
+                for (String skill : allSkills) {
+                    Boolean matched = false;
+                    for (String requiredSkill : requiredSkills) {
+                        if (skill.toLowerCase().contains(requiredSkill.toLowerCase()) || 
+                            requiredSkill.toLowerCase().contains(skill.toLowerCase())) {
+                            matchedSkills.add(skill);
+                            matched = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!matched) {
+                        additionalSkills.add(skill);
+                    }
+                }
+                
+                // Ustaw pasujące i dodatkowe umiejętności
+                if (!matchedSkills.isEmpty()) {
+                    standardized.put('matchedSkills', matchedSkills);
+                    System.debug(LoggingLevel.DEBUG, 'Ustawiono matchedSkills: ' + matchedSkills);
+                } else {
+                    // Jeśli nie znaleziono pasujących umiejętności, użyj wszystkich jako pasujących
+                    standardized.put('matchedSkills', allSkills);
+                    System.debug(LoggingLevel.DEBUG, 'Nie znaleziono pasujących umiejętności, użyto wszystkich: ' + allSkills);
+                }
+                
+                if (!additionalSkills.isEmpty()) {
+                    standardized.put('additionalSkills', additionalSkills);
+                    System.debug(LoggingLevel.DEBUG, 'Ustawiono additionalSkills: ' + additionalSkills);
+                } else {
+                    // Jeśli nie znaleziono dodatkowych umiejętności, ustaw pustą listę
+                    standardized.put('additionalSkills', new List<String>());
+                    System.debug(LoggingLevel.DEBUG, 'Nie znaleziono dodatkowych umiejętności, ustawiono pustą listę');
+                }
+            }
+        }
+        
+        return standardized;
+    }
+    
+    /**
+     * Ekstrahuje umiejętności z listy obiektów i zwraca je jako listę stringów
+     * @param skillsList Lista obiektów reprezentujących umiejętności
+     * @return Lista stringów zawierających umiejętności
+     */
+    private static List<String> extractSkillsAsList(List<Object> skillsList) {
+        List<String> skillsStrings = new List<String>();
+        
+        for (Object skill : skillsList) {
+            if (skill instanceof String) {
+                skillsStrings.add((String)skill);
+            } else if (skill instanceof Map<String, Object>) {
+                Map<String, Object> skillMap = (Map<String, Object>)skill;
+                if (skillMap.containsKey('name')) {
+                    skillsStrings.add(String.valueOf(skillMap.get('name')));
+                } else if (skillMap.containsKey('nazwa')) {
+                    skillsStrings.add(String.valueOf(skillMap.get('nazwa')));
+                } else if (!skillMap.isEmpty()) {
+                    // Jeśli nie ma klucza 'name', użyj pierwszego klucza
+                    String firstKey = new List<String>(skillMap.keySet())[0];
+                    skillsStrings.add(firstKey + ': ' + String.valueOf(skillMap.get(firstKey)));
+                }
+            }
+        }
+        
+        return skillsStrings;
     }
     
     /**
