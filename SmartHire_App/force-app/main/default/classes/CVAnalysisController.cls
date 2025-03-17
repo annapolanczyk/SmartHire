@@ -50,6 +50,72 @@ public with sharing class CVAnalysisController {
                 // Logowanie kluczy w wynikach analizy
                 System.debug(LoggingLevel.INFO, 'saveAnalysisResults - result keys: ' + results.keySet());
                 
+                // Szczegółowe logowanie struktury danych
+                System.debug(LoggingLevel.INFO, '=== DETAILED ANALYSIS RESULTS STRUCTURE ===');
+                for (String key : results.keySet()) {
+                    Object value = results.get(key);
+                    String valueType = getObjectType(value);
+                    System.debug(LoggingLevel.INFO, 'Key: ' + key + ', Type: ' + valueType);
+                    
+                    // Jeśli wartość to mapa, zaloguj jej klucze
+                    if (value instanceof Map<String, Object>) {
+                        Map<String, Object> nestedMap = (Map<String, Object>)value;
+                        System.debug(LoggingLevel.INFO, '  Nested keys for ' + key + ': ' + nestedMap.keySet());
+                    }
+                    // Jeśli wartość to lista, zaloguj jej rozmiar i typ pierwszego elementu (jeśli istnieje)
+                    else if (value instanceof List<Object>) {
+                        List<Object> nestedList = (List<Object>)value;
+                        String firstItemType = nestedList.isEmpty() ? 'empty' : getObjectType(nestedList[0]);
+                        System.debug(LoggingLevel.INFO, '  List size for ' + key + ': ' + nestedList.size() + ', First item type: ' + firstItemType);
+                        
+                        // Jeśli to lista umiejętności, zaloguj kilka pierwszych elementów
+                        if (key.containsIgnoreCase('skill') && !nestedList.isEmpty()) {
+                            Integer samplesToLog = Math.min(nestedList.size(), 5);
+                            List<Object> samples = new List<Object>();
+                            for (Integer i = 0; i < samplesToLog; i++) {
+                                samples.add(nestedList[i]);
+                            }
+                            System.debug(LoggingLevel.INFO, '  Sample skills: ' + samples);
+                        }
+                    }
+                    // Dla prostych typów, zaloguj wartość (jeśli nie jest za długa)
+                    else if (value instanceof String) {
+                        String strValue = (String)value;
+                        if (strValue.length() <= 100) {
+                            System.debug(LoggingLevel.INFO, '  Value: ' + strValue);
+                        } else {
+                            System.debug(LoggingLevel.INFO, '  Value (truncated): ' + strValue.substring(0, 100) + '...');
+                        }
+                    }
+                    else if (value instanceof Decimal || value instanceof Integer || value instanceof Double || value instanceof Boolean) {
+                        System.debug(LoggingLevel.INFO, '  Value: ' + value);
+                    }
+                }
+                System.debug(LoggingLevel.INFO, '=== END OF DETAILED ANALYSIS RESULTS STRUCTURE ===');
+                
+                // Sprawdź, czy istnieją kluczowe pola, których szukamy
+                List<String> expectedKeys = new List<String>{
+                    'matchScore', 'matchedSkills', 'missingSkills', 'additionalSkills', 
+                    'summary', 'keyHighlights', 'potentialConcerns', 'skills'
+                };
+                
+                System.debug(LoggingLevel.INFO, '=== CHECKING FOR EXPECTED KEYS ===');
+                for (String expectedKey : expectedKeys) {
+                    if (results.containsKey(expectedKey)) {
+                        System.debug(LoggingLevel.INFO, 'Expected key found: ' + expectedKey);
+                    } else {
+                        System.debug(LoggingLevel.WARN, 'Expected key NOT found: ' + expectedKey);
+                        
+                        // Sprawdź, czy istnieje podobny klucz
+                        for (String actualKey : results.keySet()) {
+                            if (actualKey.containsIgnoreCase(expectedKey)) {
+                                System.debug(LoggingLevel.INFO, '  Similar key found: ' + actualKey);
+                            }
+                        }
+                    }
+                }
+                System.debug(LoggingLevel.INFO, '=== END OF CHECKING FOR EXPECTED KEYS ===');
+                
                 if (objectType == 'Job_Application__c') {
                     System.debug(LoggingLevel.INFO, 'saveAnalysisResults - calling saveJobApplicationResults');
                     return saveJobApplicationResults(recordId, analysisResults, results);
@@ -114,6 +180,10 @@ public with sharing class CVAnalysisController {
                 throw new AuraHandledException('Błąd podczas sprawdzania istnienia obiektu AiAnalysisResult__c: ' + e.getMessage());
             }
             
+            // Mapuj klucze z wyników analizy na standardowe klucze
+            Map<String, Object> standardizedResults = standardizeResultKeys(results);
+            System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Standardized keys: ' + standardizedResults.keySet());
+            
             // Przygotuj rekord AiAnalysisResult__c
             AiAnalysisResult__c aiResult = new AiAnalysisResult__c();
             
@@ -170,8 +240,8 @@ public with sharing class CVAnalysisController {
             
             // Ustaw MatchScore
             try {
-                if (results.containsKey('matchScore') && Schema.SObjectType.AiAnalysisResult__c.fields.MatchScore__c.isCreateable()) {
-                    Object matchScoreObj = results.get('matchScore');
+                if (standardizedResults.containsKey('matchScore') && Schema.SObjectType.AiAnalysisResult__c.fields.MatchScore__c.isCreateable()) {
+                    Object matchScoreObj = standardizedResults.get('matchScore');
                     Decimal matchScore = extractMatchScore(matchScoreObj);
                     aiResult.MatchScore__c = matchScore;
                     System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set MatchScore__c: ' + matchScore);
@@ -182,17 +252,19 @@ public with sharing class CVAnalysisController {
             
             // Ustaw MatchingSkills
             try {
-                if (results.containsKey('matchedSkills') && Schema.SObjectType.AiAnalysisResult__c.fields.MatchingSkills__c.isCreateable()) {
-                    Object matchedSkillsObj = results.get('matchedSkills');
+                if (standardizedResults.containsKey('matchedSkills') && Schema.SObjectType.AiAnalysisResult__c.fields.MatchingSkills__c.isCreateable()) {
+                    Object matchedSkillsObj = standardizedResults.get('matchedSkills');
                     String matchedSkills = '';
                     
                     if (matchedSkillsObj instanceof List<Object>) {
                         matchedSkills = extractSkillsAsString((List<Object>)matchedSkillsObj);
+                    } else if (matchedSkillsObj instanceof String) {
+                        matchedSkills = (String)matchedSkillsObj;
                     }
                     
                     if (matchedSkills.length() <= 32768) { // Sprawdź limit długości pola
                         aiResult.MatchingSkills__c = matchedSkills;
-                        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set MatchingSkills__c');
+                        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set MatchingSkills__c: ' + matchedSkills);
                     } else {
                         System.debug(LoggingLevel.WARN, 'createAiAnalysisResult - MatchingSkills__c exceeds field length limit, truncating');
                         aiResult.MatchingSkills__c = matchedSkills.substring(0, 32768);
@@ -204,17 +276,19 @@ public with sharing class CVAnalysisController {
             
             // Ustaw MissingSkills
             try {
-                if (results.containsKey('missingSkills') && Schema.SObjectType.AiAnalysisResult__c.fields.MissingSkills__c.isCreateable()) {
-                    Object missingSkillsObj = results.get('missingSkills');
+                if (standardizedResults.containsKey('missingSkills') && Schema.SObjectType.AiAnalysisResult__c.fields.MissingSkills__c.isCreateable()) {
+                    Object missingSkillsObj = standardizedResults.get('missingSkills');
                     String missingSkills = '';
                     
                     if (missingSkillsObj instanceof List<Object>) {
                         missingSkills = extractSkillsAsString((List<Object>)missingSkillsObj);
+                    } else if (missingSkillsObj instanceof String) {
+                        missingSkills = (String)missingSkillsObj;
                     }
                     
                     if (missingSkills.length() <= 32768) {
                         aiResult.MissingSkills__c = missingSkills;
-                        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set MissingSkills__c');
+                        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set MissingSkills__c: ' + missingSkills);
                     } else {
                         System.debug(LoggingLevel.WARN, 'createAiAnalysisResult - MissingSkills__c exceeds field length limit, truncating');
                         aiResult.MissingSkills__c = missingSkills.substring(0, 32768);
@@ -229,24 +303,28 @@ public with sharing class CVAnalysisController {
                 if (Schema.SObjectType.AiAnalysisResult__c.fields.AdditionalSkills__c.isCreateable()) {
                     String additionalSkills = '';
                     
-                    if (results.containsKey('additionalSkills')) {
-                        Object additionalSkillsObj = results.get('additionalSkills');
+                    if (standardizedResults.containsKey('additionalSkills')) {
+                        Object additionalSkillsObj = standardizedResults.get('additionalSkills');
                         
                         if (additionalSkillsObj instanceof List<Object>) {
                             additionalSkills = extractSkillsAsString((List<Object>)additionalSkillsObj);
+                        } else if (additionalSkillsObj instanceof String) {
+                            additionalSkills = (String)additionalSkillsObj;
                         }
-                    } else if (results.containsKey('skills')) {
+                    } else if (standardizedResults.containsKey('skills')) {
                         // Jeśli nie ma additionalSkills, ale są skills, użyj ich jako additionalSkills
-                        Object skillsObj = results.get('skills');
+                        Object skillsObj = standardizedResults.get('skills');
                         
                         if (skillsObj instanceof List<Object>) {
                             additionalSkills = extractSkillsAsString((List<Object>)skillsObj);
+                        } else if (skillsObj instanceof String) {
+                            additionalSkills = (String)skillsObj;
                         }
                     }
                     
                     if (additionalSkills.length() <= 32768) {
                         aiResult.AdditionalSkills__c = additionalSkills;
-                        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set AdditionalSkills__c');
+                        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set AdditionalSkills__c: ' + additionalSkills);
                     } else {
                         System.debug(LoggingLevel.WARN, 'createAiAnalysisResult - AdditionalSkills__c exceeds field length limit, truncating');
                         aiResult.AdditionalSkills__c = additionalSkills.substring(0, 32768);
@@ -258,17 +336,28 @@ public with sharing class CVAnalysisController {
             
             // Ustaw AnalysisSummary
             try {
-                if (results.containsKey('summary') && Schema.SObjectType.AiAnalysisResult__c.fields.AnalysisSummary__c.isCreateable()) {
-                    Object summaryObj = results.get('summary');
+                if (standardizedResults.containsKey('summary') && Schema.SObjectType.AiAnalysisResult__c.fields.AnalysisSummary__c.isCreateable()) {
+                    Object summaryObj = standardizedResults.get('summary');
+                    String summary = '';
+                    
                     if (summaryObj instanceof String) {
-                        String summary = (String)summaryObj;
-                        if (summary.length() <= 32768) {
-                            aiResult.AnalysisSummary__c = summary;
-                            System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set AnalysisSummary__c');
-                        } else {
-                            System.debug(LoggingLevel.WARN, 'createAiAnalysisResult - AnalysisSummary__c exceeds field length limit, truncating');
-                            aiResult.AnalysisSummary__c = summary.substring(0, 32768);
+                        summary = (String)summaryObj;
+                    } else if (summaryObj instanceof List<Object>) {
+                        List<String> summaryList = new List<String>();
+                        for (Object item : (List<Object>)summaryObj) {
+                            if (item instanceof String) {
+                                summaryList.add((String)item);
+                            }
                         }
+                        summary = String.join(summaryList, '\n');
+                    }
+                    
+                    if (summary.length() <= 32768) {
+                        aiResult.AnalysisSummary__c = summary;
+                        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set AnalysisSummary__c: ' + summary);
+                    } else {
+                        System.debug(LoggingLevel.WARN, 'createAiAnalysisResult - AnalysisSummary__c exceeds field length limit, truncating');
+                        aiResult.AnalysisSummary__c = summary.substring(0, 32768);
                     }
                 }
             } catch (Exception e) {
@@ -293,8 +382,8 @@ public with sharing class CVAnalysisController {
             
             // Ustaw KeyHighlights
             try {
-                if (results.containsKey('keyHighlights') && Schema.SObjectType.AiAnalysisResult__c.fields.KeyHighlights__c.isCreateable()) {
-                    Object keyHighlightsObj = results.get('keyHighlights');
+                if (standardizedResults.containsKey('keyHighlights') && Schema.SObjectType.AiAnalysisResult__c.fields.KeyHighlights__c.isCreateable()) {
+                    Object keyHighlightsObj = standardizedResults.get('keyHighlights');
                     String keyHighlights = '';
                     
                     if (keyHighlightsObj instanceof String) {
@@ -311,7 +400,7 @@ public with sharing class CVAnalysisController {
                     
                     if (keyHighlights.length() <= 32768) {
                         aiResult.KeyHighlights__c = keyHighlights;
-                        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set KeyHighlights__c');
+                        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set KeyHighlights__c: ' + keyHighlights);
                     } else {
                         System.debug(LoggingLevel.WARN, 'createAiAnalysisResult - KeyHighlights__c exceeds field length limit, truncating');
                         aiResult.KeyHighlights__c = keyHighlights.substring(0, 32768);
@@ -323,10 +412,10 @@ public with sharing class CVAnalysisController {
             
             // Ustaw PotentialConcerns
             try {
-                if ((results.containsKey('potentialConcerns') || results.containsKey('concerns')) && 
+                if ((standardizedResults.containsKey('potentialConcerns') || standardizedResults.containsKey('concerns')) && 
                     Schema.SObjectType.AiAnalysisResult__c.fields.PotentialConcerns__c.isCreateable()) {
-                    Object concernsObj = results.containsKey('potentialConcerns') ? 
-                        results.get('potentialConcerns') : results.get('concerns');
+                    Object concernsObj = standardizedResults.containsKey('potentialConcerns') ? 
+                        standardizedResults.get('potentialConcerns') : standardizedResults.get('concerns');
                     
                     String concerns = '';
                     if (concernsObj instanceof String) {
@@ -343,7 +432,7 @@ public with sharing class CVAnalysisController {
                     
                     if (concerns.length() <= 32768) {
                         aiResult.PotentialConcerns__c = concerns;
-                        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set PotentialConcerns__c');
+                        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Set PotentialConcerns__c: ' + concerns);
                     } else {
                         System.debug(LoggingLevel.WARN, 'createAiAnalysisResult - PotentialConcerns__c exceeds field length limit, truncating');
                         aiResult.PotentialConcerns__c = concerns.substring(0, 32768);
@@ -371,6 +460,137 @@ public with sharing class CVAnalysisController {
         } finally {
             System.debug(LoggingLevel.INFO, '=== createAiAnalysisResult - END ===');
         }
+    }
+    
+    /**
+     * Mapuje klucze z wyników analizy na standardowe klucze używane w kodzie
+     * @param results Mapa wyników analizy
+     * @return Mapa ze znormalizowanymi kluczami
+     */
+    private static Map<String, Object> standardizeResultKeys(Map<String, Object> results) {
+        Map<String, Object> standardized = new Map<String, Object>(results);
+        Map<String, String> keyMappings = new Map<String, String>();
+        
+        // Definiuj mapowania kluczy (format: 'standardowy_klucz' => 'możliwe_alternatywne_klucze')
+        keyMappings.put('matchScore', 'match_score,dopasowanie,wynik_dopasowania,score,wynik');
+        keyMappings.put('matchedSkills', 'matched_skills,dopasowane_umiejętności,pasujące_umiejętności,matching_skills');
+        keyMappings.put('missingSkills', 'missing_skills,brakujące_umiejętności,niedobór_umiejętności');
+        keyMappings.put('additionalSkills', 'additional_skills,dodatkowe_umiejętności,inne_umiejętności');
+        keyMappings.put('skills', 'umiejętności,technologie,technologies,tech_skills');
+        keyMappings.put('summary', 'podsumowanie,streszczenie,overview');
+        keyMappings.put('keyHighlights', 'key_highlights,główne_punkty,zalety,strengths,mocne_strony');
+        keyMappings.put('potentialConcerns', 'potential_concerns,concerns,obawy,słabe_strony,weaknesses,wady');
+        
+        // Sprawdź każdy standardowy klucz
+        for (String standardKey : keyMappings.keySet()) {
+            // Jeśli standardowy klucz już istnieje, nie rób nic
+            if (standardized.containsKey(standardKey)) {
+                continue;
+            }
+            
+            // Sprawdź alternatywne klucze
+            List<String> alternativeKeys = keyMappings.get(standardKey).split(',');
+            for (String altKey : alternativeKeys) {
+                // Sprawdź dokładne dopasowanie
+                if (results.containsKey(altKey)) {
+                    standardized.put(standardKey, results.get(altKey));
+                    System.debug(LoggingLevel.INFO, 'standardizeResultKeys - Mapped ' + altKey + ' to ' + standardKey);
+                    break;
+                }
+                
+                // Sprawdź częściowe dopasowanie (zawieranie)
+                for (String actualKey : results.keySet()) {
+                    if (actualKey.containsIgnoreCase(altKey) || altKey.containsIgnoreCase(actualKey)) {
+                        standardized.put(standardKey, results.get(actualKey));
+                        System.debug(LoggingLevel.INFO, 'standardizeResultKeys - Mapped similar key ' + actualKey + ' to ' + standardKey);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Sprawdź specjalne przypadki dla struktury danych
+        for (String key : results.keySet()) {
+            // Sprawdź, czy mamy sekcję "Umiejętności techniczne" lub podobną
+            if (key.containsIgnoreCase('umiejętności') || key.containsIgnoreCase('skills')) {
+                Object value = results.get(key);
+                if (value instanceof Map<String, Object>) {
+                    Map<String, Object> skillsMap = (Map<String, Object>)value;
+                    
+                    // Jeśli nie mamy jeszcze standardowego klucza 'skills', dodaj go
+                    if (!standardized.containsKey('skills')) {
+                        List<String> extractedSkills = new List<String>();
+                        for (String skillKey : skillsMap.keySet()) {
+                            Object skillValue = skillsMap.get(skillKey);
+                            if (skillValue instanceof String) {
+                                extractedSkills.add(skillKey + ': ' + (String)skillValue);
+                            } else {
+                                extractedSkills.add(skillKey);
+                            }
+                        }
+                        standardized.put('skills', extractedSkills);
+                        System.debug(LoggingLevel.INFO, 'standardizeResultKeys - Extracted skills from map: ' + key);
+                    }
+                }
+            }
+            
+            // Sprawdź, czy mamy sekcję "Doświadczenie zawodowe" lub podobną, która może zawierać umiejętności
+            if (key.containsIgnoreCase('doświadczenie') || key.containsIgnoreCase('experience')) {
+                Object value = results.get(key);
+                if (value instanceof Map<String, Object> && !standardized.containsKey('skills')) {
+                    Map<String, Object> expMap = (Map<String, Object>)value;
+                    List<String> extractedSkills = new List<String>();
+                    
+                    // Próbuj znaleźć umiejętności w doświadczeniu
+                    for (String expKey : expMap.keySet()) {
+                        if (expKey.containsIgnoreCase('umiejętności') || expKey.containsIgnoreCase('skills') || 
+                            expKey.containsIgnoreCase('technologie') || expKey.containsIgnoreCase('technologies')) {
+                            Object skillsValue = expMap.get(expKey);
+                            if (skillsValue instanceof List<Object>) {
+                                extractedSkills.addAll(extractSkillsAsList((List<Object>)skillsValue));
+                            } else if (skillsValue instanceof String) {
+                                extractedSkills.add((String)skillsValue);
+                            }
+                        }
+                    }
+                    
+                    if (!extractedSkills.isEmpty()) {
+                        standardized.put('skills', extractedSkills);
+                        System.debug(LoggingLevel.INFO, 'standardizeResultKeys - Extracted skills from experience section');
+                    }
+                }
+            }
+        }
+        
+        return standardized;
+    }
+    
+    /**
+     * Ekstrahuje umiejętności z listy obiektów i zwraca je jako listę stringów
+     * @param skillsList Lista obiektów reprezentujących umiejętności
+     * @return Lista stringów zawierających umiejętności
+     */
+    private static List<String> extractSkillsAsList(List<Object> skillsList) {
+        List<String> skillsStrings = new List<String>();
+        
+        for (Object skill : skillsList) {
+            if (skill instanceof String) {
+                skillsStrings.add((String)skill);
+            } else if (skill instanceof Map<String, Object>) {
+                Map<String, Object> skillMap = (Map<String, Object>)skill;
+                if (skillMap.containsKey('name')) {
+                    skillsStrings.add(String.valueOf(skillMap.get('name')));
+                } else if (skillMap.containsKey('nazwa')) {
+                    skillsStrings.add(String.valueOf(skillMap.get('nazwa')));
+                } else if (!skillMap.isEmpty()) {
+                    // Jeśli nie ma klucza 'name', użyj pierwszego klucza
+                    String firstKey = new List<String>(skillMap.keySet())[0];
+                    skillsStrings.add(firstKey + ': ' + String.valueOf(skillMap.get(firstKey)));
+                }
+            }
+        }
+        
+        return skillsStrings;
     }
     
     /**
