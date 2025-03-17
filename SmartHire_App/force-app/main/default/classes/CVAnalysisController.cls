@@ -96,155 +96,294 @@ public with sharing class CVAnalysisController {
         try {
             // Sprawdź uprawnienia do tworzenia rekordów AiAnalysisResult__c
             if (!Schema.SObjectType.AiAnalysisResult__c.isCreateable()) {
-                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - AiAnalysisResult__c is not createable');
-                throw new AuraHandledException('Brak uprawnień do tworzenia obiektów AiAnalysisResult__c');
+                String errorMsg = 'Brak uprawnień do tworzenia obiektów AiAnalysisResult__c';
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - ' + errorMsg);
+                throw new AuraHandledException(errorMsg);
             }
             
-            // Sprawdź uprawnienia do pól
-            SecurityUtils.checkCreateAccess(AiAnalysisResult__c.SObjectType, 
-                new List<String>{
-                    'Candidate__c', 'Position__c', 'Job_Application__c', 'RawAnalysisResults__c',
-                    'MatchScore__c', 'MatchingSkills__c', 'MissingSkills__c', 'AdditionalSkills__c',
-                    'AnalysisSummary__c', 'RecommendationLevel__c', 'KeyHighlights__c', 'PotentialConcerns__c'
-                });
+            // Sprawdź, czy obiekt AiAnalysisResult__c istnieje
+            try {
+                SObjectType aiAnalysisType = Schema.getGlobalDescribe().get('AiAnalysisResult__c');
+                if (aiAnalysisType == null) {
+                    String errorMsg = 'Obiekt AiAnalysisResult__c nie istnieje w organizacji';
+                    System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - ' + errorMsg);
+                    throw new AuraHandledException(errorMsg);
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error checking object existence: ' + e.getMessage());
+                throw new AuraHandledException('Błąd podczas sprawdzania istnienia obiektu AiAnalysisResult__c: ' + e.getMessage());
+            }
+            
+            // Sprawdź uprawnienia do pól - z obsługą błędów dla każdego pola
+            List<String> fieldsToCheck = new List<String>{
+                'Candidate__c', 'Position__c', 'Job_Application__c', 'RawAnalysisResults__c',
+                'MatchScore__c', 'MatchingSkills__c', 'MissingSkills__c', 'AdditionalSkills__c',
+                'AnalysisSummary__c', 'RecommendationLevel__c', 'KeyHighlights__c', 'PotentialConcerns__c'
+            };
+            
+            List<String> missingFields = new List<String>();
+            for (String fieldName : fieldsToCheck) {
+                try {
+                    Schema.SObjectField field = Schema.SObjectType.AiAnalysisResult__c.fields.getMap().get(fieldName);
+                    if (field == null) {
+                        missingFields.add(fieldName);
+                        System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Field does not exist: ' + fieldName);
+                    }
+                } catch (Exception e) {
+                    System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error checking field ' + fieldName + ': ' + e.getMessage());
+                }
+            }
+            
+            if (!missingFields.isEmpty()) {
+                String errorMsg = 'Następujące pola nie istnieją w obiekcie AiAnalysisResult__c: ' + String.join(missingFields, ', ');
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - ' + errorMsg);
+                throw new AuraHandledException(errorMsg);
+            }
+            
+            try {
+                SecurityUtils.checkCreateAccess(AiAnalysisResult__c.SObjectType, fieldsToCheck);
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Security check failed: ' + e.getMessage());
+                throw new AuraHandledException('Błąd uprawnień: ' + e.getMessage());
+            }
             
             // Przygotuj rekord AiAnalysisResult__c
-            AiAnalysisResult__c aiResult = new AiAnalysisResult__c(
-                Candidate__c = candidateId,
-                Position__c = positionId,
-                Job_Application__c = jobApplicationId,
-                RawAnalysisResults__c = analysisResults
-            );
+            AiAnalysisResult__c aiResult = new AiAnalysisResult__c();
+            
+            // Ustaw pola relacji
+            if (candidateId != null) {
+                aiResult.Candidate__c = candidateId;
+            }
+            
+            if (positionId != null) {
+                aiResult.Position__c = positionId;
+            }
+            
+            if (jobApplicationId != null) {
+                aiResult.Job_Application__c = jobApplicationId;
+            }
+            
+            // Ustaw surowe wyniki analizy
+            if (analysisResults != null) {
+                if (analysisResults.length() <= 131072) { // Sprawdź limit długości pola
+                    aiResult.RawAnalysisResults__c = analysisResults;
+                } else {
+                    System.debug(LoggingLevel.WARN, 'createAiAnalysisResult - RawAnalysisResults__c exceeds field length limit, truncating');
+                    aiResult.RawAnalysisResults__c = analysisResults.substring(0, 131072);
+                }
+            }
             
             // Ustaw MatchScore
             if (results.containsKey('matchScore')) {
-                Object matchScoreObj = results.get('matchScore');
-                Decimal matchScore = extractMatchScore(matchScoreObj);
-                aiResult.MatchScore__c = matchScore;
-                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted matchScore: ' + matchScore);
+                try {
+                    Object matchScoreObj = results.get('matchScore');
+                    Decimal matchScore = extractMatchScore(matchScoreObj);
+                    aiResult.MatchScore__c = matchScore;
+                    System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted matchScore: ' + matchScore);
+                } catch (Exception e) {
+                    System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error setting MatchScore__c: ' + e.getMessage());
+                    // Nie rzucamy wyjątku, kontynuujemy z innymi polami
+                }
             }
             
             // Ustaw MatchingSkills
             if (results.containsKey('matchedSkills')) {
-                Object matchedSkillsObj = results.get('matchedSkills');
-                String matchedSkills = '';
-                
-                if (matchedSkillsObj instanceof List<Object>) {
-                    matchedSkills = extractSkillsAsString((List<Object>)matchedSkillsObj);
+                try {
+                    Object matchedSkillsObj = results.get('matchedSkills');
+                    String matchedSkills = '';
+                    
+                    if (matchedSkillsObj instanceof List<Object>) {
+                        matchedSkills = extractSkillsAsString((List<Object>)matchedSkillsObj);
+                    }
+                    
+                    if (matchedSkills.length() <= 32768) { // Sprawdź limit długości pola
+                        aiResult.MatchingSkills__c = matchedSkills;
+                    } else {
+                        System.debug(LoggingLevel.WARN, 'createAiAnalysisResult - MatchingSkills__c exceeds field length limit, truncating');
+                        aiResult.MatchingSkills__c = matchedSkills.substring(0, 32768);
+                    }
+                    
+                    System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted matchedSkills: ' + matchedSkills);
+                } catch (Exception e) {
+                    System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error setting MatchingSkills__c: ' + e.getMessage());
                 }
-                
-                aiResult.MatchingSkills__c = matchedSkills;
-                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted matchedSkills: ' + matchedSkills);
             }
             
             // Ustaw MissingSkills
             if (results.containsKey('missingSkills')) {
-                Object missingSkillsObj = results.get('missingSkills');
-                String missingSkills = '';
-                
-                if (missingSkillsObj instanceof List<Object>) {
-                    missingSkills = extractSkillsAsString((List<Object>)missingSkillsObj);
+                try {
+                    Object missingSkillsObj = results.get('missingSkills');
+                    String missingSkills = '';
+                    
+                    if (missingSkillsObj instanceof List<Object>) {
+                        missingSkills = extractSkillsAsString((List<Object>)missingSkillsObj);
+                    }
+                    
+                    if (missingSkills.length() <= 32768) {
+                        aiResult.MissingSkills__c = missingSkills;
+                    } else {
+                        aiResult.MissingSkills__c = missingSkills.substring(0, 32768);
+                    }
+                    
+                    System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted missingSkills: ' + missingSkills);
+                } catch (Exception e) {
+                    System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error setting MissingSkills__c: ' + e.getMessage());
                 }
-                
-                aiResult.MissingSkills__c = missingSkills;
-                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted missingSkills: ' + missingSkills);
             }
             
             // Ustaw AdditionalSkills
-            if (results.containsKey('additionalSkills')) {
-                Object additionalSkillsObj = results.get('additionalSkills');
+            try {
                 String additionalSkills = '';
                 
-                if (additionalSkillsObj instanceof List<Object>) {
-                    additionalSkills = extractSkillsAsString((List<Object>)additionalSkillsObj);
+                if (results.containsKey('additionalSkills')) {
+                    Object additionalSkillsObj = results.get('additionalSkills');
+                    
+                    if (additionalSkillsObj instanceof List<Object>) {
+                        additionalSkills = extractSkillsAsString((List<Object>)additionalSkillsObj);
+                    }
+                } else if (results.containsKey('skills')) {
+                    // Jeśli nie ma additionalSkills, ale są skills, użyj ich jako additionalSkills
+                    Object skillsObj = results.get('skills');
+                    
+                    if (skillsObj instanceof List<Object>) {
+                        additionalSkills = extractSkillsAsString((List<Object>)skillsObj);
+                    }
                 }
                 
-                aiResult.AdditionalSkills__c = additionalSkills;
-                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted additionalSkills: ' + additionalSkills);
-            } else if (results.containsKey('skills')) {
-                // Jeśli nie ma additionalSkills, ale są skills, użyj ich jako additionalSkills
-                Object skillsObj = results.get('skills');
-                String skills = '';
-                
-                if (skillsObj instanceof List<Object>) {
-                    skills = extractSkillsAsString((List<Object>)skillsObj);
+                if (additionalSkills.length() <= 32768) {
+                    aiResult.AdditionalSkills__c = additionalSkills;
+                } else {
+                    aiResult.AdditionalSkills__c = additionalSkills.substring(0, 32768);
                 }
                 
-                aiResult.AdditionalSkills__c = skills;
-                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - used skills as additionalSkills: ' + skills);
+                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - set AdditionalSkills__c: ' + additionalSkills);
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error setting AdditionalSkills__c: ' + e.getMessage());
             }
             
             // Ustaw AnalysisSummary
             if (results.containsKey('summary')) {
-                Object summaryObj = results.get('summary');
-                if (summaryObj instanceof String) {
-                    aiResult.AnalysisSummary__c = (String)summaryObj;
-                    System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted summary: ' + ((String)summaryObj).length() + ' chars');
+                try {
+                    Object summaryObj = results.get('summary');
+                    if (summaryObj instanceof String) {
+                        String summary = (String)summaryObj;
+                        if (summary.length() <= 32768) {
+                            aiResult.AnalysisSummary__c = summary;
+                        } else {
+                            aiResult.AnalysisSummary__c = summary.substring(0, 32768);
+                        }
+                        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted summary: ' + summary.length() + ' chars');
+                    }
+                } catch (Exception e) {
+                    System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error setting AnalysisSummary__c: ' + e.getMessage());
                 }
             }
             
             // Ustaw RecommendationLevel na podstawie matchScore
-            if (aiResult.MatchScore__c != null) {
-                if (aiResult.MatchScore__c >= 0.75) {
-                    aiResult.RecommendationLevel__c = 'High';
-                } else if (aiResult.MatchScore__c >= 0.5) {
-                    aiResult.RecommendationLevel__c = 'Medium';
-                } else {
-                    aiResult.RecommendationLevel__c = 'Low';
+            try {
+                if (aiResult.MatchScore__c != null) {
+                    if (aiResult.MatchScore__c >= 0.75) {
+                        aiResult.RecommendationLevel__c = 'High';
+                    } else if (aiResult.MatchScore__c >= 0.5) {
+                        aiResult.RecommendationLevel__c = 'Medium';
+                    } else {
+                        aiResult.RecommendationLevel__c = 'Low';
+                    }
+                    System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - set recommendationLevel: ' + aiResult.RecommendationLevel__c);
                 }
-                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - set recommendationLevel: ' + aiResult.RecommendationLevel__c);
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error setting RecommendationLevel__c: ' + e.getMessage());
             }
             
             // Ustaw KeyHighlights
             if (results.containsKey('keyHighlights')) {
-                Object keyHighlightsObj = results.get('keyHighlights');
-                if (keyHighlightsObj instanceof String) {
-                    aiResult.KeyHighlights__c = (String)keyHighlightsObj;
-                } else if (keyHighlightsObj instanceof List<Object>) {
-                    List<String> highlights = new List<String>();
-                    for (Object highlight : (List<Object>)keyHighlightsObj) {
-                        if (highlight instanceof String) {
-                            highlights.add((String)highlight);
+                try {
+                    Object keyHighlightsObj = results.get('keyHighlights');
+                    String keyHighlights = '';
+                    
+                    if (keyHighlightsObj instanceof String) {
+                        keyHighlights = (String)keyHighlightsObj;
+                    } else if (keyHighlightsObj instanceof List<Object>) {
+                        List<String> highlights = new List<String>();
+                        for (Object highlight : (List<Object>)keyHighlightsObj) {
+                            if (highlight instanceof String) {
+                                highlights.add((String)highlight);
+                            }
                         }
+                        keyHighlights = String.join(highlights, '\n');
                     }
-                    aiResult.KeyHighlights__c = String.join(highlights, '\n');
+                    
+                    if (keyHighlights.length() <= 32768) {
+                        aiResult.KeyHighlights__c = keyHighlights;
+                    } else {
+                        aiResult.KeyHighlights__c = keyHighlights.substring(0, 32768);
+                    }
+                    
+                    System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted keyHighlights');
+                } catch (Exception e) {
+                    System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error setting KeyHighlights__c: ' + e.getMessage());
                 }
-                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted keyHighlights');
             }
             
             // Ustaw PotentialConcerns
             if (results.containsKey('potentialConcerns') || results.containsKey('concerns')) {
-                Object concernsObj = results.containsKey('potentialConcerns') ? 
-                    results.get('potentialConcerns') : results.get('concerns');
-                
-                if (concernsObj instanceof String) {
-                    aiResult.PotentialConcerns__c = (String)concernsObj;
-                } else if (concernsObj instanceof List<Object>) {
-                    List<String> concerns = new List<String>();
-                    for (Object concern : (List<Object>)concernsObj) {
-                        if (concern instanceof String) {
-                            concerns.add((String)concern);
+                try {
+                    Object concernsObj = results.containsKey('potentialConcerns') ? 
+                        results.get('potentialConcerns') : results.get('concerns');
+                    
+                    String concerns = '';
+                    if (concernsObj instanceof String) {
+                        concerns = (String)concernsObj;
+                    } else if (concernsObj instanceof List<Object>) {
+                        List<String> concernsList = new List<String>();
+                        for (Object concern : (List<Object>)concernsObj) {
+                            if (concern instanceof String) {
+                                concernsList.add((String)concern);
+                            }
                         }
+                        concerns = String.join(concernsList, '\n');
                     }
-                    aiResult.PotentialConcerns__c = String.join(concerns, '\n');
+                    
+                    if (concerns.length() <= 32768) {
+                        aiResult.PotentialConcerns__c = concerns;
+                    } else {
+                        aiResult.PotentialConcerns__c = concerns.substring(0, 32768);
+                    }
+                    
+                    System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted potentialConcerns');
+                } catch (Exception e) {
+                    System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error setting PotentialConcerns__c: ' + e.getMessage());
                 }
-                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted potentialConcerns');
             }
             
-            // Wstaw rekord
-            Database.SaveResult result = Database.insert(aiResult, true);
-            if (result.isSuccess()) {
-                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - successfully created AiAnalysisResult__c with ID: ' + result.getId());
-                return result.getId();
-            } else {
-                String errorMsg = 'Error creating AiAnalysisResult__c: ' + (result.getErrors().size() > 0 ? result.getErrors()[0].getMessage() : 'Unknown error');
-                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - insert failed: ' + errorMsg);
-                throw new AuraHandledException(errorMsg);
+            // Wstaw rekord z obsługą błędów
+            try {
+                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - Attempting to insert AiAnalysisResult__c record');
+                
+                // Użyj Database.insert zamiast insert, aby uzyskać szczegółowe informacje o błędach
+                Database.SaveResult result = Database.insert(aiResult, false);
+                
+                if (result.isSuccess()) {
+                    System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - successfully created AiAnalysisResult__c with ID: ' + result.getId());
+                    return result.getId();
+                } else {
+                    List<String> errors = new List<String>();
+                    for (Database.Error err : result.getErrors()) {
+                        String errorMsg = 'Field: ' + err.getFields() + ', Status Code: ' + err.getStatusCode() + ', Message: ' + err.getMessage();
+                        errors.add(errorMsg);
+                        System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Error: ' + errorMsg);
+                    }
+                    throw new AuraHandledException('Error creating AiAnalysisResult__c: ' + String.join(errors, '; '));
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Exception during insert: ' + e.getMessage());
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Stack trace: ' + e.getStackTraceString());
+                throw new AuraHandledException('Error creating AiAnalysisResult__c: ' + e.getMessage());
             }
         } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Exception: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Unexpected exception: ' + e.getMessage());
             System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Stack trace: ' + e.getStackTraceString());
-            throw e;
+            throw new AuraHandledException('Error in createAiAnalysisResult: ' + e.getMessage());
         } finally {
             System.debug(LoggingLevel.INFO, '=== createAiAnalysisResult - END ===');
         }
