@@ -10,9 +10,9 @@ public with sharing class PositionService {
         'Required_Skills__c', 'Salary_Range__c'
     };
     
-    // Pole Qualifications__c zostało usunięte, ponieważ używamy Required_Skills__c
+    // Używamy Job_Description__c zamiast Description__c
     private static final List<String> DETAIL_FIELDS = new List<String>{
-        'Description__c'
+        'Job_Description__c'
     };
 
     /**
@@ -41,7 +41,7 @@ public with sharing class PositionService {
         }
 
         List<Position__c> positions = [SELECT Id, Name, Department__c, Status__c, Location__c,
-                                              Required_Skills__c, Salary_Range__c, Description__c
+                                              Required_Skills__c, Salary_Range__c, Job_Description__c
                                        FROM Position__c 
                                        WHERE Id = :positionId];
 

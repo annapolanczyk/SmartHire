@@ -8,7 +8,7 @@
  * 
  * @author ChangeMeIn@UserSettingsUnder.SFDoc
  * @group 
- * @last modified on  : 03-13-2025
+ * @last modified on  : 03-17-2025
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 public with sharing class CVAnalysisHelper {
@@ -113,7 +113,7 @@ public with sharing class CVAnalysisHelper {
         if (positionId != null) {
             Position__c position = getPosition(positionId);
             if (position != null) {
-                context.jobDescription = String.isNotBlank(position.Description__c) ? position.Description__c : '';
+                context.jobDescription = String.isNotBlank(position.Job_Description__c) ? position.Job_Description__c : '';
                 context.positionName = position.Name;
                 context.requiredSkills = String.isNotBlank(position.Required_Skills__c) 
                     ? parseSkills(position.Required_Skills__c) 
@@ -163,37 +163,39 @@ public with sharing class CVAnalysisHelper {
      * @return Prompt dla API OpenAI
      */
     private static String buildPrompt(AnalysisContext context) {
-        String prompt = 'Przeprowadź zaawansowaną analizę semantyczną poniższego CV. Działaj jako doświadczony rekruter ze specjalizacją w technologiach Salesforce. '
-            + 'Szczegółowo zidentyfikuj wszystkie umiejętności, kompetencje, kwalifikacje i doświadczenie zawodowe wymienione w dokumencie.\n\n'
-            + 'Zwróć szczególną uwagę na:\n'
-            + '1. Umiejętności techniczne związane z Salesforce (Apex, LWC, Visualforce, SOQL, Flow, itp.)\n'
-            + '2. Umiejętności programistyczne i integracyjne (REST/SOAP API, JavaScript, HTML/CSS, itp.)\n'
-            + '3. Umiejętności miękkie i interpersonalne\n'
-            + '4. Certyfikaty i kwalifikacje, szczególnie związane z Salesforce\n'
-            + '5. Poziom doświadczenia zawodowego\n'
-            + '6. Pośrednie umiejętności, które nie są wymienione wprost, ale wynikają z kontekstu\n\n'
-            + 'Wyodrębnij następujące informacje w formacie JSON:\n'
-            + '1. Dane osobowe (imię, nazwisko, email, telefon)\n'
-            + '2. Wykształcenie (stopień, kierunek, uczelnia, rok ukończenia)\n'
-            + '3. Doświadczenie zawodowe (lista stanowisk, firm, okresów zatrudnienia, obowiązków)\n'
-            + '4. Umiejętności techniczne (lista, zwróć szczególną uwagę na technologie Salesforce)\n'
-            + '5. Języki obce (lista z poziomem znajomości)\n'
-            + '6. Certyfikaty (lista)\n\n';
+        String prompt = 'Conduct an advanced semantic analysis of the following resume. Act as an experienced recruiter specializing in Salesforce technologies. '
+            + 'Identify in detail all skills, competencies, qualifications, and professional experience mentioned in the document.\n\n'
+            + 'Pay special attention to:\n'
+            + '1. Technical skills related to Salesforce (Apex, LWC, Visualforce, SOQL, Flow, etc.)\n'
+            + '2. Programming and integration skills (REST/SOAP API, JavaScript, HTML/CSS, etc.)\n'
+            + '3. Soft and interpersonal skills\n'
+            + '4. Certificates and qualifications, especially related to Salesforce\n'
+            + '5. Level of professional experience\n'
+            + '6. Indirect skills that are not explicitly mentioned but can be inferred from context\n\n'
+            + 'Extract the following information in JSON format:\n'
+            + '1. personalData (name, surname, email, phone)\n'
+            + '2. education (degree, field, university, graduation year)\n'
+            + '3. workExperience (list of positions, companies, employment periods, responsibilities)\n'
+            + '4. technicalSkills (list, pay special attention to Salesforce technologies)\n'
+            + '5. languages (list with proficiency level)\n'
+            + '6. certifications (list)\n\n';
         
-        // Dodaj informacje o stanowisku jeśli są dostępne
+        // Add position information if available
         if (context.hasPositionDetails()) {
-            prompt += 'Dodatkowo, oceń dopasowanie kandydata do stanowiska "' + context.positionName + '" na podstawie poniższego opisu i wymaganych umiejętności. '
-                + 'Podaj procentowy wynik dopasowania (0-100%) oraz szczegółowe uzasadnienie, wymieniając konkretne umiejętności, które pasują do wymagań.\n\n'
-                + 'Opis stanowiska: ' + context.jobDescription + '\n\n'
-                + 'Wymagane umiejętności: ' + String.join(context.requiredSkills, ', ') + '\n\n'
-                + 'W odpowiedzi uwzględnij następujące sekcje:\n'
-                + '1. "matchedSkills" (tablica umiejętności, które odpowiadają wymaganym umiejętnościom)\n'
-                + '2. "missingSkills" (tablica wymaganych umiejętności, których brakuje w CV)\n'
-                + '3. "matchScore" (liczba od 0 do 100 określająca ogólne dopasowanie)\n'
-                + '4. "recommendations" (tekst z rekomendacjami dla rekrutera)\n\n';
+            prompt += 'Additionally, evaluate the candidate\'s fit for the position "' + context.positionName + '" based on the description and required skills below. '
+                + 'Provide a percentage match score (0-100%) and detailed justification, listing specific skills that match the requirements.\n\n'
+                + 'Position description: ' + context.jobDescription + '\n\n'
+                + 'Required skills: ' + String.join(context.requiredSkills, ', ') + '\n\n'
+                + 'Include the following sections in your response:\n'
+                + '1. "matchedSkills" (array of skills that match the required skills)\n'
+                + '2. "additionalSkills" (array of skills that are not directly required but may be valuable)\n'
+                + '3. "matchScore" (percentage match score from 0 to 100)\n'
+                + '4. "matchJustification" (detailed explanation of the match score)\n'
+                + '5. "recommendations" (suggestions for the recruiter)\n\n';
         }
         
-        prompt += 'CV do analizy:\n' + context.resumeText;
+        prompt += 'Resume text to analyze:\n\n' + context.resumeText;
+        
         return prompt;
     }
     
@@ -410,7 +412,7 @@ public with sharing class CVAnalysisHelper {
             
             // Wykonaj zapytanie SOQL
             List<Position__c> positionList = [
-                SELECT Id, Name, Description__c, Required_Skills__c 
+                SELECT Id, Name, Job_Description__c, Required_Skills__c 
                 FROM Position__c 
                 WHERE Id = :positionId 
                 WITH SECURITY_ENFORCED
@@ -435,7 +437,7 @@ public with sharing class CVAnalysisHelper {
         
         // Walidacja uprawnień do pól
         Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.Position__c.fields.getMap();
-        for (String field : new List<String>{'Id', 'Name', 'Description__c', 'Required_Skills__c'}) {
+        for (String field : new List<String>{'Id', 'Name', 'Job_Description__c', 'Required_Skills__c'}) {
             if (!fieldMap.get(field).getDescribe().isAccessible()) {
                 throw new CVAnalysisException('Brak uprawnień do odczytu pola Position__c.' + field);
             }
@@ -895,31 +897,35 @@ public with sharing class CVAnalysisHelper {
     }
     
     /**
-     * @description Ekstrahuje szczegóły błędu z odpowiedzi Google Vision API
-     * @param responseBody Ciało odpowiedzi
-     * @return Szczegóły błędu
+     * @description Extracts error details from Google Vision API response
+     * @param responseBody Response body
+     * @return Error details
      */
     private static String extractErrorDetails(String responseBody) {
         try {
             if (String.isBlank(responseBody)) {
-                return 'Brak szczegółów błędu';
+                return 'No error details available';
             }
             
-            // Próba parsowania odpowiedzi jako JSON
+            // Try to parse response as JSON
             Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(responseBody);
             
-            // Sprawdź, czy odpowiedź zawiera pole "error"
+            // Initialize error variables
+            String errorCode = '';
+            String errorMessage = '';
+            String errorDetails = '';
+            
+            // Check if response contains "error" field
             if (responseMap.containsKey('error')) {
                 Map<String, Object> errorMap = (Map<String, Object>) responseMap.get('error');
                 
-                // Pobierz kod błędu i wiadomość
-                String errorCode = errorMap.containsKey('code') ? String.valueOf(errorMap.get('code')) : '';
-                String errorMessage = errorMap.containsKey('message') ? String.valueOf(errorMap.get('message')) : '';
+                // Get error code and message
+                errorCode = errorMap.containsKey('code') ? String.valueOf(errorMap.get('code')) : '';
+                errorMessage = errorMap.containsKey('message') ? String.valueOf(errorMap.get('message')) : '';
                 
-                // Pobierz szczegóły błędu, jeśli istnieją
-                String errorDetails = '';
+                // Get error details if they exist
                 if (errorMap.containsKey('details') && errorMap.get('details') instanceof List<Object>) {
-                    List<Object> detailsList = (List<Object>) errorMap.get('details');
+                    List<Object> detailsList = (List<Object>)errorMap.get('details');
                     for (Object detail : detailsList) {
                         if (detail instanceof Map<String, Object>) {
                             Map<String, Object> detailMap = (Map<String, Object>) detail;
@@ -929,16 +935,13 @@ public with sharing class CVAnalysisHelper {
                         }
                     }
                 }
-                
-                // Zwróć sformatowane szczegóły błędu
-                return 'Kod: ' + errorCode + ', Wiadomość: ' + errorMessage + (String.isNotBlank(errorDetails) ? ', Szczegóły: ' + errorDetails : '');
             }
             
-            // Jeśli nie znaleziono pola "error", zwróć całą odpowiedź (ograniczoną do 500 znaków)
-            return responseBody.length() > 500 ? responseBody.substring(0, 500) + '...' : responseBody;
+            // Return formatted error details
+            return 'Code: ' + errorCode + ', Message: ' + errorMessage + (String.isNotBlank(errorDetails) ? ', Details: ' + errorDetails : '');
         } catch (Exception e) {
-            // W przypadku błędu podczas parsowania, zwróć oryginalną odpowiedź (ograniczoną do 500 znaków)
-            return 'Błąd parsowania odpowiedzi: ' + e.getMessage() + '. Oryginalna odpowiedź: ' + 
+            // In case of parsing error, return the original response (limited to 500 characters)
+            return 'Error parsing response: ' + e.getMessage() + '. Original response: ' + 
                    (responseBody.length() > 500 ? responseBody.substring(0, 500) + '...' : responseBody);
         }
     }
