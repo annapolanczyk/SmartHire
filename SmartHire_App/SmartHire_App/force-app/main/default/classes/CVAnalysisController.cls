@@ -469,94 +469,40 @@ public with sharing class CVAnalysisController {
      */
     private static Map<String, Object> standardizeResultKeys(Map<String, Object> results) {
         Map<String, Object> standardized = new Map<String, Object>(results);
-        Map<String, String> keyMappings = new Map<String, String>();
+        Map<String, String> keyMappings = new Map<String, String>{
+            'matchScore' => 'match_score|matching_score|score|dopasowanie|wynik',
+            'matchedSkills' => 'matched_skills|matching_skills|found_skills|skills_found|dopasowane_umiejetnosci',
+            'missingSkills' => 'missing_skills|lacking_skills|skills_missing|skills_lacking|brakujace_umiejetnosci',
+            'additionalSkills' => 'additional_skills|extra_skills|other_skills|dodatkowe_umiejetnosci',
+            'summary' => 'summary|overview|resume|podsumowanie',
+            'keyHighlights' => 'key_highlights|highlights|key_points|main_points|kluczowe_punkty',
+            'potentialConcerns' => 'potential_concerns|concerns|warnings|red_flags|zastrzezenia',
+            'skills' => 'skills|umiejetnosci|technologie|technologies'
+        };
         
-        // Definiuj mapowania kluczy (format: 'standardowy_klucz' => 'możliwe_alternatywne_klucze')
-        keyMappings.put('matchScore', 'match_score,dopasowanie,wynik_dopasowania,score,wynik');
-        keyMappings.put('matchedSkills', 'matched_skills,dopasowane_umiejętności,pasujące_umiejętności,matching_skills');
-        keyMappings.put('missingSkills', 'missing_skills,brakujące_umiejętności,niedobór_umiejętności');
-        keyMappings.put('additionalSkills', 'additional_skills,dodatkowe_umiejętności,inne_umiejętności');
-        keyMappings.put('skills', 'umiejętności,technologie,technologies,tech_skills');
-        keyMappings.put('summary', 'podsumowanie,streszczenie,overview');
-        keyMappings.put('keyHighlights', 'key_highlights,główne_punkty,zalety,strengths,mocne_strony');
-        keyMappings.put('potentialConcerns', 'potential_concerns,concerns,obawy,słabe_strony,weaknesses,wady');
-        
-        // Sprawdź każdy standardowy klucz
+        // Najpierw sprawdź dokładne dopasowania
         for (String standardKey : keyMappings.keySet()) {
-            // Jeśli standardowy klucz już istnieje, nie rób nic
-            if (standardized.containsKey(standardKey)) {
-                continue;
-            }
-            
-            // Sprawdź alternatywne klucze
-            List<String> alternativeKeys = keyMappings.get(standardKey).split(',');
-            for (String altKey : alternativeKeys) {
-                // Sprawdź dokładne dopasowanie
-                if (results.containsKey(altKey)) {
-                    standardized.put(standardKey, results.get(altKey));
-                    System.debug(LoggingLevel.INFO, 'standardizeResultKeys - Mapped ' + altKey + ' to ' + standardKey);
-                    break;
-                }
-                
-                // Sprawdź częściowe dopasowanie (zawieranie)
-                for (String actualKey : results.keySet()) {
-                    if (actualKey.containsIgnoreCase(altKey) || altKey.containsIgnoreCase(actualKey)) {
-                        standardized.put(standardKey, results.get(actualKey));
-                        System.debug(LoggingLevel.INFO, 'standardizeResultKeys - Mapped similar key ' + actualKey + ' to ' + standardKey);
+            if (!standardized.containsKey(standardKey)) {
+                String alternatives = keyMappings.get(standardKey);
+                for (String alt : alternatives.split('\\|')) {
+                    if (results.containsKey(alt)) {
+                        standardized.put(standardKey, results.get(alt));
                         break;
                     }
                 }
             }
         }
         
-        // Sprawdź specjalne przypadki dla struktury danych
-        for (String key : results.keySet()) {
-            // Sprawdź, czy mamy sekcję "Umiejętności techniczne" lub podobną
-            if (key.containsIgnoreCase('umiejętności') || key.containsIgnoreCase('skills')) {
-                Object value = results.get(key);
-                if (value instanceof Map<String, Object>) {
-                    Map<String, Object> skillsMap = (Map<String, Object>)value;
-                    
-                    // Jeśli nie mamy jeszcze standardowego klucza 'skills', dodaj go
-                    if (!standardized.containsKey('skills')) {
-                        List<String> extractedSkills = new List<String>();
-                        for (String skillKey : skillsMap.keySet()) {
-                            Object skillValue = skillsMap.get(skillKey);
-                            if (skillValue instanceof String) {
-                                extractedSkills.add(skillKey + ': ' + (String)skillValue);
-                            } else {
-                                extractedSkills.add(skillKey);
-                            }
+        // Następnie sprawdź częściowe dopasowania (case-insensitive)
+        for (String standardKey : keyMappings.keySet()) {
+            if (!standardized.containsKey(standardKey)) {
+                String alternatives = keyMappings.get(standardKey);
+                for (String resultKey : results.keySet()) {
+                    for (String alt : alternatives.split('\\|')) {
+                        if (resultKey.containsIgnoreCase(alt)) {
+                            standardized.put(standardKey, results.get(resultKey));
+                            break;
                         }
-                        standardized.put('skills', extractedSkills);
-                        System.debug(LoggingLevel.INFO, 'standardizeResultKeys - Extracted skills from map: ' + key);
-                    }
-                }
-            }
-            
-            // Sprawdź, czy mamy sekcję "Doświadczenie zawodowe" lub podobną, która może zawierać umiejętności
-            if (key.containsIgnoreCase('doświadczenie') || key.containsIgnoreCase('experience')) {
-                Object value = results.get(key);
-                if (value instanceof Map<String, Object> && !standardized.containsKey('skills')) {
-                    Map<String, Object> expMap = (Map<String, Object>)value;
-                    List<String> extractedSkills = new List<String>();
-                    
-                    // Próbuj znaleźć umiejętności w doświadczeniu
-                    for (String expKey : expMap.keySet()) {
-                        if (expKey.containsIgnoreCase('umiejętności') || expKey.containsIgnoreCase('skills') || 
-                            expKey.containsIgnoreCase('technologie') || expKey.containsIgnoreCase('technologies')) {
-                            Object skillsValue = expMap.get(expKey);
-                            if (skillsValue instanceof List<Object>) {
-                                extractedSkills.addAll(extractSkillsAsList((List<Object>)skillsValue));
-                            } else if (skillsValue instanceof String) {
-                                extractedSkills.add((String)skillsValue);
-                            }
-                        }
-                    }
-                    
-                    if (!extractedSkills.isEmpty()) {
-                        standardized.put('skills', extractedSkills);
-                        System.debug(LoggingLevel.INFO, 'standardizeResultKeys - Extracted skills from experience section');
                     }
                 }
             }

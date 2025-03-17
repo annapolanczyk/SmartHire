@@ -27,36 +27,91 @@ export default class CvAnalyzer extends LightningElement {
         return !this.lastAnalyzedDocumentId;
     }
     
-    get skills() {
-        if (this.analysisResults && this.analysisResults.skills) {
-            if (Array.isArray(this.analysisResults.skills)) {
-                return this.analysisResults.skills;
-            } else if (typeof this.analysisResults.skills === 'object') {
-                // Jeśli skills to obiekt z kluczami name, zwróć listę nazw
-                return Object.values(this.analysisResults.skills)
-                    .filter(skill => skill && skill.name)
-                    .map(skill => skill.name);
-            }
-        }
-        return null;
-    }
-    
     get matchedSkills() {
-        if (this.analysisResults && this.analysisResults.matchedSkills) {
-            if (Array.isArray(this.analysisResults.matchedSkills)) {
-                return this.analysisResults.matchedSkills;
+        if (this.analysisResults) {
+            const skills = this.analysisResults.matchedSkills;
+            if (Array.isArray(skills)) {
+                return skills;
+            } else if (typeof skills === 'string') {
+                return skills.split(',').map(s => s.trim());
+            } else if (typeof skills === 'object' && skills !== null) {
+                return Object.values(skills);
             }
         }
-        return null;
+        return [];
     }
     
     get missingSkills() {
-        if (this.analysisResults && this.analysisResults.missingSkills) {
-            if (Array.isArray(this.analysisResults.missingSkills)) {
-                return this.analysisResults.missingSkills;
+        if (this.analysisResults) {
+            const skills = this.analysisResults.missingSkills;
+            if (Array.isArray(skills)) {
+                return skills;
+            } else if (typeof skills === 'string') {
+                return skills.split(',').map(s => s.trim());
+            } else if (typeof skills === 'object' && skills !== null) {
+                return Object.values(skills);
             }
         }
-        return null;
+        return [];
+    }
+    
+    get skills() {
+        if (this.analysisResults) {
+            const skills = this.analysisResults.skills;
+            if (Array.isArray(skills)) {
+                return skills;
+            } else if (typeof skills === 'string') {
+                return skills.split(',').map(s => s.trim());
+            } else if (typeof skills === 'object' && skills !== null) {
+                if (skills.technical || skills.soft || skills.other) {
+                    return [...(skills.technical || []), ...(skills.soft || []), ...(skills.other || [])];
+                }
+                return Object.values(skills);
+            }
+        }
+        return [];
+    }
+    
+    get summary() {
+        if (this.analysisResults) {
+            const summary = this.analysisResults.summary;
+            if (typeof summary === 'string') {
+                return summary;
+            } else if (Array.isArray(summary)) {
+                return summary.join('\n');
+            } else if (typeof summary === 'object' && summary !== null) {
+                return Object.values(summary).join('\n');
+            }
+        }
+        return '';
+    }
+    
+    get keyHighlights() {
+        if (this.analysisResults) {
+            const highlights = this.analysisResults.keyHighlights;
+            if (Array.isArray(highlights)) {
+                return highlights;
+            } else if (typeof highlights === 'string') {
+                return highlights.split('\n').map(h => h.trim()).filter(h => h);
+            } else if (typeof highlights === 'object' && highlights !== null) {
+                return Object.values(highlights);
+            }
+        }
+        return [];
+    }
+    
+    get potentialConcerns() {
+        if (this.analysisResults) {
+            const concerns = this.analysisResults.potentialConcerns;
+            if (Array.isArray(concerns)) {
+                return concerns;
+            } else if (typeof concerns === 'string') {
+                return concerns.split('\n').map(c => c.trim()).filter(c => c);
+            } else if (typeof concerns === 'object' && concerns !== null) {
+                return Object.values(concerns);
+            }
+        }
+        return [];
     }
     
     get matchScore() {
