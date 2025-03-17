@@ -8,7 +8,7 @@
  * 
  * @author ChangeMeIn@UserSettingsUnder.SFDoc
  * @group 
- * @last modified on  : 03-13-2025
+ * @last modified on  : 03-17-2025
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 public with sharing class CVAnalysisHelper {
@@ -39,8 +39,8 @@ public with sharing class CVAnalysisHelper {
             // Walidacja uprawnień do ContentVersion
             validateContentVersionAccess();
             
-            // Konwersja CV na tekst
-            String resumeText = extractTextFromCV(cv);
+        // Konwersja CV na tekst
+        String resumeText = extractTextFromCV(cv);
             
             // Pobierz dane stanowiska i utwórz kontekst analizy
             AnalysisContext context = createAnalysisContext(resumeText, positionId);
@@ -113,7 +113,14 @@ public with sharing class CVAnalysisHelper {
         if (positionId != null) {
             Position__c position = getPosition(positionId);
             if (position != null) {
-                context.jobDescription = String.isNotBlank(position.Description__c) ? position.Description__c : '';
+                // Użyj pola Job_Description__c jeśli jest wypełnione, w przeciwnym razie użyj Description__c
+                if (String.isNotBlank(position.Job_Description__c)) {
+                    context.jobDescription = position.Job_Description__c;
+                    System.debug(LoggingLevel.INFO, 'Użyto pełnej treści ogłoszenia z pola Job_Description__c');
+                } else {
+                    context.jobDescription = String.isNotBlank(position.Description__c) ? position.Description__c : '';
+                    System.debug(LoggingLevel.INFO, 'Użyto krótkiego opisu z pola Description__c');
+                }
                 context.positionName = position.Name;
                 context.requiredSkills = String.isNotBlank(position.Required_Skills__c) 
                     ? parseSkills(position.Required_Skills__c) 
@@ -410,7 +417,7 @@ public with sharing class CVAnalysisHelper {
             
             // Wykonaj zapytanie SOQL
             List<Position__c> positionList = [
-                SELECT Id, Name, Description__c, Required_Skills__c 
+                SELECT Id, Name, Description__c, Required_Skills__c, Job_Description__c 
                 FROM Position__c 
                 WHERE Id = :positionId 
                 WITH SECURITY_ENFORCED
@@ -435,7 +442,7 @@ public with sharing class CVAnalysisHelper {
         
         // Walidacja uprawnień do pól
         Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.Position__c.fields.getMap();
-        for (String field : new List<String>{'Id', 'Name', 'Description__c', 'Required_Skills__c'}) {
+        for (String field : new List<String>{'Id', 'Name', 'Description__c', 'Required_Skills__c', 'Job_Description__c'}) {
             if (!fieldMap.get(field).getDescribe().isAccessible()) {
                 throw new CVAnalysisException('Brak uprawnień do odczytu pola Position__c.' + field);
             }
