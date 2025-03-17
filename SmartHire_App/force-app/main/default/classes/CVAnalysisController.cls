@@ -27,7 +27,7 @@ public with sharing class CVAnalysisController {
      * Save analysis results to the record
      * @param recordId ID of the record (Job_Application__c or Candidate__c)
      * @param analysisResults JSON string with analysis results
-     * @return ID of the updated record
+     * @return ID of the created AiAnalysisResult__c record
      */
     @AuraEnabled
     public static Id saveAnalysisResults(Id recordId, String analysisResults) {
@@ -79,151 +79,175 @@ public with sharing class CVAnalysisController {
     }
     
     /**
-     * Tworzy rekordy umiejętności na podstawie wyników analizy CV
+     * Tworzy rekord AiAnalysisResult__c na podstawie wyników analizy CV
      * @param candidateId ID kandydata
-     * @param results Wyniki analizy CV
-     * @return Lista utworzonych rekordów umiejętności
+     * @param positionId ID pozycji (opcjonalnie)
+     * @param jobApplicationId ID aplikacji o pracę (opcjonalnie)
+     * @param analysisResults Surowe wyniki analizy w formacie JSON
+     * @param results Sparsowane wyniki analizy
+     * @return ID utworzonego rekordu AiAnalysisResult__c
      */
-    private static List<Skill__c> createSkillRecords(Id candidateId, Map<String, Object> results) {
-        System.debug(LoggingLevel.INFO, '=== createSkillRecords - START ===');
-        System.debug(LoggingLevel.INFO, 'createSkillRecords - candidateId: ' + candidateId);
-        
-        List<Skill__c> skillsToInsert = new List<Skill__c>();
+    private static Id createAiAnalysisResult(Id candidateId, Id positionId, Id jobApplicationId, String analysisResults, Map<String, Object> results) {
+        System.debug(LoggingLevel.INFO, '=== createAiAnalysisResult - START ===');
+        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - candidateId: ' + candidateId);
+        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - positionId: ' + positionId);
+        System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - jobApplicationId: ' + jobApplicationId);
         
         try {
-            // Sprawdź uprawnienia do tworzenia rekordów Skill__c
-            if (!Schema.SObjectType.Skill__c.isCreateable()) {
-                System.debug(LoggingLevel.ERROR, 'createSkillRecords - Skill__c is not createable');
-                throw new AuraHandledException('Brak uprawnień do tworzenia obiektów Skill__c');
+            // Sprawdź uprawnienia do tworzenia rekordów AiAnalysisResult__c
+            if (!Schema.SObjectType.AiAnalysisResult__c.isCreateable()) {
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - AiAnalysisResult__c is not createable');
+                throw new AuraHandledException('Brak uprawnień do tworzenia obiektów AiAnalysisResult__c');
             }
             
             // Sprawdź uprawnienia do pól
-            SecurityUtils.checkCreateAccess(Skill__c.SObjectType, 
-                new List<String>{'Name', 'Candidate__c', 'Category__c', 'Proficiency_Level__c'});
+            SecurityUtils.checkCreateAccess(AiAnalysisResult__c.SObjectType, 
+                new List<String>{
+                    'Candidate__c', 'Position__c', 'Job_Application__c', 'RawAnalysisResults__c',
+                    'MatchScore__c', 'MatchingSkills__c', 'MissingSkills__c', 'AdditionalSkills__c',
+                    'AnalysisSummary__c', 'RecommendationLevel__c', 'KeyHighlights__c', 'PotentialConcerns__c'
+                });
             
-            // Pobierz umiejętności z wyników analizy
-            List<String> skillsList = new List<String>();
+            // Przygotuj rekord AiAnalysisResult__c
+            AiAnalysisResult__c aiResult = new AiAnalysisResult__c(
+                Candidate__c = candidateId,
+                Position__c = positionId,
+                Job_Application__c = jobApplicationId,
+                RawAnalysisResults__c = analysisResults
+            );
             
-            // Sprawdź różne możliwe formaty umiejętności w wynikach
-            if (results.containsKey('skills') && results.get('skills') instanceof List<Object>) {
-                List<Object> skillsObj = (List<Object>)results.get('skills');
-                for (Object skill : skillsObj) {
-                    if (skill instanceof String) {
-                        skillsList.add((String)skill);
-                    } else if (skill instanceof Map<String, Object>) {
-                        Map<String, Object> skillMap = (Map<String, Object>)skill;
-                        if (skillMap.containsKey('name')) {
-                            skillsList.add(String.valueOf(skillMap.get('name')));
-                        }
-                    }
+            // Ustaw MatchScore
+            if (results.containsKey('matchScore')) {
+                Object matchScoreObj = results.get('matchScore');
+                Decimal matchScore = extractMatchScore(matchScoreObj);
+                aiResult.MatchScore__c = matchScore;
+                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted matchScore: ' + matchScore);
+            }
+            
+            // Ustaw MatchingSkills
+            if (results.containsKey('matchedSkills')) {
+                Object matchedSkillsObj = results.get('matchedSkills');
+                String matchedSkills = '';
+                
+                if (matchedSkillsObj instanceof List<Object>) {
+                    matchedSkills = extractSkillsAsString((List<Object>)matchedSkillsObj);
                 }
-                System.debug(LoggingLevel.INFO, 'createSkillRecords - extracted skills from "skills" key: ' + skillsList.size());
-            } else if (results.containsKey('Umiejętności techniczne')) {
-                Object skillsObj = results.get('Umiejętności techniczne');
+                
+                aiResult.MatchingSkills__c = matchedSkills;
+                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted matchedSkills: ' + matchedSkills);
+            }
+            
+            // Ustaw MissingSkills
+            if (results.containsKey('missingSkills')) {
+                Object missingSkillsObj = results.get('missingSkills');
+                String missingSkills = '';
+                
+                if (missingSkillsObj instanceof List<Object>) {
+                    missingSkills = extractSkillsAsString((List<Object>)missingSkillsObj);
+                }
+                
+                aiResult.MissingSkills__c = missingSkills;
+                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted missingSkills: ' + missingSkills);
+            }
+            
+            // Ustaw AdditionalSkills
+            if (results.containsKey('additionalSkills')) {
+                Object additionalSkillsObj = results.get('additionalSkills');
+                String additionalSkills = '';
+                
+                if (additionalSkillsObj instanceof List<Object>) {
+                    additionalSkills = extractSkillsAsString((List<Object>)additionalSkillsObj);
+                }
+                
+                aiResult.AdditionalSkills__c = additionalSkills;
+                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted additionalSkills: ' + additionalSkills);
+            } else if (results.containsKey('skills')) {
+                // Jeśli nie ma additionalSkills, ale są skills, użyj ich jako additionalSkills
+                Object skillsObj = results.get('skills');
+                String skills = '';
+                
                 if (skillsObj instanceof List<Object>) {
-                    List<Object> techSkills = (List<Object>)skillsObj;
-                    for (Object skill : techSkills) {
-                        if (skill instanceof String) {
-                            skillsList.add((String)skill);
-                        }
-                    }
-                } else if (skillsObj instanceof String) {
-                    // Jeśli to string, spróbuj podzielić po przecinkach
-                    String skillsStr = (String)skillsObj;
-                    skillsList.addAll(skillsStr.split(','));
-                }
-                System.debug(LoggingLevel.INFO, 'createSkillRecords - extracted skills from "Umiejętności techniczne" key: ' + skillsList.size());
-            }
-            
-            // Dodaj również dopasowane umiejętności, jeśli istnieją
-            if (results.containsKey('matchedSkills') && results.get('matchedSkills') instanceof List<Object>) {
-                List<Object> matchedSkillsObj = (List<Object>)results.get('matchedSkills');
-                for (Object skill : matchedSkillsObj) {
-                    if (skill instanceof String) {
-                        String skillName = ((String)skill).trim();
-                        if (!skillsList.contains(skillName)) {
-                            skillsList.add(skillName);
-                        }
-                    }
-                }
-                System.debug(LoggingLevel.INFO, 'createSkillRecords - added matched skills, total skills: ' + skillsList.size());
-            }
-            
-            // Jeśli nie znaleziono umiejętności, zakończ
-            if (skillsList.isEmpty()) {
-                System.debug(LoggingLevel.INFO, 'createSkillRecords - no skills found in results');
-                return skillsToInsert;
-            }
-            
-            // Utwórz rekordy umiejętności
-            for (String skillName : skillsList) {
-                skillName = skillName.trim();
-                if (String.isNotBlank(skillName)) {
-                    Skill__c skill = new Skill__c(
-                        Name = skillName,
-                        Candidate__c = candidateId
-                    );
-                    
-                    // Ustaw kategorię na podstawie nazwy umiejętności (prosta logika)
-                    if (skillName.containsIgnoreCase('Apex') || 
-                        skillName.containsIgnoreCase('LWC') || 
-                        skillName.containsIgnoreCase('Visualforce') ||
-                        skillName.containsIgnoreCase('SOQL') ||
-                        skillName.containsIgnoreCase('SOSL') ||
-                        skillName.containsIgnoreCase('Flow')) {
-                        skill.Category__c = 'Technical';
-                    } else if (skillName.containsIgnoreCase('Java') || 
-                               skillName.containsIgnoreCase('JavaScript') || 
-                               skillName.containsIgnoreCase('Python') ||
-                               skillName.containsIgnoreCase('C#') ||
-                               skillName.containsIgnoreCase('C++')) {
-                        skill.Category__c = 'Technical';
-                    } else if (skillName.containsIgnoreCase('English') || 
-                               skillName.containsIgnoreCase('French') || 
-                               skillName.containsIgnoreCase('German') ||
-                               skillName.containsIgnoreCase('Spanish')) {
-                        skill.Category__c = 'Language';
-                    } else {
-                        skill.Category__c = 'Soft Skills';
-                    }
-                    
-                    // Domyślny poziom biegłości
-                    skill.Proficiency_Level__c = 'Intermediate';
-                    
-                    skillsToInsert.add(skill);
-                }
-            }
-            
-            System.debug(LoggingLevel.INFO, 'createSkillRecords - prepared ' + skillsToInsert.size() + ' skills to insert');
-            
-            // Wstaw rekordy umiejętności
-            if (!skillsToInsert.isEmpty()) {
-                // Użyj Database.insert zamiast insert, aby obsłużyć błędy
-                Database.SaveResult[] saveResults = Database.insert(skillsToInsert, false);
-                
-                // Sprawdź wyniki
-                Integer successCount = 0;
-                for (Database.SaveResult sr : saveResults) {
-                    if (sr.isSuccess()) {
-                        successCount++;
-                    } else {
-                        for (Database.Error err : sr.getErrors()) {
-                            System.debug(LoggingLevel.ERROR, 'createSkillRecords - Error creating skill: ' + err.getMessage());
-                        }
-                    }
+                    skills = extractSkillsAsString((List<Object>)skillsObj);
                 }
                 
-                System.debug(LoggingLevel.INFO, 'createSkillRecords - Successfully inserted ' + successCount + ' out of ' + skillsToInsert.size() + ' skills');
+                aiResult.AdditionalSkills__c = skills;
+                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - used skills as additionalSkills: ' + skills);
+            }
+            
+            // Ustaw AnalysisSummary
+            if (results.containsKey('summary')) {
+                Object summaryObj = results.get('summary');
+                if (summaryObj instanceof String) {
+                    aiResult.AnalysisSummary__c = (String)summaryObj;
+                    System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted summary: ' + ((String)summaryObj).length() + ' chars');
+                }
+            }
+            
+            // Ustaw RecommendationLevel na podstawie matchScore
+            if (aiResult.MatchScore__c != null) {
+                if (aiResult.MatchScore__c >= 0.75) {
+                    aiResult.RecommendationLevel__c = 'High';
+                } else if (aiResult.MatchScore__c >= 0.5) {
+                    aiResult.RecommendationLevel__c = 'Medium';
+                } else {
+                    aiResult.RecommendationLevel__c = 'Low';
+                }
+                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - set recommendationLevel: ' + aiResult.RecommendationLevel__c);
+            }
+            
+            // Ustaw KeyHighlights
+            if (results.containsKey('keyHighlights')) {
+                Object keyHighlightsObj = results.get('keyHighlights');
+                if (keyHighlightsObj instanceof String) {
+                    aiResult.KeyHighlights__c = (String)keyHighlightsObj;
+                } else if (keyHighlightsObj instanceof List<Object>) {
+                    List<String> highlights = new List<String>();
+                    for (Object highlight : (List<Object>)keyHighlightsObj) {
+                        if (highlight instanceof String) {
+                            highlights.add((String)highlight);
+                        }
+                    }
+                    aiResult.KeyHighlights__c = String.join(highlights, '\n');
+                }
+                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted keyHighlights');
+            }
+            
+            // Ustaw PotentialConcerns
+            if (results.containsKey('potentialConcerns') || results.containsKey('concerns')) {
+                Object concernsObj = results.containsKey('potentialConcerns') ? 
+                    results.get('potentialConcerns') : results.get('concerns');
+                
+                if (concernsObj instanceof String) {
+                    aiResult.PotentialConcerns__c = (String)concernsObj;
+                } else if (concernsObj instanceof List<Object>) {
+                    List<String> concerns = new List<String>();
+                    for (Object concern : (List<Object>)concernsObj) {
+                        if (concern instanceof String) {
+                            concerns.add((String)concern);
+                        }
+                    }
+                    aiResult.PotentialConcerns__c = String.join(concerns, '\n');
+                }
+                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - extracted potentialConcerns');
+            }
+            
+            // Wstaw rekord
+            Database.SaveResult result = Database.insert(aiResult, true);
+            if (result.isSuccess()) {
+                System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - successfully created AiAnalysisResult__c with ID: ' + result.getId());
+                return result.getId();
+            } else {
+                String errorMsg = 'Error creating AiAnalysisResult__c: ' + (result.getErrors().size() > 0 ? result.getErrors()[0].getMessage() : 'Unknown error');
+                System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - insert failed: ' + errorMsg);
+                throw new AuraHandledException(errorMsg);
             }
         } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'createSkillRecords - Exception: ' + e.getMessage());
-            System.debug(LoggingLevel.ERROR, 'createSkillRecords - Stack trace: ' + e.getStackTraceString());
-            // Nie rzucamy wyjątku, aby nie przerywać głównego procesu zapisywania wyników analizy
+            System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Exception: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - Stack trace: ' + e.getStackTraceString());
+            throw e;
         } finally {
-            System.debug(LoggingLevel.INFO, '=== createSkillRecords - END ===');
+            System.debug(LoggingLevel.INFO, '=== createAiAnalysisResult - END ===');
         }
-        
-        return skillsToInsert;
     }
     
     /**
@@ -231,91 +255,36 @@ public with sharing class CVAnalysisController {
      * @param recordId ID aplikacji o pracę
      * @param analysisResults Surowe wyniki analizy w formacie JSON
      * @param results Sparsowane wyniki analizy
-     * @return ID zaktualizowanego rekordu
+     * @return ID utworzonego rekordu AiAnalysisResult__c
      */
     private static Id saveJobApplicationResults(Id recordId, String analysisResults, Map<String, Object> results) {
         try {
             System.debug(LoggingLevel.INFO, '=== saveJobApplicationResults - START ===');
             System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - start for recordId: ' + recordId);
             
-            // Sprawdź uprawnienia
-            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - checking update access');
-            SecurityUtils.checkUpdateAccess(Job_Application__c.SObjectType, 
-                new List<String>{'Analysis_Results__c'});
-            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - permissions checked successfully');
+            // Pobierz ID kandydata i pozycji z aplikacji o pracę
+            Job_Application__c jobApp = [
+                SELECT Id, Candidate__c, Position__c 
+                FROM Job_Application__c 
+                WHERE Id = :recordId 
+                WITH SECURITY_ENFORCED 
+                LIMIT 1
+            ];
             
-            // Pobierz ID kandydata z aplikacji o pracę
-            Job_Application__c jobApp = [SELECT Id, Candidate__c FROM Job_Application__c WHERE Id = :recordId WITH SECURITY_ENFORCED LIMIT 1];
             Id candidateId = jobApp.Candidate__c;
+            Id positionId = jobApp.Position__c;
             
-            // Jeśli mamy ID kandydata, utwórz rekordy umiejętności
-            if (candidateId != null) {
-                createSkillRecords(candidateId, results);
-            }
+            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - candidateId: ' + candidateId);
+            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - positionId: ' + positionId);
             
-            // Przygotuj dane do zapisu
-            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - preparing data for update');
-            Job_Application__c application = new Job_Application__c(
-                Id = recordId,
-                Analysis_Results__c = analysisResults
-            );
+            // Utwórz rekord AiAnalysisResult__c
+            Id aiResultId = createAiAnalysisResult(candidateId, positionId, recordId, analysisResults, results);
             
-            // Dodaj wynik dopasowania, jeśli istnieje
-            if (results.containsKey('matchScore')) {
-                Object matchScoreObj = results.get('matchScore');
-                System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - matchScore found, type: ' + getObjectType(matchScoreObj));
-                Decimal matchScore = extractMatchScore(matchScoreObj);
-                
-                // Sprawdź, czy pole Match_Score__c istnieje w obiekcie Job_Application__c
-                Schema.DescribeFieldResult fieldDescribe = Schema.SObjectType.Job_Application__c.fields.getMap().get('Match_Score__c')?.getDescribe();
-                if (fieldDescribe != null && fieldDescribe.isUpdateable()) {
-                    application.put('Match_Score__c', matchScore);
-                    System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - extracted matchScore: ' + matchScore);
-                } else {
-                    System.debug(LoggingLevel.WARN, 'saveJobApplicationResults - Match_Score__c field does not exist or is not updateable');
-                }
-            } else {
-                System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - matchScore not found in results');
-            }
+            // Zaktualizuj Job_Application__c, aby wskazywał na najnowszą analizę
+            // Można to zrobić w przyszłości, jeśli będzie taka potrzeba
             
-            // Dodaj zidentyfikowane umiejętności, jeśli istnieją
-            if (results.containsKey('skills')) {
-                Object skillsObj = results.get('skills');
-                System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - skills found, type: ' + getObjectType(skillsObj));
-                String skillsString = extractSkillsFromResults(results);
-                
-                // Sprawdź, czy pole Skills__c istnieje w obiekcie Job_Application__c
-                Schema.DescribeFieldResult fieldDescribe = Schema.SObjectType.Job_Application__c.fields.getMap().get('Skills__c')?.getDescribe();
-                if (fieldDescribe != null && fieldDescribe.isUpdateable()) {
-                    application.put('Skills__c', skillsString);
-                    System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - extracted skills length: ' + (skillsString != null ? skillsString.length() : 0));
-                } else {
-                    System.debug(LoggingLevel.WARN, 'saveJobApplicationResults - Skills__c field does not exist or is not updateable');
-                }
-            } else {
-                System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - skills not found in results');
-            }
-            
-            // Zapisz zmiany z wymuszeniem sprawdzania uprawnień CRUD
-            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - attempting to update record with fields: ' + 
-                          'Analysis_Results__c (length: ' + (application.Analysis_Results__c != null ? application.Analysis_Results__c.length() : 0) + ')');
-            
-            Database.DMLOptions dmlOptions = new Database.DMLOptions();
-            dmlOptions.OptAllOrNone = true;
-            Database.SaveResult result = Database.update(application, dmlOptions);
-            if (!result.isSuccess()) {
-                String errorMsg = 'Error updating Job_Application__c: ' + (result.getErrors().size() > 0 ? result.getErrors()[0].getMessage() : 'Unknown error');
-                System.debug(LoggingLevel.ERROR, 'saveJobApplicationResults - update failed: ' + errorMsg);
-                for (Database.Error err : result.getErrors()) {
-                    System.debug(LoggingLevel.ERROR, 'saveJobApplicationResults - error details: ' + 
-                                 'Fields: ' + err.getFields() + ', ' +
-                                 'Message: ' + err.getMessage() + ', ' +
-                                 'StatusCode: ' + err.getStatusCode());
-                }
-                throw new AuraHandledException(errorMsg);
-            }
-            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - update successful');
-            return recordId;
+            System.debug(LoggingLevel.INFO, 'saveJobApplicationResults - created AiAnalysisResult__c with ID: ' + aiResultId);
+            return aiResultId;
         } catch (Exception e) {
             System.debug(LoggingLevel.ERROR, 'saveJobApplicationResults - Exception: ' + e.getMessage());
             System.debug(LoggingLevel.ERROR, 'saveJobApplicationResults - Exception type: ' + e.getTypeName());
@@ -331,67 +300,18 @@ public with sharing class CVAnalysisController {
      * @param recordId ID kandydata
      * @param analysisResults Surowe wyniki analizy w formacie JSON
      * @param results Sparsowane wyniki analizy
-     * @return ID zaktualizowanego rekordu
+     * @return ID utworzonego rekordu AiAnalysisResult__c
      */
     private static Id saveCandidateResults(Id recordId, String analysisResults, Map<String, Object> results) {
         try {
             System.debug(LoggingLevel.INFO, '=== saveCandidateResults - START ===');
             System.debug(LoggingLevel.INFO, 'saveCandidateResults - start for recordId: ' + recordId);
             
-            // Sprawdź uprawnienia
-            System.debug(LoggingLevel.INFO, 'saveCandidateResults - checking update access');
-            SecurityUtils.checkUpdateAccess(Candidate__c.SObjectType, 
-                new List<String>{'Analysis_Results__c'});
-            System.debug(LoggingLevel.INFO, 'saveCandidateResults - permissions checked successfully');
+            // Utwórz rekord AiAnalysisResult__c
+            Id aiResultId = createAiAnalysisResult(recordId, null, null, analysisResults, results);
             
-            // Utwórz rekordy umiejętności
-            createSkillRecords(recordId, results);
-            
-            // Przygotuj dane do zapisu
-            System.debug(LoggingLevel.INFO, 'saveCandidateResults - preparing data for update');
-            Candidate__c candidate = new Candidate__c(
-                Id = recordId,
-                Analysis_Results__c = analysisResults
-            );
-            
-            // Dodaj zidentyfikowane umiejętności, jeśli istnieją
-            if (results.containsKey('skills')) {
-                Object skillsObj = results.get('skills');
-                System.debug(LoggingLevel.INFO, 'saveCandidateResults - skills found, type: ' + getObjectType(skillsObj));
-                String skillsString = extractSkillsFromResults(results);
-                
-                // Sprawdź, czy pole Skills__c istnieje w obiekcie Candidate__c
-                Schema.DescribeFieldResult fieldDescribe = Schema.SObjectType.Candidate__c.fields.getMap().get('Skills__c')?.getDescribe();
-                if (fieldDescribe != null && fieldDescribe.isUpdateable()) {
-                    candidate.put('Skills__c', skillsString);
-                    System.debug(LoggingLevel.INFO, 'saveCandidateResults - extracted skills length: ' + (skillsString != null ? skillsString.length() : 0));
-                } else {
-                    System.debug(LoggingLevel.WARN, 'saveCandidateResults - Skills__c field does not exist or is not updateable');
-                }
-            } else {
-                System.debug(LoggingLevel.INFO, 'saveCandidateResults - skills not found in results');
-            }
-            
-            // Zapisz zmiany z wymuszeniem sprawdzania uprawnień CRUD
-            System.debug(LoggingLevel.INFO, 'saveCandidateResults - attempting to update record with fields: ' + 
-                          'Analysis_Results__c (length: ' + (candidate.Analysis_Results__c != null ? candidate.Analysis_Results__c.length() : 0) + ')');
-            
-            Database.DMLOptions dmlOptions = new Database.DMLOptions();
-            dmlOptions.OptAllOrNone = true;
-            Database.SaveResult result = Database.update(candidate, dmlOptions);
-            if (!result.isSuccess()) {
-                String errorMsg = 'Error updating Candidate__c: ' + (result.getErrors().size() > 0 ? result.getErrors()[0].getMessage() : 'Unknown error');
-                System.debug(LoggingLevel.ERROR, 'saveCandidateResults - update failed: ' + errorMsg);
-                for (Database.Error err : result.getErrors()) {
-                    System.debug(LoggingLevel.ERROR, 'saveCandidateResults - error details: ' + 
-                                 'Fields: ' + err.getFields() + ', ' +
-                                 'Message: ' + err.getMessage() + ', ' +
-                                 'StatusCode: ' + err.getStatusCode());
-                }
-                throw new AuraHandledException(errorMsg);
-            }
-            System.debug(LoggingLevel.INFO, 'saveCandidateResults - update successful');
-            return recordId;
+            System.debug(LoggingLevel.INFO, 'saveCandidateResults - created AiAnalysisResult__c with ID: ' + aiResultId);
+            return aiResultId;
         } catch (Exception e) {
             System.debug(LoggingLevel.ERROR, 'saveCandidateResults - Exception: ' + e.getMessage());
             System.debug(LoggingLevel.ERROR, 'saveCandidateResults - Exception type: ' + e.getTypeName());
