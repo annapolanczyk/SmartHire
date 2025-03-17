@@ -5,8 +5,8 @@
     <externalId>false</externalId>
     <label>Candidate</label>
     <referenceTo>Candidate__c</referenceTo>
-    <relationshipLabel>Skills</relationshipLabel>
-    <relationshipName>Skills</relationshipName>
+    <relationshipLabel>Skill</relationshipLabel>
+    <relationshipName>Skill</relationshipName>
     <required>false</required>
     <trackTrending>false</trackTrending>
     <type>Lookup</type>

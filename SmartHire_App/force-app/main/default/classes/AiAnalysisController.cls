@@ -63,4 +63,4 @@ public with sharing class AiAnalysisController {
         
         return analyses.isEmpty() ? null : analyses[0].Id;
     }
-} 
+}

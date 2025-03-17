@@ -47,44 +47,44 @@ public class CVAnalysisFactory {
      */
     private class OpenAICVAnalyzer implements ICVAnalyzer {
         public Map<String, Object> analyzeResume(String resumeText, String jobDescription, List<String> requiredSkills) {
-            // Przygotuj kontekst systemowy
-            String systemPrompt = 'Jesteś ekspertem w dziedzinie HR i rekrutacji, specjalizującym się w analizie CV. ' +
-                'Twoim zadaniem jest analiza przesłanego CV i wyodrębnienie kluczowych informacji. ' +
-                'Zwróć wyniki w formacie JSON z następującymi sekcjami: ' +
-                '1. skills (tablica wykrytych umiejętności) ' +
-                '2. workExperience (sformatowany tekst HTML z doświadczeniem zawodowym) ' +
-                '3. education (sformatowany tekst HTML z wykształceniem) ' +
-                '4. languages (tablica znanych języków) ' +
-                '5. certifications (tablica certyfikatów) ';
+            // Prepare system context
+            String systemPrompt = 'You are an expert in HR and recruitment, specializing in resume analysis. ' +
+                'Your task is to analyze the submitted resume and extract key information. ' +
+                'Return the results in JSON format with the following sections: ' +
+                '1. skills (array of detected skills) ' +
+                '2. workExperience (HTML formatted text with work experience) ' +
+                '3. education (HTML formatted text with education) ' +
+                '4. languages (array of known languages) ' +
+                '5. certifications (array of certifications) ';
             
-            // Dodaj informacje o stanowisku, jeśli są dostępne
+            // Add position information if available
             if (String.isNotBlank(jobDescription)) {
-                systemPrompt += 'Dodatkowo oceń dopasowanie CV do opisu stanowiska, dodając następujące sekcje: ' +
-                    '6. matchScore (liczba od 0 do 100 określająca ogólne dopasowanie) ' +
-                    '7. skillsMatchScore (liczba od 0 do 100 określająca dopasowanie umiejętności) ' +
-                    '8. experienceMatchScore (liczba od 0 do 100 określająca dopasowanie doświadczenia) ' +
-                    '9. recommendations (tekst HTML z rekomendacjami dla rekrutera) ';
+                systemPrompt += 'Additionally, evaluate the resume\'s match to the position description, adding the following sections: ' +
+                    '6. matchScore (number from 0 to 100 indicating overall match) ' +
+                    '7. skillsMatchScore (number from 0 to 100 indicating skills match) ' +
+                    '8. experienceMatchScore (number from 0 to 100 indicating experience match) ' +
+                    '9. recommendations (HTML text with recommendations for the recruiter) ';
             }
             
-            // Przygotuj zapytanie
-            String prompt = 'Poniżej znajduje się tekst CV do analizy:\n\n' + resumeText;
+            // Prepare the prompt
+            String prompt = 'Below is the resume text to analyze:\n\n' + resumeText;
             
-            // Dodaj opis stanowiska, jeśli jest dostępny
+            // Add job description if available
             if (String.isNotBlank(jobDescription)) {
-                prompt += '\n\nOpis stanowiska:\n\n' + jobDescription;
+                prompt += '\n\nPosition description:\n\n' + jobDescription;
             }
             
-            // Dodaj wymagane umiejętności, jeśli są dostępne
+            // Add required skills if available
             if (requiredSkills != null && !requiredSkills.isEmpty()) {
-                prompt += '\n\nWymagane umiejętności:\n\n' + String.join(requiredSkills, ', ');
+                prompt += '\n\nRequired skills:\n\n' + String.join(requiredSkills, ', ');
             }
             
-            // Wywołaj OpenAI API
+            // Call OpenAI API
             String response = OpenAIService.callOpenAI(prompt, systemPrompt);
             
-            // Przetwórz odpowiedź JSON
+            // Process JSON response
             try {
-                // Ekstrakcja bloku JSON z odpowiedzi
+                // Extract JSON block from response
                 Pattern p = Pattern.compile('\\{[\\s\\S]*\\}');
                 Matcher m = p.matcher(response);
                 if (m.find()) {
@@ -92,11 +92,11 @@ public class CVAnalysisFactory {
                     Map<String, Object> results = (Map<String, Object>)JSON.deserializeUntyped(jsonStr);
                     return results;
                 } else {
-                    throw new OpenAIService.OpenAIException('Nie można znaleźć prawidłowej odpowiedzi JSON');
+                    throw new OpenAIService.OpenAIException('Could not find valid JSON response');
                 }
             } catch (Exception e) {
-                Logger.error('OpenAICVAnalyzer', 'analyzeResume', 'Błąd przetwarzania odpowiedzi', e);
-                throw new OpenAIService.OpenAIException('Błąd przetwarzania odpowiedzi: ' + e.getMessage());
+                Logger.error('OpenAICVAnalyzer', 'analyzeResume', 'Error processing response', e);
+                throw new OpenAIService.OpenAIException('Error processing response: ' + e.getMessage());
             }
         }
     }

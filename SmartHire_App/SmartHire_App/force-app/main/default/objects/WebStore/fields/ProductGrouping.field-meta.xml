@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ProductGrouping</fullName>
+    <inlineHelpText>Choose how product variations and parent products display in search results.</inlineHelpText>
+</CustomField>

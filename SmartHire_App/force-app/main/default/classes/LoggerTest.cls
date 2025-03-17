@@ -11,7 +11,8 @@ private class LoggerTest {
      */
     @isTest
     static void testErrorLogging() {
-        Exception testException = new NullPointerException('Test Exception');
+        // Używamy IllegalArgumentException zamiast NullPointerException, ponieważ można go utworzyć z parametrem
+        Exception testException = new IllegalArgumentException('Test Exception');
         
         Test.startTest();
         
