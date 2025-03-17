@@ -39,14 +39,16 @@ public with sharing class CVAnalysisHelper {
             // Walidacja uprawnień do ContentVersion
             validateContentVersionAccess();
             
-            // Konwersja CV na tekst
-            String resumeText = extractTextFromCV(cv);
+        // Konwersja CV na tekst
+        String resumeText = extractTextFromCV(cv);
             
             // Pobierz dane stanowiska i utwórz kontekst analizy
             AnalysisContext context = createAnalysisContext(resumeText, positionId);
             
             // Przygotuj prompt dla OpenAI
-            String systemPrompt = 'Jesteś ekspertem HR analizującym CV kandydatów. Twoim zadaniem jest dokładna analiza CV i wyodrębnienie kluczowych informacji.';
+            String systemPrompt = 'Jesteś ekspertem HR analizującym CV kandydatów, ze szczególną specjalizacją w technologiach Salesforce. '
+                + 'Twoim zadaniem jest dokładna analiza CV i wyodrębnienie kluczowych informacji, ze szczególnym uwzględnieniem umiejętności technicznych '
+                + 'związanych z platformą Salesforce, takich jak Apex, LWC, Visualforce, SOQL, Flow, integracje API, itp.';
             String prompt = buildPrompt(context);
             
             // Wywołaj OpenAI API
@@ -161,20 +163,34 @@ public with sharing class CVAnalysisHelper {
      * @return Prompt dla API OpenAI
      */
     private static String buildPrompt(AnalysisContext context) {
-        String prompt = 'Przeanalizuj poniższe CV i wyodrębnij następujące informacje w formacie JSON:\n'
+        String prompt = 'Przeprowadź zaawansowaną analizę semantyczną poniższego CV. Działaj jako doświadczony rekruter ze specjalizacją w technologiach Salesforce. '
+            + 'Szczegółowo zidentyfikuj wszystkie umiejętności, kompetencje, kwalifikacje i doświadczenie zawodowe wymienione w dokumencie.\n\n'
+            + 'Zwróć szczególną uwagę na:\n'
+            + '1. Umiejętności techniczne związane z Salesforce (Apex, LWC, Visualforce, SOQL, Flow, itp.)\n'
+            + '2. Umiejętności programistyczne i integracyjne (REST/SOAP API, JavaScript, HTML/CSS, itp.)\n'
+            + '3. Umiejętności miękkie i interpersonalne\n'
+            + '4. Certyfikaty i kwalifikacje, szczególnie związane z Salesforce\n'
+            + '5. Poziom doświadczenia zawodowego\n'
+            + '6. Pośrednie umiejętności, które nie są wymienione wprost, ale wynikają z kontekstu\n\n'
+            + 'Wyodrębnij następujące informacje w formacie JSON:\n'
             + '1. Dane osobowe (imię, nazwisko, email, telefon)\n'
             + '2. Wykształcenie (stopień, kierunek, uczelnia, rok ukończenia)\n'
             + '3. Doświadczenie zawodowe (lista stanowisk, firm, okresów zatrudnienia, obowiązków)\n'
-            + '4. Umiejętności techniczne (lista)\n'
+            + '4. Umiejętności techniczne (lista, zwróć szczególną uwagę na technologie Salesforce)\n'
             + '5. Języki obce (lista z poziomem znajomości)\n'
             + '6. Certyfikaty (lista)\n\n';
         
         // Dodaj informacje o stanowisku jeśli są dostępne
         if (context.hasPositionDetails()) {
             prompt += 'Dodatkowo, oceń dopasowanie kandydata do stanowiska "' + context.positionName + '" na podstawie poniższego opisu i wymaganych umiejętności. '
-                + 'Podaj procentowy wynik dopasowania (0-100%) oraz krótkie uzasadnienie.\n\n'
+                + 'Podaj procentowy wynik dopasowania (0-100%) oraz szczegółowe uzasadnienie, wymieniając konkretne umiejętności, które pasują do wymagań.\n\n'
                 + 'Opis stanowiska: ' + context.jobDescription + '\n\n'
-                + 'Wymagane umiejętności: ' + String.join(context.requiredSkills, ', ') + '\n\n';
+                + 'Wymagane umiejętności: ' + String.join(context.requiredSkills, ', ') + '\n\n'
+                + 'W odpowiedzi uwzględnij następujące sekcje:\n'
+                + '1. "matchedSkills" (tablica umiejętności, które odpowiadają wymaganym umiejętnościom)\n'
+                + '2. "missingSkills" (tablica wymaganych umiejętności, których brakuje w CV)\n'
+                + '3. "matchScore" (liczba od 0 do 100 określająca ogólne dopasowanie)\n'
+                + '4. "recommendations" (tekst z rekomendacjami dla rekrutera)\n\n';
         }
         
         prompt += 'CV do analizy:\n' + context.resumeText;
@@ -188,34 +204,184 @@ public with sharing class CVAnalysisHelper {
      */
     private static Map<String, Object> parseAIResponse(String aiResponse) {
         try {
+            // Logowanie oryginalnej odpowiedzi dla celów diagnostycznych
+            System.debug(LoggingLevel.INFO, 'Oryginalna odpowiedź z OpenAI (pierwsze 200 znaków): ' + 
+                (aiResponse != null && aiResponse.length() > 200 ? aiResponse.substring(0, 200) + '...' : aiResponse));
+            
+            // Czyszczenie odpowiedzi przed parsowaniem
+            String cleanedResponse = cleanJsonResponse(aiResponse);
+            
             // Próba bezpośredniego parsowania JSON
-            Map<String, Object> parsedResponse = (Map<String, Object>) JSON.deserializeUntyped(aiResponse);
-            return parsedResponse;
-        } catch (Exception e) {
-            Logger.error('Error parsing AI response as JSON', e);
-            
-            // Jeśli odpowiedź nie jest czystym JSON, próbujemy wyodrębnić JSON z tekstu
-            String jsonPattern = '\\{[\\s\\S]*\\}';
-            Pattern p = Pattern.compile(jsonPattern);
-            Matcher m = p.matcher(aiResponse);
-            
-            if (m.find()) {
-                String jsonStr = m.group(0);
-                try {
-                    Map<String, Object> extractedJson = (Map<String, Object>) JSON.deserializeUntyped(jsonStr);
-                    return extractedJson;
-                } catch (Exception ex) {
-                    Logger.error('Error parsing extracted JSON', ex);
+            try {
+                Map<String, Object> parsedResponse = (Map<String, Object>) JSON.deserializeUntyped(cleanedResponse);
+                System.debug(LoggingLevel.INFO, 'Pomyślnie sparsowano odpowiedź jako JSON');
+                return parsedResponse;
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'Error parsing cleaned AI response as JSON: ' + e.getMessage());
+                
+                // Jeśli odpowiedź nie jest czystym JSON, próbujemy wyodrębnić JSON z tekstu
+                String jsonPattern = '\\{[\\s\\S]*\\}';
+                Pattern p = Pattern.compile(jsonPattern);
+                Matcher m = p.matcher(cleanedResponse);
+                
+                if (m.find()) {
+                    String jsonStr = m.group(0);
+                    try {
+                        Map<String, Object> extractedJson = (Map<String, Object>) JSON.deserializeUntyped(jsonStr);
+                        System.debug(LoggingLevel.INFO, 'Pomyślnie wyodrębniono i sparsowano JSON z odpowiedzi');
+                        return extractedJson;
+                    } catch (Exception ex) {
+                        System.debug(LoggingLevel.ERROR, 'Error parsing extracted JSON: ' + ex.getMessage());
+                    }
                 }
             }
             
-            // Jeśli nie udało się sparsować JSON, zwracamy podstawową strukturę z oryginalną odpowiedzią
+            // Jeśli nie udało się sparsować JSON, próbujemy ręcznie wyodrębnić kluczowe informacje
+            Map<String, Object> manuallyExtractedData = extractDataManually(aiResponse);
+            if (!manuallyExtractedData.isEmpty()) {
+                System.debug(LoggingLevel.INFO, 'Pomyślnie wyodrębniono dane ręcznie');
+                return manuallyExtractedData;
+            }
+            
+            // Jeśli wszystkie metody zawiodły, zwracamy podstawową strukturę z oryginalną odpowiedzią
             Map<String, Object> fallbackResponse = new Map<String, Object>{
                 'rawResponse' => aiResponse,
                 'education' => 'Nie udało się wyodrębnić danych z CV',
-                'matchScore' => 0
+                'matchScore' => 0,
+                'skills' => new List<String>(),
+                'matchedSkills' => new List<String>(),
+                'missingSkills' => new List<String>()
             };
             return fallbackResponse;
+        } catch (Exception e) {
+            Logger.error('Unexpected error in parseAIResponse', e);
+            
+            // Zwracamy podstawową strukturę w przypadku nieoczekiwanego błędu
+            Map<String, Object> errorResponse = new Map<String, Object>{
+                'error' => 'Wystąpił nieoczekiwany błąd podczas przetwarzania odpowiedzi: ' + e.getMessage(),
+                'education' => 'Nie udało się wyodrębnić danych z CV',
+                'matchScore' => 0,
+                'skills' => new List<String>(),
+                'matchedSkills' => new List<String>(),
+                'missingSkills' => new List<String>()
+            };
+            return errorResponse;
+        }
+    }
+    
+    /**
+     * @description Czyści odpowiedź JSON z nieprawidłowych znaków i formatowania
+     * @param jsonResponse Odpowiedź JSON do wyczyszczenia
+     * @return Wyczyszczona odpowiedź JSON
+     */
+    private static String cleanJsonResponse(String jsonResponse) {
+        if (String.isBlank(jsonResponse)) {
+            return '{}';
+        }
+        
+        // Usuwanie znaczników kodu markdown
+        String cleaned = jsonResponse.replaceAll('```json', '').replaceAll('```', '');
+        
+        // Usuwanie znaków specjalnych na początku i końcu
+        cleaned = cleaned.trim();
+        if (cleaned.startsWith('`')) {
+            cleaned = cleaned.substring(1);
+        }
+        if (cleaned.endsWith('`')) {
+            cleaned = cleaned.substring(0, cleaned.length() - 1);
+        }
+        
+        // Upewniamy się, że odpowiedź zaczyna się od { i kończy na }
+        if (!cleaned.startsWith('{')) {
+            Integer startIdx = cleaned.indexOf('{');
+            if (startIdx >= 0) {
+                cleaned = cleaned.substring(startIdx);
+            } else {
+                return '{}';
+            }
+        }
+        
+        if (!cleaned.endsWith('}')) {
+            Integer endIdx = cleaned.lastIndexOf('}');
+            if (endIdx >= 0) {
+                cleaned = cleaned.substring(0, endIdx + 1);
+            } else {
+                return '{}';
+            }
+        }
+        
+        return cleaned;
+    }
+    
+    /**
+     * @description Ręcznie wyodrębnia dane z odpowiedzi tekstowej, gdy parsowanie JSON zawodzi
+     * @param response Odpowiedź tekstowa
+     * @return Mapa z wyodrębnionymi danymi
+     */
+    private static Map<String, Object> extractDataManually(String response) {
+        Map<String, Object> result = new Map<String, Object>();
+        
+        try {
+            // Próba wyodrębnienia matchedSkills
+            List<String> matchedSkills = new List<String>();
+            Pattern matchedPattern = Pattern.compile('"matchedSkills"\\s*:\\s*\\[([^\\]]+)\\]');
+            Matcher matchedMatcher = matchedPattern.matcher(response);
+            if (matchedMatcher.find()) {
+                String matchedStr = matchedMatcher.group(1);
+                for (String skill : matchedStr.split(',')) {
+                    skill = skill.replaceAll('"', '').trim();
+                    if (String.isNotBlank(skill)) {
+                        matchedSkills.add(skill);
+                    }
+                }
+                result.put('matchedSkills', matchedSkills);
+            }
+            
+            // Próba wyodrębnienia missingSkills
+            List<String> missingSkills = new List<String>();
+            Pattern missingPattern = Pattern.compile('"missingSkills"\\s*:\\s*\\[([^\\]]+)\\]');
+            Matcher missingMatcher = missingPattern.matcher(response);
+            if (missingMatcher.find()) {
+                String missingStr = missingMatcher.group(1);
+                for (String skill : missingStr.split(',')) {
+                    skill = skill.replaceAll('"', '').trim();
+                    if (String.isNotBlank(skill)) {
+                        missingSkills.add(skill);
+                    }
+                }
+                result.put('missingSkills', missingSkills);
+            }
+            
+            // Próba wyodrębnienia matchScore
+            Pattern scorePattern = Pattern.compile('"matchScore"\\s*:\\s*(\\d+)');
+            Matcher scoreMatcher = scorePattern.matcher(response);
+            if (scoreMatcher.find()) {
+                String scoreStr = scoreMatcher.group(1);
+                try {
+                    Integer score = Integer.valueOf(scoreStr);
+                    result.put('matchScore', score);
+                } catch (Exception e) {
+                    result.put('matchScore', 0);
+                }
+            }
+            
+            // Próba wyodrębnienia recommendations
+            Pattern recPattern = Pattern.compile('"recommendations"\\s*:\\s*"([^"]+)"');
+            Matcher recMatcher = recPattern.matcher(response);
+            if (recMatcher.find()) {
+                String recommendations = recMatcher.group(1);
+                result.put('recommendations', recommendations);
+            }
+            
+            // Jeśli nie znaleziono żadnych danych, zwróć pustą mapę
+            if (result.isEmpty()) {
+                return new Map<String, Object>();
+            }
+            
+            return result;
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Error in extractDataManually: ' + e.getMessage());
+            return new Map<String, Object>();
         }
     }
     
@@ -353,24 +519,47 @@ public with sharing class CVAnalysisHelper {
                 Logger.error('CVAnalysisHelper', 'parsePDF', 'Google Vision API nie zwróciło tekstu', null);
                 throw new CVAnalysisException('Nie udało się wyekstrahować tekstu z pliku PDF. Sprawdź, czy plik zawiera tekst możliwy do odczytania.');
             } catch (CVAnalysisException e) {
-                // Jeśli wystąpił błąd "Bad image data", spróbuj alternatywnej metody
+                // Jeśli wystąpił błąd "Bad image data", spróbuj użyć naszej usługi PDF Extractor
                 if (e.getMessage().contains('Bad image data')) {
-                    Logger.error('CVAnalysisHelper', 'parsePDF', 'Błąd "Bad image data" z Google Vision API. Próba użycia alternatywnej metody ekstrakcji tekstu.', null);
+                    Logger.error('CVAnalysisHelper', 'parsePDF', 'Błąd "Bad image data" z Google Vision API. Próba użycia usługi PDF Extractor.', null);
                     
-                    // Próba użycia alternatywnej metody ekstrakcji tekstu
+                    // Próba użycia usługi PDF Extractor
                     try {
-                        String alternativeText = extractTextAlternative(pdfData);
-                        if (String.isNotBlank(alternativeText)) {
-                            Logger.info('CVAnalysisHelper', 'parsePDF', 'Pomyślnie wyekstrahowano tekst z PDF używając alternatywnej metody. Długość tekstu: ' + alternativeText.length());
-                            return alternativeText;
+                        String pdfExtractorText = extractTextUsingPdfExtractor(pdfData);
+                        if (String.isNotBlank(pdfExtractorText)) {
+                            Logger.info('CVAnalysisHelper', 'parsePDF', 'Pomyślnie wyekstrahowano tekst z PDF używając usługi PDF Extractor. Długość tekstu: ' + pdfExtractorText.length());
+                            return pdfExtractorText;
                         } else {
-                            Logger.warn('CVAnalysisHelper', 'parsePDF', 'Alternatywna metoda ekstrakcji tekstu zwróciła pusty tekst');
-                            throw new CVAnalysisException('Nie udało się wyekstrahować tekstu z pliku PDF używając alternatywnej metody. Sprawdź, czy plik zawiera tekst możliwy do odczytania.');
+                            Logger.warn('CVAnalysisHelper', 'parsePDF', 'Usługa PDF Extractor zwróciła pusty tekst');
+                            
+                            // Jeśli usługa PDF Extractor nie zadziałała, spróbuj alternatywnej metody
+                            String alternativeText = extractTextAlternative(pdfData);
+                            if (String.isNotBlank(alternativeText)) {
+                                Logger.info('CVAnalysisHelper', 'parsePDF', 'Pomyślnie wyekstrahowano tekst z PDF używając alternatywnej metody. Długość tekstu: ' + alternativeText.length());
+                                return alternativeText;
+                            } else {
+                                Logger.warn('CVAnalysisHelper', 'parsePDF', 'Alternatywna metoda ekstrakcji tekstu zwróciła pusty tekst');
+                                throw new CVAnalysisException('Nie udało się wyekstrahować tekstu z pliku PDF używając żadnej z dostępnych metod. Sprawdź, czy plik zawiera tekst możliwy do odczytania.');
+                            }
                         }
-                    } catch (Exception altEx) {
-                        Logger.error('CVAnalysisHelper', 'parsePDF', 'Błąd podczas używania alternatywnej metody ekstrakcji tekstu: ' + altEx.getMessage(), altEx);
-                        throw new CVAnalysisException('Błąd podczas analizy pliku PDF: Google Vision API zgłosiło "Bad image data", a alternatywna metoda ekstrakcji tekstu nie zadziałała. ' +
-                                                     'Sprawdź, czy plik PDF jest poprawny, nie jest zabezpieczony hasłem i jest w standardowym formacie PDF.');
+                    } catch (Exception extEx) {
+                        Logger.error('CVAnalysisHelper', 'parsePDF', 'Błąd podczas używania usługi PDF Extractor: ' + extEx.getMessage(), extEx);
+                        
+                        // Jeśli usługa PDF Extractor nie zadziałała, spróbuj alternatywnej metody
+                        try {
+                            String alternativeText = extractTextAlternative(pdfData);
+                            if (String.isNotBlank(alternativeText)) {
+                                Logger.info('CVAnalysisHelper', 'parsePDF', 'Pomyślnie wyekstrahowano tekst z PDF używając alternatywnej metody. Długość tekstu: ' + alternativeText.length());
+                                return alternativeText;
+                            } else {
+                                Logger.warn('CVAnalysisHelper', 'parsePDF', 'Alternatywna metoda ekstrakcji tekstu zwróciła pusty tekst');
+                                throw new CVAnalysisException('Nie udało się wyekstrahować tekstu z pliku PDF używając żadnej z dostępnych metod. Sprawdź, czy plik zawiera tekst możliwy do odczytania.');
+                            }
+                        } catch (Exception altEx) {
+                            Logger.error('CVAnalysisHelper', 'parsePDF', 'Błąd podczas używania alternatywnej metody ekstrakcji tekstu: ' + altEx.getMessage(), altEx);
+                            throw new CVAnalysisException('Błąd podczas analizy pliku PDF: Google Vision API zgłosiło "Bad image data", a żadna z alternatywnych metod ekstrakcji tekstu nie zadziałała. ' +
+                                                         'Sprawdź, czy plik PDF jest poprawny, nie jest zabezpieczony hasłem i jest w standardowym formacie PDF.');
+                        }
                     }
                 }
                 // Przekazujemy dalej inne wyjątki CVAnalysisException
@@ -382,6 +571,63 @@ public with sharing class CVAnalysisHelper {
         } catch (Exception e) {
             Logger.error('Błąd podczas przetwarzania pliku PDF', e);
             throw new CVAnalysisException('Błąd podczas przetwarzania pliku PDF: ' + e.getMessage() + '. Sprawdź, czy plik PDF jest poprawny i zawiera tekst możliwy do odczytania.');
+        }
+    }
+    
+    /**
+     * @description Ekstrahuje tekst z dokumentu PDF używając usługi PDF Extractor
+     * @param pdfData Dane dokumentu PDF w formacie Blob
+     * @return Wyekstrahowany tekst z dokumentu PDF
+     */
+    private static String extractTextUsingPdfExtractor(Blob pdfData) {
+        try {
+            // Konwertuj Blob do Base64
+            String base64Data = EncodingUtil.base64Encode(pdfData);
+            Logger.info('CVAnalysisHelper', 'extractTextUsingPdfExtractor', 'Długość danych Base64: ' + base64Data.length());
+            
+            // Przygotuj żądanie HTTP do usługi PDF Extractor
+            Http http = new Http();
+            HttpRequest req = new HttpRequest();
+            req.setEndpoint('https://smarthire-pdf-service-3d672936eec0.herokuapp.com/api/extract');
+            req.setMethod('POST');
+            req.setHeader('Content-Type', 'application/json');
+            req.setTimeout(120000); // 120 sekund timeout
+            
+            // Przygotuj dane do wysłania
+            Map<String, String> requestBody = new Map<String, String>{
+                'pdfData' => base64Data
+            };
+            req.setBody(JSON.serialize(requestBody));
+            
+            // Wyślij żądanie
+            Logger.info('CVAnalysisHelper', 'extractTextUsingPdfExtractor', 'Wysyłanie żądania do usługi PDF Extractor');
+            HttpResponse res = http.send(req);
+            
+            // Sprawdź odpowiedź
+            if (res.getStatusCode() == 200) {
+                // Parsuj odpowiedź JSON
+                Map<String, Object> responseMap = (Map<String, Object>)JSON.deserializeUntyped(res.getBody());
+                
+                // Sprawdź, czy operacja się powiodła
+                if (responseMap.containsKey('success') && (Boolean)responseMap.get('success')) {
+                    // Pobierz wyekstrahowany tekst
+                    String extractedText = (String)responseMap.get('text');
+                    Logger.info('CVAnalysisHelper', 'extractTextUsingPdfExtractor', 'Pomyślnie wyekstrahowano tekst. Długość tekstu: ' + extractedText.length());
+                    return extractedText;
+                } else {
+                    // Operacja się nie powiodła
+                    String errorMessage = responseMap.containsKey('error') ? (String)responseMap.get('error') : 'Nieznany błąd';
+                    Logger.error('CVAnalysisHelper', 'extractTextUsingPdfExtractor', 'Błąd z usługi PDF Extractor: ' + errorMessage, null);
+                    throw new CVAnalysisException('Błąd podczas ekstrakcji tekstu z PDF: ' + errorMessage);
+                }
+            } else {
+                // Błąd HTTP
+                Logger.error('CVAnalysisHelper', 'extractTextUsingPdfExtractor', 'Błąd HTTP: ' + res.getStatusCode() + ' - ' + res.getStatus(), null);
+                throw new CVAnalysisException('Błąd podczas komunikacji z usługą PDF Extractor: ' + res.getStatus());
+            }
+        } catch (Exception e) {
+            Logger.error('CVAnalysisHelper', 'extractTextUsingPdfExtractor', 'Wyjątek: ' + e.getMessage(), e);
+            throw new CVAnalysisException('Błąd podczas ekstrakcji tekstu z PDF: ' + e.getMessage());
         }
     }
     

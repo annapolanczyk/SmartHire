@@ -2,7 +2,7 @@
   @description       : 
   @author            : ChangeMeIn@UserSettingsUnder.SFDoc
   @group             : 
-  @last modified on  : 03-12-2025
+  @last modified on  : 03-13-2025
   @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 -->
 <template>
@@ -81,6 +81,43 @@
                                         {matchScoreFormatted}
                                     </p>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Dopasowane umiejętności -->
+                    <div class="slds-grid slds-gutters slds-wrap slds-m-top_medium">
+                        <!-- Lewa kolumna - Dopasowane umiejętności -->
+                        <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
+                            <div class="slds-m-bottom_medium">
+                                <h3 class="slds-text-heading_small slds-m-bottom_x-small">MATCHED SKILLS</h3>
+                                <ul class="slds-list_dotted">
+                                    <template if:true={matchedSkills}>
+                                        <template for:each={matchedSkills} for:item="skill">
+                                            <li key={skill} class="slds-m-bottom_x-small slds-text-color_success">{skill}</li>
+                                        </template>
+                                    </template>
+                                    <template if:false={matchedSkills}>
+                                        <li>No matched skills</li>
+                                    </template>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <!-- Prawa kolumna - Brakujące umiejętności -->
+                        <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
+                            <div class="slds-m-bottom_medium">
+                                <h3 class="slds-text-heading_small slds-m-bottom_x-small">MISSING SKILLS</h3>
+                                <ul class="slds-list_dotted">
+                                    <template if:true={missingSkills}>
+                                        <template for:each={missingSkills} for:item="skill">
+                                            <li key={skill} class="slds-m-bottom_x-small slds-text-color_error">{skill}</li>
+                                        </template>
+                                    </template>
+                                    <template if:false={missingSkills}>
+                                        <li>No missing skills</li>
+                                    </template>
+                                </ul>
                             </div>
                         </div>
                     </div>
