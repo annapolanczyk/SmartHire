@@ -36,7 +36,6 @@
     </types>
     <types>
         <members>AiAnalysisResult__c</members>
-        <members>ApplicationStatusHistory__c</members>
         <members>CandidateConversionHistory__c</members>
         <members>Candidate__c</members>
         <members>Employee__c</members>
@@ -50,7 +49,6 @@
     </types>
     <types>
         <members>AiAnalysisResult__c.*</members>
-        <members>ApplicationStatusHistory__c.*</members>
         <members>CandidateConversionHistory__c.*</members>
         <members>Candidate__c.*</members>
         <members>Employee__c.*</members>

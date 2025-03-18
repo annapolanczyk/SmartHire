@@ -138,9 +138,6 @@ public with sharing class JobApplicationService {
             
             insert application;
             
-            // Tworzenie rekordu historii statusu
-            createStatusHistoryRecord(application.Id, application.Status__c, 'Initial application');
-            
             return application.Id;
         } catch (Exception e) {
             Logger.error(CLASS_NAME, 'createApplication', 'Error creating application', e);
