@@ -280,6 +280,32 @@ public with sharing class CVAnalysisController {
             System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - recordId: ' + recordId);
             System.debug(LoggingLevel.INFO, 'createAiAnalysisResult - objectType: ' + objectType);
             
+            // Dodajemy walidację parametrów wejściowych
+            if (recordId == null) {
+                throw new AuraHandledException('Record ID cannot be null');
+            }
+            
+            if (String.isBlank(objectType)) {
+                throw new AuraHandledException('Object type cannot be blank');
+            }
+            
+            if (objectType != 'Job_Application__c' && objectType != 'Candidate__c') {
+                throw new AuraHandledException('Unsupported object type: ' + objectType);
+            }
+            
+            // Potwierdzamy że rekord istnieje
+            Integer recordCount;
+            
+            if (objectType == 'Job_Application__c') {
+                recordCount = [SELECT COUNT() FROM Job_Application__c WHERE Id = :recordId];
+            } else {
+                recordCount = [SELECT COUNT() FROM Candidate__c WHERE Id = :recordId];
+            }
+            
+            if (recordCount == 0) {
+                throw new AuraHandledException('Record with ID ' + recordId + ' does not exist');
+            }
+            
             // Standardize keys in analysis results
             results = standardizeResultKeys(results);
             
@@ -291,8 +317,28 @@ public with sharing class CVAnalysisController {
             
             // Set relationship fields based on object type
             if (objectType == 'Job_Application__c') {
+                // Pobieramy informacje o stanowisku
+                Job_Application__c jobApp = [
+                    SELECT Id, Position__c, Candidate__c 
+                    FROM Job_Application__c 
+                    WHERE Id = :recordId 
+                    LIMIT 1
+                ];
+                
                 result.Job_Application__c = recordId;
+                
+                // Ustawiamy powiązane pola
+                if (jobApp.Position__c != null) {
+                    result.Position__c = jobApp.Position__c;
+                }
+                
+                if (jobApp.Candidate__c != null) {
+                    result.Candidate__c = jobApp.Candidate__c;
+                }
+                
                 System.debug(LoggingLevel.INFO, 'Set Job_Application__c: ' + recordId);
+                System.debug(LoggingLevel.INFO, 'Set Position__c: ' + result.Position__c);
+                System.debug(LoggingLevel.INFO, 'Set Candidate__c: ' + result.Candidate__c);
             } else if (objectType == 'Candidate__c') {
                 result.Candidate__c = recordId;
                 System.debug(LoggingLevel.INFO, 'Set Candidate__c: ' + recordId);
@@ -385,7 +431,23 @@ public with sharing class CVAnalysisController {
                 Object recommendationObj = results.get('recommendationLevel');
                 
                 if (recommendationObj instanceof String) {
-                    result.RecommendationLevel__c = (String)recommendationObj;
+                    String recommendationLevel = (String)recommendationObj;
+                    // Walidacja i dostosowanie do wartości dopuszczalnych
+                    List<String> validLevels = new List<String>{'Highly Recommended', 'Recommended', 'Consider', 'Not Recommended'};
+                    if (validLevels.contains(recommendationLevel)) {
+                        result.RecommendationLevel__c = recommendationLevel;
+                    } else {
+                        // Proste mapowanie
+                        if (recommendationLevel.containsIgnoreCase('high')) {
+                            result.RecommendationLevel__c = 'Highly Recommended';
+                        } else if (recommendationLevel.containsIgnoreCase('recommend')) {
+                            result.RecommendationLevel__c = 'Recommended';
+                        } else if (recommendationLevel.containsIgnoreCase('consider')) {
+                            result.RecommendationLevel__c = 'Consider';
+                        } else {
+                            result.RecommendationLevel__c = 'Not Recommended';
+                        }
+                    }
                     System.debug(LoggingLevel.INFO, 'Set RecommendationLevel__c: ' + result.RecommendationLevel__c);
                 }
             }
@@ -397,6 +459,13 @@ public with sharing class CVAnalysisController {
                 if (summaryObj instanceof String) {
                     result.AnalysisSummary__c = (String)summaryObj;
                     System.debug(LoggingLevel.INFO, 'Set AnalysisSummary__c: ' + result.AnalysisSummary__c);
+                }
+            } else if (results.containsKey('summary')) {
+                Object summaryObj = results.get('summary');
+                
+                if (summaryObj instanceof String) {
+                    result.AnalysisSummary__c = (String)summaryObj;
+                    System.debug(LoggingLevel.INFO, 'Set AnalysisSummary__c from summary: ' + result.AnalysisSummary__c);
                 }
             }
 
@@ -442,18 +511,41 @@ public with sharing class CVAnalysisController {
                 }
             }
             
-            // Insert record
+            // Zapisujemy rekord AiAnalysisResult__c z obsługą błędów
+            SavePoint sp = Database.setSavepoint();
             try {
+                System.debug(LoggingLevel.INFO, 'Inserting AiAnalysisResult__c record');
+                
+                // Ustawiamy dostępne dane (upewniamy się, że pola wymagane są wypełnione)
+                if (String.isBlank(result.AnalysisSummary__c)) {
+                    result.AnalysisSummary__c = 'Analysis performed on ' + Datetime.now().format();
+                }
+                
+                // Weryfikacja pól
+                System.debug(LoggingLevel.INFO, 'Validating fields before insert:');
+                System.debug(LoggingLevel.INFO, 'Job_Application__c: ' + result.Job_Application__c);
+                System.debug(LoggingLevel.INFO, 'Candidate__c: ' + result.Candidate__c);
+                System.debug(LoggingLevel.INFO, 'Position__c: ' + result.Position__c);
+                System.debug(LoggingLevel.INFO, 'MatchScore__c: ' + result.MatchScore__c);
+                System.debug(LoggingLevel.INFO, 'RecommendationLevel__c: ' + result.RecommendationLevel__c);
+                
                 insert result;
                 System.debug(LoggingLevel.INFO, 'Created AiAnalysisResult__c record: ' + result.Id);
                 return result.Id;
             } catch (Exception e) {
+                Database.rollback(sp);
                 System.debug(LoggingLevel.ERROR, 'Error inserting AiAnalysisResult__c record: ' + e.getMessage());
+                System.debug(LoggingLevel.ERROR, 'Error type: ' + e.getTypeName());
                 System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
+                
+                // Log detailed record data
+                System.debug(LoggingLevel.ERROR, 'Failed record: ' + JSON.serialize(result));
+                
                 throw new AuraHandledException('Error inserting record: ' + e.getMessage());
             }
         } catch (Exception e) {
             System.debug(LoggingLevel.ERROR, 'Error creating AiAnalysisResult__c record: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'Error type: ' + e.getTypeName());
             System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
             throw new AuraHandledException('Error creating analysis record: ' + e.getMessage());
         } finally {
