@@ -334,10 +334,10 @@ public with sharing class CVAnalysisController {
                 Object matchedSkillsObj = standardizedResults.get('matchedSkills');
                 if (matchedSkillsObj instanceof List<Object>) {
                     List<String> skillsList = extractSkillsAsList((List<Object>)matchedSkillsObj);
-                    result.MatchedSkills__c = String.join(skillsList, ', ').left(255);
-                    System.debug(LoggingLevel.ERROR, 'Set MatchedSkills__c: ' + result.MatchedSkills__c);
+                    result.MatchingSkills__c = String.join(skillsList, ', ').left(255);
+                    System.debug(LoggingLevel.ERROR, 'Set MatchingSkills__c: ' + result.MatchingSkills__c);
                 } else if (matchedSkillsObj instanceof String) {
-                    result.MatchedSkills__c = ((String)matchedSkillsObj).left(255);
+                    result.MatchingSkills__c = ((String)matchedSkillsObj).left(255);
                 }
             }
             
@@ -433,7 +433,7 @@ public with sharing class CVAnalysisController {
             System.debug(LoggingLevel.ERROR, 'Candidate__c: ' + result.Candidate__c);
             System.debug(LoggingLevel.ERROR, 'Position__c: ' + result.Position__c);
             System.debug(LoggingLevel.ERROR, 'MatchScore__c: ' + result.MatchScore__c);
-            System.debug(LoggingLevel.ERROR, 'MatchedSkills__c: ' + result.MatchedSkills__c);
+            System.debug(LoggingLevel.ERROR, 'MatchingSkills__c: ' + result.MatchingSkills__c);
             System.debug(LoggingLevel.ERROR, 'AdditionalSkills__c: ' + result.AdditionalSkills__c);
             System.debug(LoggingLevel.ERROR, 'MissingSkills__c: ' + result.MissingSkills__c);
             System.debug(LoggingLevel.ERROR, 'RecommendationLevel__c: ' + result.RecommendationLevel__c);
