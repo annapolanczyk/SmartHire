@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>All_DiscoveryProcedures</fullName>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>UsageType</field>
+        <operation>equals</operation>
+        <value>27</value>
+    </filters>
+    <label>All Discovery Procedures</label>
+</ListView>

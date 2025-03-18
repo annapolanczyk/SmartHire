@@ -1,0 +1,172 @@
+# SmartHire - Instrukcje implementacji diagramów
+
+## Narzędzia rekomendowane do tworzenia diagramów
+
+1. **draw.io (diagrams.net)** - darmowe narzędzie do tworzenia różnych typów diagramów
+2. **Lucidchart** - profesjonalne narzędzie do tworzenia diagramów (płatne, ale z wersją próbną)
+3. **Figma** - do tworzenia makiet UI
+4. **dbdiagram.io** - specjalistyczne narzędzie do tworzenia diagramów ERD
+5. **PlantUML** - tekstowy język do tworzenia diagramów UML
+6. **Mermaid** - tekstowy język do tworzenia diagramów, zintegrowany z wieloma narzędziami
+
+## Instrukcje implementacji poszczególnych diagramów
+
+### 1. Diagram wysokopoziomowy
+
+**Narzędzie**: draw.io lub Lucidchart
+
+**Kroki implementacji**:
+1. Utwórz nowy diagram
+2. Dodaj prostokąty reprezentujące główne komponenty systemu:
+   - Portal rekrutacyjny
+   - Silnik analizy CV
+   - System zarządzania kandydatami
+   - Integracje zewnętrzne
+3. Użyj strzałek do pokazania przepływu danych między komponentami
+4. Dodaj ikony reprezentujące użytkowników (rekruter, menedżer HR)
+5. Dodaj ikony reprezentujące zewnętrzne systemy (OpenAI API)
+6. Dodaj etykiety do każdego komponentu z krótkim opisem
+7. Użyj kolorów do rozróżnienia typów komponentów:
+   - Niebieski: komponenty UI
+   - Zielony: komponenty logiki biznesowej
+   - Pomarańczowy: komponenty danych
+   - Czerwony: integracje zewnętrzne
+8. Dodaj tytuł i legendę
+
+### 2. Diagram architektury technicznej
+
+**Narzędzie**: draw.io lub Lucidchart
+
+**Kroki implementacji**:
+1. Utwórz nowy diagram
+2. Dodaj prostokąty reprezentujące warstwy aplikacji:
+   - Warstwa prezentacji (UI)
+   - Warstwa kontrolerów
+   - Warstwa serwisów
+   - Warstwa pomocnicza
+   - Warstwa asynchroniczna
+   - Warstwa danych
+   - Warstwa integracji
+3. W każdej warstwie umieść mniejsze prostokąty reprezentujące komponenty
+4. Użyj strzałek do pokazania przepływu danych i zależności między komponentami
+5. Dodaj etykiety do każdego komponentu z nazwą klasy
+6. Użyj kolorów zgodnych ze specyfikacją dla różnych typów komponentów
+7. Dodaj specjalne oznaczenia dla punktów kontroli Governor Limits
+8. Dodaj tytuł, legendę i krótki opis
+
+### 3. Diagram przepływu pracy (workflow)
+
+**Narzędzie**: draw.io (z biblioteką BPMN) lub Lucidchart
+
+**Kroki implementacji**:
+1. Utwórz nowy diagram BPMN
+2. Dodaj swimlanes dla każdej roli:
+   - Rekruter
+   - System
+   - Menedżer HR
+   - Menedżer zatrudniający
+3. Dodaj zdarzenie początkowe (Start Event) w swimlane Rekrutera
+4. Dodaj aktywności dla każdego kroku procesu
+5. Dodaj bramki decyzyjne (Gateways) w odpowiednich miejscach
+6. Połącz wszystkie elementy strzałkami sekwencji
+7. Dodaj zdarzenia końcowe (End Events) dla różnych wyników procesu
+8. Dodaj etykiety do każdego elementu
+9. Użyj kolorów do rozróżnienia typów aktywności
+10. Dodaj tytuł i legendę
+
+### 4. Diagram modelu danych (ERD)
+
+**Narzędzie**: dbdiagram.io lub draw.io
+
+**Kroki implementacji**:
+1. Utwórz nowy diagram ERD
+2. Dodaj tabele dla każdego obiektu:
+   - Job_Application__c
+   - Position__c
+   - Candidate__c
+   - Skill__c
+   - SmartHire_Setting__mdt
+   - User
+   - Contact
+3. Dla każdej tabeli dodaj pola z typami danych
+4. Oznacz klucze główne (PK) i obce (FK)
+5. Dodaj relacje między tabelami używając odpowiednich symboli (1:n, n:n)
+6. Użyj kolorów do rozróżnienia typów obiektów:
+   - Pomarańczowy: obiekty niestandardowe
+   - Niebieski: obiekty standardowe
+   - Zielony: obiekty metadanych
+7. Dodaj etykiety do relacji opisujące ich charakter
+8. Dodaj tytuł i legendę
+
+### 5. Diagramy sekwencji
+
+**Narzędzie**: PlantUML, draw.io lub Lucidchart
+
+**Kroki implementacji**:
+1. Utwórz nowy diagram sekwencji
+2. Dodaj aktorów i komponenty jako pionowe linie:
+   - Użytkownik (Rekruter/Menedżer HR)
+   - Komponenty UI (LWC)
+   - Kontrolery Apex
+   - Serwisy Apex
+   - Klasy pomocnicze
+   - Baza danych
+   - Systemy zewnętrzne
+3. Dodaj strzałki poziome reprezentujące wywołania metod i przepływ danych
+4. Dodaj etykiety do strzałek z nazwami metod i parametrów
+5. Użyj przerywanych strzałek dla odpowiedzi
+6. Dodaj ramki aktywacji pokazujące czas wykonania metody
+7. Użyj kolorów do rozróżnienia typów komponentów
+8. Dodaj tytuł i legendę
+
+### 6. Makiety UI
+
+**Narzędzie**: Figma lub draw.io
+
+**Kroki implementacji**:
+1. Utwórz nowy projekt UI
+2. Dla każdego komponentu/ekranu utwórz osobną ramkę
+3. Dodaj elementy UI zgodnie z makietami tekstowymi:
+   - Nagłówki
+   - Pola formularzy
+   - Przyciski
+   - Tabele
+   - Wykresy
+   - Sekcje
+4. Użyj kolorów zgodnych z Salesforce Lightning Design System:
+   - Niebieski (#1589EE) dla przycisków akcji
+   - Zielony (#4CAF50) dla pozytywnych akcji
+   - Czerwony (#F44336) dla negatywnych akcji
+   - Szary (#F3F3F3) dla tła
+5. Dodaj etykiety i opisy do każdego elementu
+6. Dodaj interakcje i przepływy między ekranami
+7. Dodaj adnotacje wyjaśniające funkcjonalność
+
+## Wskazówki dotyczące spójności diagramów
+
+1. **Spójna kolorystyka** - używaj tych samych kolorów dla tych samych typów komponentów we wszystkich diagramach
+2. **Spójna terminologia** - używaj tych samych nazw dla tych samych komponentów we wszystkich diagramach
+3. **Spójny poziom szczegółowości** - dostosuj poziom szczegółowości do odbiorcy diagramu
+4. **Czytelne etykiety** - używaj krótkich, ale jasnych etykiet
+5. **Legenda** - dodaj legendę do każdego diagramu
+6. **Hierarchia wizualna** - używaj rozmiaru i koloru do podkreślenia ważności elementów
+7. **Grupowanie** - grupuj powiązane elementy razem
+8. **Kierunek przepływu** - zachowaj spójny kierunek przepływu (zazwyczaj od lewej do prawej lub od góry do dołu)
+
+## Eksport i udostępnianie diagramów
+
+1. **Formaty eksportu**:
+   - PNG/JPG - dla prostego udostępniania
+   - SVG - dla wysokiej jakości i możliwości edycji
+   - PDF - dla dokumentacji
+   - HTML - dla interaktywnych diagramów
+
+2. **Integracja z dokumentacją**:
+   - Dodaj diagramy do dokumentacji projektu
+   - Dodaj odnośniki między diagramami
+   - Dodaj opisy i kontekst do każdego diagramu
+
+3. **Aktualizacja**:
+   - Zachowaj źródłowe pliki diagramów
+   - Dokumentuj zmiany w diagramach
+   - Utrzymuj diagramy aktualne wraz z rozwojem aplikacji 

@@ -1,0 +1,105 @@
+# Diagramy sekwencji dla SmartHire
+
+## Diagram 1: Proces dodawania nowego stanowiska
+
+```
+Rekruter    UI    PositionController    PositionService
+   |         |            |                    |
+   |--dodaj->|            |                    |
+   |         |--createPosition()-->|           |
+   |         |            |--createPosition()-->|
+   |         |            |                    |--walidacja-->|
+   |         |            |                    |<--OK---------|
+   |         |            |                    |--zapis------>|
+   |         |            |                    |<--OK---------|
+   |         |            |<--zwróć Id---------|
+   |         |<--zwróć Id--|                    |
+   |<--pokaż--|            |                    |
+   |  sukces  |            |                    |
+```
+
+## Diagram 2: Proces dodawania nowego kandydata
+
+```
+Rekruter    UI    CandidateController    CandidateService
+   |         |            |                    |
+   |--dodaj->|            |                    |
+   |         |--createCandidate()-->|          |
+   |         |            |--createCandidate()-->|
+   |         |            |                    |--walidacja-->|
+   |         |            |                    |<--OK---------|
+   |         |            |                    |--zapis------>|
+   |         |            |                    |<--OK---------|
+   |         |            |<--zwróć Id---------|
+   |         |<--zwróć Id--|                    |
+   |<--pokaż--|            |                    |
+   |  sukces  |            |                    |
+```
+
+## Diagram 3: Proces analizy CV
+
+```
+Rekruter    UI    CVAnalysisController    CVAnalysisService    OpenAIService
+   |         |            |                    |                    |
+   |--dodaj CV>|          |                    |                    |
+   |         |--analyzeCandidateResume()-->|   |                    |
+   |         |            |--analyzeCandidateResume()-->|           |
+   |         |            |                    |--extractText()-->| |
+   |         |            |                    |<--tekst CV-------|  |
+   |         |            |                    |--callOpenAI()--------->|
+   |         |            |                    |                    |--analiza-->|
+   |         |            |                    |                    |<--wyniki----|
+   |         |            |                    |<--wyniki analizy---|
+   |         |            |<--wyniki analizy---|                    |
+   |         |<--wyniki---|                    |                    |
+   |<--pokaż--|            |                    |                    |
+   |  wyniki  |            |                    |                    |
+```
+
+## Diagram 4: Proces zarządzania aplikacją
+
+```
+Rekruter    UI    ApplicationController    JobApplicationService
+   |         |            |                    |
+   |--otwórz->|           |                    |
+   |         |--getApplicationDetails()-->|    |
+   |         |            |--getApplication()-->|
+   |         |            |                    |--pobierz dane-->|
+   |         |            |                    |<--dane-----------|
+   |         |            |<--dane aplikacji---|
+   |         |<--dane-----|                    |
+   |<--pokaż--|            |                    |
+   |  dane    |            |                    |
+   |         |            |                    |
+   |--zmień-->|            |                    |
+   |  status  |--updateApplicationStatus()-->|  |
+   |         |            |--updateStatus()-->|  |
+   |         |            |                    |--walidacja-->|
+   |         |            |                    |<--OK---------|
+   |         |            |                    |--aktualizacja>|
+   |         |            |                    |<--OK---------|
+   |         |            |<--wynik aktualizacji--|
+   |         |<--potwierdzenie--|               |
+   |<--pokaż--|            |                    |
+   |  sukces  |            |                    |
+```
+
+## Diagram 5: Proces konwersji kandydata na kontakt
+
+```
+Rekruter    UI    CandidateConversionController    CandidateConversionService
+   |         |            |                    |
+   |--konwertuj>|         |                    |
+   |         |--convertCandidateToContact()-->|  |
+   |         |            |--convertCandidateToContact()-->|
+   |         |            |                    |--pobierz dane-->|
+   |         |            |                    |<--dane-----------|
+   |         |            |                    |--utwórz kontakt->|
+   |         |            |                    |<--Id kontaktu----|
+   |         |            |                    |--aktualizuj status>|
+   |         |            |                    |<--OK--------------|
+   |         |            |<--Id kontaktu------|
+   |         |<--Id kontaktu--|                |
+   |<--pokaż--|            |                    |
+   |  sukces  |            |                    |
+``` 

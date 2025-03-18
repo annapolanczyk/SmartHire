@@ -1,0 +1,75 @@
+<!-- parentComponent/parentComponent.html -->
+<template>
+    <div class="slds-card">
+        <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__figure">
+                    <lightning-icon icon-name="standard:job_profile" alternative-text="Centrum rekrutacji" size="medium"></lightning-icon>
+                </div>
+                <div class="slds-media__body">
+                    <h2 class="slds-card__header-title">
+                        <span class="slds-text-heading_medium">Centrum rekrutacji</span>
+                    </h2>
+                </div>
+            </header>
+        </div>
+        
+        <div class="slds-card__body slds-card__body_inner">
+            <!-- Komponent wiadomości -->
+            <c-message-banner aria-live="polite"></c-message-banner>
+            
+            <!-- Spinner ładowania -->
+            <template if:true={isLoading}>
+                <div class="slds-is-relative slds-p-around_medium">
+                    <lightning-spinner alternative-text="Ładowanie danych..." size="medium"></lightning-spinner>
+                </div>
+            </template>
+            
+            <!-- Obsługa błędów -->
+            <template if:true={error}>
+                <div class="slds-box slds-theme_error slds-m-bottom_medium" role="alert">
+                    <p>{error}</p>
+                </div>
+            </template>
+            
+            <!-- Układ dwukolumnowy -->
+            <div class="slds-grid slds-gutters">
+                <!-- Lista aplikacji (lewa kolumna) -->
+                <div class="slds-col slds-size_1-of-3">
+                    <c-application-list 
+                        applications={applications}
+                        onselect={handleApplicationSelection}
+                        aria-label="Lista aplikacji o pracę">
+                    </c-application-list>
+                </div>
+                
+                <!-- Szczegóły aplikacji i analiza CV (prawa kolumna) -->
+                <div class="slds-col slds-size_2-of-3">
+                    <template if:true={isApplicationSelected}>
+                        <c-application-details 
+                            record-id={selectedApplicationId}
+                            oncvanalysiscomplete={handleCVAnalysisComplete}
+                            aria-label="Szczegóły aplikacji">
+                        </c-application-details>
+                    </template>
+                    
+                    <template if:false={isApplicationSelected}>
+                        <div class="slds-box slds-theme_shade slds-text-align_center">
+                            <p>Wybierz aplikację z listy, aby zobaczyć szczegóły i przeprowadzić analizę CV.</p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+        
+        <div class="slds-card__footer">
+            <lightning-button 
+                label="Odśwież dane" 
+                onclick={loadApplications} 
+                variant="brand"
+                icon-name="utility:refresh"
+                aria-label="Odśwież listę aplikacji">
+            </lightning-button>
+        </div>
+    </div>
+</template>

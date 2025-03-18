@@ -1,0 +1,62 @@
+# SmartHire - Diagram wysokopoziomowy
+
+## Główne komponenty systemu:
+
+### 1. Portal rekrutacyjny
+- Interfejs dla rekruterów i menedżerów HR
+- Zarządzanie stanowiskami, kandydatami i aplikacjami
+- Analiza CV z wykorzystaniem AI
+
+### 2. Silnik analizy CV
+- Integracja z OpenAI
+- Ekstrakcja danych z CV
+- Dopasowanie kandydatów do stanowisk
+- Generowanie rekomendacji
+
+### 3. System zarządzania kandydatami
+- Śledzenie statusu kandydatów
+- Historia konwersji
+- Powiadomienia i przypomnienia
+
+## Przepływ danych:
+
+1. Rekruter dodaje nowe stanowisko
+2. Rekruter dodaje nowego kandydata
+3. Rekruter tworzy aplikację łączącą kandydata ze stanowiskiem
+4. Rekruter dodaje CV kandydata
+5. System analizuje CV z wykorzystaniem AI
+6. System generuje wyniki analizy i rekomendacje
+7. Rekruter ocenia kandydata na podstawie wyników analizy
+8. Menedżer HR podejmuje decyzję o zatrudnieniu
+
+## Główne obiekty danych:
+
+- Job_Application__c (Aplikacja)
+- Position__c (Stanowisko)
+- Candidate__c (Kandydat)
+- Skill__c (Umiejętność)
+- ApplicationStatusHistory__c (Historia statusów)
+- CandidateConversionHistory__c (Historia konwersji)
+- Error_Log__c (Logi błędów)
+
+## Integracje:
+
+- OpenAI API (analiza CV)
+- Salesforce Platform (baza danych)
+- Lightning Web Components (interfejs użytkownika)
+- PDF Parser Service (ekstrakcja tekstu z PDF)
+- DOCX Parser Service (ekstrakcja tekstu z DOCX)
+
+## Użytkownicy systemu:
+
+- Rekruterzy (dodawanie kandydatów, analiza CV)
+- Menedżerowie HR (ocena kandydatów, podejmowanie decyzji)
+- Administratorzy (konfiguracja systemu)
+
+## Korzyści biznesowe:
+
+- Automatyzacja analizy CV
+- Obiektywna ocena kandydatów
+- Skrócenie czasu rekrutacji
+- Lepsze dopasowanie kandydatów do stanowisk
+- Centralne repozytorium danych rekrutacyjnych 

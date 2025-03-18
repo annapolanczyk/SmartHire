@@ -1,0 +1,180 @@
+# SmartHire - Model danych
+
+## Obiekty niestandardowe
+
+### Job_Application__c (Aplikacja)
+
+**Pola:**
+- Name (auto-number)
+- Candidate__c (lookup do Candidate__c)
+- Position__c (lookup do Position__c)
+- Status__c (picklist: Nowa, W trakcie analizy, Przeanalizowana, W trakcie oceny, Zaakceptowana, Odrzucona)
+- Application_Date__c (date)
+- Assigned_Reviewer__c (lookup do User)
+- Notes__c (text area)
+- Analysis_Results__c (long text area)
+- Analysis_Score__c (number)
+- Skills_Identified__c (text)
+- Analysis_Date__c (datetime)
+
+**Opis:**
+Obiekt reprezentujący aplikację kandydata na dane stanowisko. Przechowuje informacje o statusie aplikacji, wynikach analizy CV i przypisanym recenzencie.
+
+### Position__c (Stanowisko)
+
+**Pola:**
+- Name (text)
+- Description__c (text area)
+- Department__c (text)
+- Required_Skills__c (text)
+- Status__c (picklist: Otwarte, Zamknięte, Wstrzymane)
+- Hiring_Manager__c (lookup do User)
+- Start_Date__c (date)
+- End_Date__c (date)
+- Max_Salary__c (currency)
+- Min_Salary__c (currency)
+- Location__c (text)
+- Job_Type__c (picklist: Pełny etat, Część etatu, Kontrakt, Staż)
+
+**Opis:**
+Obiekt reprezentujący stanowisko pracy, na które mogą aplikować kandydaci. Zawiera szczegółowy opis stanowiska, wymagane umiejętności i inne informacje.
+
+### Candidate__c (Kandydat)
+
+**Pola:**
+- First_Name__c (text)
+- Last_Name__c (text)
+- Email__c (email)
+- Phone__c (phone)
+- LinkedIn_URL__c (url)
+- Skills__c (text)
+- Experience_Years__c (number)
+- Education__c (text)
+- Current_Employer__c (text)
+- Current_Position__c (text)
+- Status__c (picklist: Nowy, W procesie, Zatrudniony, Odrzucony, Nieaktywny)
+- Source__c (picklist: Strona kariery, LinkedIn, Polecenie, Agencja, Inne)
+- Contact__c (lookup do Contact)
+- Analysis_Results__c (long text area)
+- Last_Analysis_Date__c (datetime)
+
+**Opis:**
+Obiekt reprezentujący kandydata w procesie rekrutacji. Przechowuje podstawowe informacje o kandydacie, jego umiejętnościach i doświadczeniu.
+
+### Skill__c (Umiejętność)
+
+**Pola:**
+- Name (text)
+- Category__c (picklist: Techniczne, Miękkie, Językowe, Certyfikaty)
+- Description__c (text area)
+- Weight__c (number)
+
+**Opis:**
+Obiekt reprezentujący umiejętność, która może być wymagana na stanowisku lub posiadana przez kandydata. Umożliwia kategoryzację i ważenie umiejętności.
+
+### ApplicationStatusHistory__c (Historia statusów aplikacji)
+
+**Pola:**
+- Name (auto-number)
+- JobApplication__c (master-detail do Job_Application__c)
+- Status__c (picklist)
+- Change_Date__c (datetime)
+- Changed_By__c (lookup do User)
+- Comments__c (text area)
+
+**Opis:**
+Obiekt przechowujący historię zmian statusów aplikacji. Umożliwia śledzenie procesu rekrutacji i audyt zmian.
+
+### CandidateConversionHistory__c (Historia konwersji kandydatów)
+
+**Pola:**
+- Name (auto-number)
+- Candidate__c (lookup do Candidate__c)
+- JobApplication__c (lookup do Job_Application__c)
+- Conversion_Type__c (picklist: Kontakt, Użytkownik, Lead)
+- Conversion_Date__c (datetime)
+- Converted_By__c (lookup do User)
+- Target_Record_Id__c (text)
+- Notes__c (text area)
+
+**Opis:**
+Obiekt przechowujący informacje o konwersji kandydatów na inne obiekty (np. Kontakty, Użytkowników). Umożliwia śledzenie procesu onboardingu.
+
+### Error_Log__c (Log błędów)
+
+**Pola:**
+- Name (auto-number)
+- Class_Name__c (text)
+- Method_Name__c (text)
+- Message__c (text area)
+- Stack_Trace__c (long text area)
+- Exception_Type__c (text)
+- Log_Time__c (datetime)
+- User__c (lookup do User)
+
+**Opis:**
+Obiekt przechowujący logi błędów aplikacji. Umożliwia debugowanie i monitorowanie błędów.
+
+## Relacje między obiektami
+
+1. **Job_Application__c → Candidate__c**
+   - Typ: Lookup
+   - Opis: Każda aplikacja jest powiązana z jednym kandydatem. Kandydat może mieć wiele aplikacji.
+
+2. **Job_Application__c → Position__c**
+   - Typ: Lookup
+   - Opis: Każda aplikacja jest powiązana z jednym stanowiskiem. Stanowisko może mieć wiele aplikacji.
+
+3. **Job_Application__c → User (Assigned_Reviewer__c)**
+   - Typ: Lookup
+   - Opis: Każda aplikacja może być przypisana do jednego recenzenta. Recenzent może mieć wiele przypisanych aplikacji.
+
+4. **ApplicationStatusHistory__c → Job_Application__c**
+   - Typ: Master-Detail
+   - Opis: Każda historia statusu jest powiązana z jedną aplikacją. Aplikacja może mieć wiele historii statusów.
+
+5. **CandidateConversionHistory__c → Candidate__c**
+   - Typ: Lookup
+   - Opis: Każda historia konwersji jest powiązana z jednym kandydatem. Kandydat może mieć wiele historii konwersji.
+
+6. **CandidateConversionHistory__c → Job_Application__c**
+   - Typ: Lookup
+   - Opis: Każda historia konwersji może być powiązana z aplikacją. Aplikacja może mieć wiele historii konwersji.
+
+7. **Position__c → User (Hiring_Manager__c)**
+   - Typ: Lookup
+   - Opis: Każde stanowisko może mieć przypisanego menedżera rekrutacji. Menedżer może być przypisany do wielu stanowisk.
+
+8. **Candidate__c → Contact**
+   - Typ: Lookup
+   - Opis: Kandydat może być powiązany z kontaktem po konwersji. Kontakt może być powiązany z jednym kandydatem.
+
+## Obiekty standardowe:
+
+### User (Użytkownik)
+- **Kluczowe pola:**
+  - Id (PK)
+  - Name
+  - Email
+  - Profile
+  - Role
+  - IsActive
+
+### Contact (Kontakt)
+- **Kluczowe pola:**
+  - Id (PK)
+  - FirstName
+  - LastName
+  - Email
+  - Phone
+  - AccountId (FK → Account)
+
+## Diagramy pomocnicze:
+
+### Diagram statusów aplikacji:
+- Nowa → W trakcie analizy → Przeanalizowana → W trakcie oceny → Zaakceptowana → Odrzucona
+- Nowa → W trakcie analizy → Przeanalizowana → Odrzucona
+- Nowa → Odrzucona
+
+### Diagram konwersji kandydata:
+- Candidate__c → Contact → User (opcjonalnie) 

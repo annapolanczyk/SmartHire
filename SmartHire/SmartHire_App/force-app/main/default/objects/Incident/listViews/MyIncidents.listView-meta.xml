@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>MyIncidents</fullName>
+    <columns>Name</columns>
+    <columns>Subject</columns>
+    <columns>ReportedBy</columns>
+    <columns>Priority</columns>
+    <columns>Status</columns>
+    <columns>AssignedUser</columns>
+    <columns>Category</columns>
+    <columns>SubCategory</columns>
+    <filterScope>Mine</filterScope>
+    <label>My Incidents</label>
+</ListView>
