@@ -178,23 +178,38 @@ public with sharing class CVAnalysisHelper {
             + '3. workExperience (list of positions, companies, employment periods, responsibilities)\n'
             + '4. technicalSkills (list, pay special attention to Salesforce technologies)\n'
             + '5. languages (list with proficiency level)\n'
-            + '6. certifications (list)\n\n';
+            + '6. certifications (list)\n'
+            + '7. matchScore (percentage match score from 0 to 100, even without position data provide an estimated skill level score)\n'
+            + '8. matchedSkills (array of skills relevant to Salesforce development, even without position data)\n'
+            + '9. additionalSkills (array of supplementary skills that might be useful)\n'
+            + '10. analysisSummary (concise summary of candidate\'s profile, 2-3 sentences max)\n'
+            + '11. keyHighlights (bullet points of 3-5 most important strengths)\n'
+            + '12. potentialConcerns (areas where the candidate might lack experience)\n'
+            + '13. missingSkills (skills that would be beneficial but are missing from the resume)\n'
+            + '14. recommendationLevel (string value, one of: "Highly Recommended", "Recommended", "Consider", "Not Recommended")\n\n';
         
         // Add position information if available
         if (context.hasPositionDetails()) {
             prompt += 'Additionally, evaluate the candidate\'s fit for the position "' + context.positionName + '" based on the description and required skills below. '
-                + 'Provide a percentage match score (0-100%) and detailed justification, listing specific skills that match the requirements.\n\n'
+                + 'When evaluating the match, read the position description carefully and compare it with candidate\'s experience.\n\n'
                 + 'Position description: ' + context.jobDescription + '\n\n'
                 + 'Required skills: ' + String.join(context.requiredSkills, ', ') + '\n\n'
-                + 'Include the following sections in your response:\n'
-                + '1. "matchedSkills" (array of skills that match the required skills)\n'
-                + '2. "additionalSkills" (array of skills that are not directly required but may be valuable)\n'
-                + '3. "matchScore" (percentage match score from 0 to 100)\n'
+                + 'For this position, pay special attention to these fields in your response:\n'
+                + '1. "matchedSkills" (array of skills that match the required skills for THIS SPECIFIC POSITION)\n'
+                + '2. "additionalSkills" (array of skills that are not directly required for THIS POSITION but may be valuable)\n'
+                + '3. "matchScore" (percentage match score from 0 to 100 for THIS POSITION)\n'
                 + '4. "matchJustification" (detailed explanation of the match score)\n'
-                + '5. "recommendations" (suggestions for the recruiter)\n\n';
+                + '5. "missingSkills" (specific skills required for THIS POSITION that the candidate lacks)\n'
+                + '6. "recommendationLevel" (string value based on position fit, one of: "Highly Recommended", "Recommended", "Consider", "Not Recommended")\n'
+                + '7. "potentialConcerns" (areas where the candidate might lack experience for THIS POSITION)\n\n';
+        } else {
+            prompt += 'Since no position details were provided, evaluate the candidate as a general Salesforce professional. '
+                + 'Still provide values for all required fields in your response. '
+                + 'For missing skills, mention common Salesforce skills that would enhance their profile.\n\n';
         }
         
-        prompt += 'Resume text to analyze:\n\n' + context.resumeText;
+        prompt += 'Important: Always include ALL the required JSON fields mentioned above, even with empty arrays or default values if necessary.\n\n'
+            + 'Resume text to analyze:\n\n' + context.resumeText;
         
         return prompt;
     }

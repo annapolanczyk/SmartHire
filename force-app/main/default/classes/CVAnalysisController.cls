@@ -361,6 +361,86 @@ public with sharing class CVAnalysisController {
                     System.debug(LoggingLevel.INFO, 'Set AdditionalSkills__c (string): ' + result.AdditionalSkills__c);
                 }
             }
+
+            // Set missing skills
+            if (results.containsKey('missingSkills')) {
+                Object missingSkillsObj = results.get('missingSkills');
+                
+                if (missingSkillsObj instanceof List<Object>) {
+                    List<Object> missingSkillsList = (List<Object>)missingSkillsObj;
+                    
+                    List<String> skillStrings = new List<String>();
+                    for (Object skill : missingSkillsList) {
+                        skillStrings.add(String.valueOf(skill));
+                    }
+                    result.MissingSkills__c = String.join(skillStrings, ', ');
+                    System.debug(LoggingLevel.INFO, 'Set MissingSkills__c: ' + result.MissingSkills__c);
+                } else if (missingSkillsObj instanceof String) {
+                    result.MissingSkills__c = (String)missingSkillsObj;
+                }
+            }
+
+            // Set recommendation level
+            if (results.containsKey('recommendationLevel')) {
+                Object recommendationObj = results.get('recommendationLevel');
+                
+                if (recommendationObj instanceof String) {
+                    result.RecommendationLevel__c = (String)recommendationObj;
+                    System.debug(LoggingLevel.INFO, 'Set RecommendationLevel__c: ' + result.RecommendationLevel__c);
+                }
+            }
+
+            // Set analysis summary
+            if (results.containsKey('analysisSummary')) {
+                Object summaryObj = results.get('analysisSummary');
+                
+                if (summaryObj instanceof String) {
+                    result.AnalysisSummary__c = (String)summaryObj;
+                    System.debug(LoggingLevel.INFO, 'Set AnalysisSummary__c: ' + result.AnalysisSummary__c);
+                }
+            }
+
+            // Set key highlights
+            if (results.containsKey('keyHighlights')) {
+                Object highlightsObj = results.get('keyHighlights');
+                
+                if (highlightsObj instanceof List<Object>) {
+                    List<Object> highlightsList = (List<Object>)highlightsObj;
+                    
+                    List<String> highlightStrings = new List<String>();
+                    for (Object highlight : highlightsList) {
+                        highlightStrings.add(String.valueOf(highlight));
+                    }
+                    result.KeyHighlights__c = String.join(highlightStrings, '\n- ');
+                    if (!result.KeyHighlights__c.startsWith('- ')) {
+                        result.KeyHighlights__c = '- ' + result.KeyHighlights__c;
+                    }
+                    System.debug(LoggingLevel.INFO, 'Set KeyHighlights__c: ' + result.KeyHighlights__c);
+                } else if (highlightsObj instanceof String) {
+                    result.KeyHighlights__c = (String)highlightsObj;
+                }
+            }
+
+            // Set potential concerns
+            if (results.containsKey('potentialConcerns')) {
+                Object concernsObj = results.get('potentialConcerns');
+                
+                if (concernsObj instanceof List<Object>) {
+                    List<Object> concernsList = (List<Object>)concernsObj;
+                    
+                    List<String> concernStrings = new List<String>();
+                    for (Object concern : concernsList) {
+                        concernStrings.add(String.valueOf(concern));
+                    }
+                    result.PotentialConcerns__c = String.join(concernStrings, '\n- ');
+                    if (!result.PotentialConcerns__c.startsWith('- ')) {
+                        result.PotentialConcerns__c = '- ' + result.PotentialConcerns__c;
+                    }
+                    System.debug(LoggingLevel.INFO, 'Set PotentialConcerns__c: ' + result.PotentialConcerns__c);
+                } else if (concernsObj instanceof String) {
+                    result.PotentialConcerns__c = (String)concernsObj;
+                }
+            }
             
             // Insert record
             try {
