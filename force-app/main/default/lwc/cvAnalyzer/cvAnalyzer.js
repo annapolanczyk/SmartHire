@@ -366,19 +366,51 @@ export default class CvAnalyzer extends LightningElement {
         })
         .catch(error => {
             this.isLoading = false;
-            this.showToast('Error', 'Failed to save analysis results: ' + this.extractErrorMessage(error), 'error');
+            
+            // Bardziej szczegółowa obsługa błędu
+            let errorMessage = this.extractErrorMessage(error);
+            console.error('Error saving analysis results:', error);
+            console.error('Detailed error message:', errorMessage);
+            
+            // Dodatkowe informacje dla debugowania
+            if (this.recordId) {
+                console.log('RecordId:', this.recordId);
+                console.log('Object API Name:', this.objectApiName);
+            }
+            
+            this.showToast('Error', 'Failed to save analysis results: ' + errorMessage, 'error');
         });
     }
     
     extractErrorMessage(error) {
         let message = 'Unknown error';
+        
+        console.log('Error object:', JSON.stringify(error));
+        
         if (typeof error === 'string') {
             message = error;
         } else if (error.body && error.body.message) {
             message = error.body.message;
+            
+            // Sprawdzamy, czy message zawiera zagnieżdżone informacje o błędzie
+            if (message.includes('failed to save analysis results')) {
+                const parts = message.split('failed to save analysis results:');
+                if (parts.length > 1) {
+                    message = parts[1].trim();
+                }
+            }
         } else if (error.message) {
             message = error.message;
+        } else if (error.statusText) {
+            message = error.statusText;
+        } else if (error.detail) {
+            message = error.detail;
+        } else if (error.body && error.body.error) {
+            message = error.body.error;
+        } else if (error.body && error.body.stackTrace) {
+            message = `Error with stack trace: ${error.body.stackTrace}`;
         }
+        
         return message;
     }
     
