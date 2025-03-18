@@ -179,9 +179,6 @@ public with sharing class JobApplicationService {
             
             update app;
             
-            // Tworzenie rekordu historii statusu
-            createStatusHistoryRecord(applicationId, status, notes);
-            
             // If hired, update candidate status to Active
             if (status == 'Hired') {
                 // Sprawdzamy uprawnienia do aktualizacji Candidate__c
@@ -233,21 +230,20 @@ public with sharing class JobApplicationService {
     }
     
     /**
-     * Get application status history
+     * Get application status history using standard history tracking
      * @param applicationId Application Id
-     * @return List of status history records
+     * @return List of history records
      */
-    public static List<ApplicationStatusHistory__c> getApplicationHistory(Id applicationId) {
+    public static List<Job_Application__History> getApplicationHistory(Id applicationId) {
         try {
-            SecurityUtils.checkReadAccess(ApplicationStatusHistory__c.SObjectType, 
-                                         new List<String>{'Id', 'Status__c', 'Comments__c', 'Change_Date__c'});
+            SecurityUtils.checkReadAccess(Job_Application__History.SObjectType, 
+                                         new List<String>{'Id', 'Field', 'OldValue', 'NewValue', 'CreatedDate', 'CreatedById'});
             
-            SecurityUtils.checkReadAccess(User.SObjectType, new List<String>{'Id', 'Name'});
-
-            return [SELECT Id, Status__c, Comments__c, Change_Date__c, CreatedBy.Name 
-                   FROM ApplicationStatusHistory__c 
-                   WHERE JobApplication__c = :applicationId 
-                   ORDER BY Change_Date__c DESC];
+            return [SELECT Id, Field, OldValue, NewValue, CreatedDate, CreatedBy.Name 
+                   FROM Job_Application__History 
+                   WHERE ParentId = :applicationId 
+                   AND Field = 'Status__c'
+                   ORDER BY CreatedDate DESC];
         } catch (Exception e) {
             Logger.error(CLASS_NAME, 'getApplicationHistory', 'Error retrieving application history: ' + applicationId, e);
             throw new AuraHandledException(e.getMessage());
@@ -267,31 +263,6 @@ public with sharing class JobApplicationService {
         
         if (String.isBlank(application.Status__c)) {
             application.Status__c = 'Applied';
-        }
-    }
-    
-    /**
-     * Create a status history record for an application
-     * @param applicationId Application Id
-     * @param status New status
-     * @param comments Optional comments
-     */
-    private static void createStatusHistoryRecord(Id applicationId, String status, String comments) {
-        try {
-            SecurityUtils.checkCreateAccess(ApplicationStatusHistory__c.SObjectType, 
-                                            new List<String>{'JobApplication__c', 'Status__c', 'Comments__c'});
-
-            ApplicationStatusHistory__c history = new ApplicationStatusHistory__c(
-                JobApplication__c = applicationId,
-                Status__c = status,
-                Comments__c = comments,
-                Change_Date__c = DateTime.now()
-            );
-
-            insert history;
-        } catch (Exception e) {
-            Logger.error(CLASS_NAME, 'createStatusHistoryRecord', 'Error creating history record for application: ' + applicationId, e);
-            // Nie rzucamy wyjątku, aby nie przerywać głównej operacji
         }
     }
 }

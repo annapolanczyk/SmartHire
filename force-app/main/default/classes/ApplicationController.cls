@@ -74,15 +74,11 @@ public with sharing class ApplicationController {
      * Get application history
      */
     @AuraEnabled(cacheable=true)
-    public static List<ApplicationStatusHistory__c> getApplicationHistory(Id applicationId) {
-        if (!Schema.SObjectType.ApplicationStatusHistory__c.isAccessible()) {
-            throw new AuraHandledException('Insufficient permissions to access ApplicationStatusHistory__c');
+    public static List<Job_Application__History> getApplicationHistory(Id applicationId) {
+        if (!Schema.SObjectType.Job_Application__History.isAccessible()) {
+            throw new AuraHandledException('Insufficient permissions to access Job_Application__History');
         }
         
-        // Implementacja metody getApplicationHistory
-        return [SELECT Id, Status__c, Comments__c, Change_Date__c, CreatedBy.Name 
-               FROM ApplicationStatusHistory__c 
-               WHERE JobApplication__c = :applicationId 
-               ORDER BY Change_Date__c DESC];
+        return JobApplicationService.getApplicationHistory(applicationId);
     }
 }
