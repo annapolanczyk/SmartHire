@@ -399,13 +399,13 @@ public with sharing class CVAnalysisHelper {
             System.debug(LoggingLevel.DEBUG, 'Typ pliku: ' + fileType);
             
             // Obsługa plików PDF
-            if (fileType == PDF_TYPE) {
-                return parsePDF(cv.VersionData);
+        if (fileType == PDF_TYPE) {
+            return parsePDF(cv.VersionData);
             } 
             // Obsługa innych typów plików
             else if (fileType == TXT_TYPE) {
                 return cv.VersionData.toString();
-            } else {
+        } else {
                 throw new CVAnalysisException('Nieobsługiwany format pliku: ' + fileType + '. Aplikacja obsługuje tylko pliki PDF i TXT.');
             }
         } catch (Exception e) {
@@ -445,25 +445,25 @@ public with sharing class CVAnalysisHelper {
                 if (String.isNotBlank(extractedText)) {
                     Logger.info('CVAnalysisHelper', 'parsePDF', 'Pomyślnie wyekstrahowano tekst z PDF. Długość tekstu: ' + extractedText.length());
                     return extractedText;
-                } else {
+                        } else {
                     Logger.warn('CVAnalysisHelper', 'parsePDF', 'PDF Extractor zwrócił pusty tekst');
-                }
-            } catch (Exception extEx) {
-                Logger.error('CVAnalysisHelper', 'parsePDF', 'Błąd podczas używania usługi PDF Extractor: ' + extEx.getMessage(), extEx);
+                        }
+                    } catch (Exception extEx) {
+                        Logger.error('CVAnalysisHelper', 'parsePDF', 'Błąd podczas używania usługi PDF Extractor: ' + extEx.getMessage(), extEx);
                 // Kontynuuj do alternatywnej metody
             }
-            
+                        
             // 2. Próba alternatywnej metody jako backup
-            try {
-                String alternativeText = extractTextAlternative(pdfData);
-                if (String.isNotBlank(alternativeText)) {
-                    Logger.info('CVAnalysisHelper', 'parsePDF', 'Pomyślnie wyekstrahowano tekst z PDF używając alternatywnej metody. Długość tekstu: ' + alternativeText.length());
-                    return alternativeText;
-                } else {
-                    Logger.warn('CVAnalysisHelper', 'parsePDF', 'Alternatywna metoda ekstrakcji tekstu zwróciła pusty tekst');
-                }
-            } catch (Exception altEx) {
-                Logger.error('CVAnalysisHelper', 'parsePDF', 'Błąd podczas używania alternatywnej metody ekstrakcji tekstu: ' + altEx.getMessage(), altEx);
+                        try {
+                            String alternativeText = extractTextAlternative(pdfData);
+                            if (String.isNotBlank(alternativeText)) {
+                                Logger.info('CVAnalysisHelper', 'parsePDF', 'Pomyślnie wyekstrahowano tekst z PDF używając alternatywnej metody. Długość tekstu: ' + alternativeText.length());
+                                return alternativeText;
+                            } else {
+                                Logger.warn('CVAnalysisHelper', 'parsePDF', 'Alternatywna metoda ekstrakcji tekstu zwróciła pusty tekst');
+                            }
+                        } catch (Exception altEx) {
+                            Logger.error('CVAnalysisHelper', 'parsePDF', 'Błąd podczas używania alternatywnej metody ekstrakcji tekstu: ' + altEx.getMessage(), altEx);
                 throw new CVAnalysisException('Nie udało się wyekstrahować tekstu z pliku PDF. Sprawdź, czy plik zawiera tekst możliwy do odczytania.');
             }
             
@@ -662,7 +662,7 @@ public with sharing class CVAnalysisHelper {
         
         if (fileType == PDF_TYPE) {
             return parsePDF(cv.VersionData);
-        } else {
+            } else {
             throw new CVAnalysisException('Nieobsługiwany format pliku: ' + cv.FileType + '. Aplikacja obsługuje tylko pliki PDF.');
         }
     }
