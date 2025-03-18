@@ -185,7 +185,7 @@ public with sharing class CandidateService {
     public static List<Candidate__c> searchCandidates(String searchKey) {
         try {
             String searchPattern = '%' + searchKey + '%';
-            return [SELECT Id, Name, Email__c, Phone__c, Status__c, LinkedIn_Profile__c, Resume_Text__c
+            return [SELECT Id, Name, Email__c, Phone__c, Status__c, LinkedIn_Profile__c
                     FROM Candidate__c
                     WHERE Name LIKE :searchPattern
                     OR Email__c LIKE :searchPattern
