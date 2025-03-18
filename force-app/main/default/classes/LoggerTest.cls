@@ -11,7 +11,14 @@ private class LoggerTest {
      */
     @isTest
     static void testErrorLogging() {
-        Exception testException = new NullPointerException('Test Exception');
+        // Tworzenie testowego wyjątku
+        Exception testException;
+        try {
+            String s = null;
+            s.length();
+        } catch (Exception e) {
+            testException = e;
+        }
         
         Test.startTest();
         

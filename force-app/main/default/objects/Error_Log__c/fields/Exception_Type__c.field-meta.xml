@@ -1,21 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Exception_Type__c</fullName>
-<<<<<<< HEAD
-    <externalId>false</externalId>
-=======
     <description>Type of the exception</description>
     <externalId>false</externalId>
     <inlineHelpText>Type of the exception</inlineHelpText>
->>>>>>> d1804668f9c0ab98e3e523c2d207f99184c8a1fa
     <label>Exception Type</label>
     <length>255</length>
     <required>false</required>
     <trackTrending>false</trackTrending>
     <type>Text</type>
     <unique>false</unique>
-<<<<<<< HEAD
 </CustomField>
-=======
-</CustomField> 
->>>>>>> d1804668f9c0ab98e3e523c2d207f99184c8a1fa
