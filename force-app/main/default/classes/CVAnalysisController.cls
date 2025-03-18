@@ -367,8 +367,26 @@ public with sharing class CVAnalysisController {
             if (standardizedResults.containsKey('recommendationLevel')) {
                 Object recLevelObj = standardizedResults.get('recommendationLevel');
                 if (recLevelObj != null) {
-                    result.RecommendationLevel__c = String.valueOf(recLevelObj).left(100);
-                    System.debug(LoggingLevel.ERROR, 'Set RecommendationLevel__c: ' + result.RecommendationLevel__c);
+                    String recommendationLevel = String.valueOf(recLevelObj).trim();
+                    // Walidacja wartości listy wyboru
+                    if (recommendationLevel.equalsIgnoreCase('High') || recommendationLevel.equalsIgnoreCase('Highly Recommended')) {
+                        result.RecommendationLevel__c = 'High';
+                    } else if (recommendationLevel.equalsIgnoreCase('Medium') || recommendationLevel.equalsIgnoreCase('Recommended')) {
+                        result.RecommendationLevel__c = 'Medium';
+                    } else if (recommendationLevel.equalsIgnoreCase('Low') || recommendationLevel.equalsIgnoreCase('Not Recommended')) {
+                        result.RecommendationLevel__c = 'Low';
+                    } else {
+                        // Jeśli wartość nie pasuje do dozwolonych wartości, map na domyślną wartość
+                        if (recommendationLevel.containsIgnoreCase('high') || recommendationLevel.containsIgnoreCase('strong')) {
+                            result.RecommendationLevel__c = 'High';
+                        } else if (recommendationLevel.containsIgnoreCase('low') || recommendationLevel.containsIgnoreCase('weak') || 
+                                  recommendationLevel.containsIgnoreCase('not')) {
+                            result.RecommendationLevel__c = 'Low';
+                        } else {
+                            result.RecommendationLevel__c = 'Medium'; // Domyślna wartość
+                        }
+                    }
+                    System.debug(LoggingLevel.ERROR, 'Set RecommendationLevel__c: ' + result.RecommendationLevel__c + ' (original value: ' + recommendationLevel + ')');
                 }
             }
             
