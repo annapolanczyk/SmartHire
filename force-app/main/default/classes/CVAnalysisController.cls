@@ -652,6 +652,16 @@ public with sharing class CVAnalysisController {
             }
         }
         
+        // Specjalne mapowanie dla pól, które mogą mieć różne nazwy
+        // Map analysisSummary <-> summary dla zgodności
+        if (standardized.containsKey('analysisSummary') && !standardized.containsKey('summary')) {
+            standardized.put('summary', standardized.get('analysisSummary'));
+            System.debug(LoggingLevel.DEBUG, 'Mapped analysisSummary to summary');
+        } else if (standardized.containsKey('summary') && !standardized.containsKey('analysisSummary')) {
+            standardized.put('analysisSummary', standardized.get('summary'));
+            System.debug(LoggingLevel.DEBUG, 'Mapped summary to analysisSummary');
+        }
+        
         return standardized;
     }
     

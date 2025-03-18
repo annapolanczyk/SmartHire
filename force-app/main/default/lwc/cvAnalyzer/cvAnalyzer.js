@@ -91,6 +91,86 @@ export default class CvAnalyzer extends LightningElement {
         }
     }
     
+    get recommendationLevel() {
+        if (this.analysisResults && this.analysisResults.recommendationLevel) {
+            return this.analysisResults.recommendationLevel;
+        } else if (this.matchScore >= 80) {
+            return 'Highly Recommended';
+        } else if (this.matchScore >= 60) {
+            return 'Recommended';
+        } else if (this.matchScore >= 40) {
+            return 'Consider';
+        } else {
+            return 'Not Recommended';
+        }
+    }
+    
+    get recommendationLevelClass() {
+        const level = this.recommendationLevel;
+        if (!level) return 'slds-box slds-box_small';
+        
+        if (level === 'Highly Recommended') {
+            return 'slds-box slds-box_small slds-theme_success';
+        } else if (level === 'Recommended') {
+            return 'slds-box slds-box_small slds-theme_info';
+        } else if (level === 'Consider') {
+            return 'slds-box slds-box_small slds-theme_warning';
+        } else {
+            return 'slds-box slds-box_small slds-theme_error';
+        }
+    }
+    
+    get analysisSummary() {
+        if (this.analysisResults && this.analysisResults.analysisSummary) {
+            return this.analysisResults.analysisSummary;
+        }
+        return '';
+    }
+    
+    get keyHighlights() {
+        if (this.analysisResults && this.analysisResults.keyHighlights) {
+            if (Array.isArray(this.analysisResults.keyHighlights)) {
+                return this.analysisResults.keyHighlights;
+            } else if (typeof this.analysisResults.keyHighlights === 'string') {
+                const highlights = this.analysisResults.keyHighlights;
+                if (highlights.includes('\n')) {
+                    return highlights.split('\n')
+                        .map(item => item.replace(/^[\s-]*/, '').trim())
+                        .filter(item => item.length > 0);
+                } else if (highlights.includes(',')) {
+                    return highlights.split(',')
+                        .map(item => item.trim())
+                        .filter(item => item.length > 0);
+                } else {
+                    return [highlights];
+                }
+            }
+        }
+        return null;
+    }
+    
+    get potentialConcerns() {
+        if (this.analysisResults && this.analysisResults.potentialConcerns) {
+            if (Array.isArray(this.analysisResults.potentialConcerns)) {
+                return this.analysisResults.potentialConcerns;
+            } else if (typeof this.analysisResults.potentialConcerns === 'string') {
+                const concerns = this.analysisResults.potentialConcerns;
+                if (concerns.includes('\n')) {
+                    return concerns.split('\n')
+                        .map(item => item.replace(/^[\s-]*/, '').trim())
+                        .filter(item => item.length > 0);
+                } else if (concerns.includes(',')) {
+                    return concerns.split(',')
+                        .map(item => item.trim())
+                        .filter(item => item.length > 0);
+                } else {
+                    return [concerns];
+                }
+            }
+        }
+        return null;
+    }
+    
     get showCandidateDetails() {
         return this.candidateName || this.candidateEmail || this.education;
     }
@@ -232,9 +312,42 @@ export default class CvAnalyzer extends LightningElement {
         
         this.isLoading = true;
         
+        // Przygotowanie danych do zapisu - tworzenie kopii obiektu z dostosowaniami
+        const resultsToSave = JSON.parse(JSON.stringify(this.analysisResults));
+        
+        // Upewniamy się, że wszystkie wymagane pola są obecne
+        if (resultsToSave.analysisSummary && !resultsToSave.summary) {
+            resultsToSave.summary = resultsToSave.analysisSummary;
+        }
+        
+        // Upewniamy się, że pola z umiejętnościami są tablicami
+        if (resultsToSave.matchedSkills && !Array.isArray(resultsToSave.matchedSkills)) {
+            resultsToSave.matchedSkills = [resultsToSave.matchedSkills];
+        }
+        
+        if (resultsToSave.missingSkills && !Array.isArray(resultsToSave.missingSkills)) {
+            resultsToSave.missingSkills = [resultsToSave.missingSkills];
+        }
+        
+        if (resultsToSave.additionalSkills && !Array.isArray(resultsToSave.additionalSkills)) {
+            resultsToSave.additionalSkills = [resultsToSave.additionalSkills];
+        }
+        
+        // Upewniamy się, że poziom rekomendacji jest stringiem
+        if (resultsToSave.recommendationLevel && typeof resultsToSave.recommendationLevel !== 'string') {
+            resultsToSave.recommendationLevel = String(resultsToSave.recommendationLevel);
+        }
+        
+        // Konwersja liczb do odpowiednich formatów
+        if (resultsToSave.matchScore && typeof resultsToSave.matchScore === 'string') {
+            resultsToSave.matchScore = parseFloat(resultsToSave.matchScore);
+        }
+        
+        console.log('Data to save:', JSON.stringify(resultsToSave));
+        
         saveAnalysisResults({
             recordId: this.recordId,
-            analysisResults: JSON.stringify(this.analysisResults)
+            analysisResults: JSON.stringify(resultsToSave)
         })
         .then(result => {
             this.isLoading = false;
