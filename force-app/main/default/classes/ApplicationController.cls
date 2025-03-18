@@ -24,9 +24,18 @@ public with sharing class ApplicationController {
             throw new AuraHandledException('Insufficient permissions to access Job_Application__c');
         }
         
-        // Implementacja metody getApplicationsByCandidate w JobApplicationService
-        List<Job_Application__c> applications = [SELECT Id, Name, Status__c FROM Job_Application__c WHERE Candidate__c = :candidateId];
-        return applications;
+        // Sprawdzamy dostęp do pól
+        Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.Job_Application__c.fields.getMap();
+        List<String> fieldsToCheck = new List<String>{'Id', 'Name', 'Status__c', 'Candidate__c'};
+        
+        for (String field : fieldsToCheck) {
+            if (!fieldMap.get(field).getDescribe().isAccessible()) {
+                throw new AuraHandledException('Insufficient permissions to access Job_Application__c.' + field);
+            }
+        }
+        
+        // Korzystamy z warstwy serwisowej zamiast bezpośredniego zapytania SOQL
+        return JobApplicationService.getApplicationsByCandidate(candidateId);
     }
     
     /**
