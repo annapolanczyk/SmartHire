@@ -353,6 +353,9 @@ export default class CvAnalyzer extends LightningElement {
             this.isLoading = false;
             this.showToast('Success', 'Analysis results saved successfully', 'success');
             
+            // Zachowujemy showResults = true, aby wyniki były nadal widoczne
+            this.showResults = true;
+            
             // Dispatch event to notify parent components
             this.dispatchEvent(new CustomEvent('analysissaved', {
                 detail: {
