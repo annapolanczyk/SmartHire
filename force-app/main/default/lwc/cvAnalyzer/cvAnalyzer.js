@@ -312,8 +312,32 @@ export default class CvAnalyzer extends LightningElement {
         
         this.isLoading = true;
         
+        // Sprawdzenie czy mamy prawidłowy ID rekordu i kontekst
+        if (!this.recordId) {
+            this.isLoading = false;
+            this.showToast('Error', 'Missing record ID. Cannot save analysis results.', 'error');
+            return;
+        }
+        
+        if (!this.objectApiName) {
+            this.isLoading = false;
+            this.showToast('Error', 'Missing object context. Cannot save analysis results.', 'error');
+            return;
+        }
+        
+        // Sprawdzamy czy kontekst jest wspierany
+        if (this.objectApiName !== 'Candidate__c' && this.objectApiName !== 'Job_Application__c') {
+            this.isLoading = false;
+            this.showToast('Error', `Unsupported object type: ${this.objectApiName}. Analysis can only be saved for Candidate or Job Application.`, 'error');
+            return;
+        }
+        
         // Przygotowanie danych do zapisu - tworzenie kopii obiektu z dostosowaniami
         const resultsToSave = JSON.parse(JSON.stringify(this.analysisResults));
+        
+        // Dodajemy informacje o kontekście do zapisanych wyników
+        resultsToSave.recordId = this.recordId;
+        resultsToSave.objectApiName = this.objectApiName;
         
         // Upewniamy się, że wszystkie wymagane pola są obecne
         if (resultsToSave.analysisSummary && !resultsToSave.summary) {
@@ -343,7 +367,14 @@ export default class CvAnalyzer extends LightningElement {
             resultsToSave.matchScore = parseFloat(resultsToSave.matchScore);
         }
         
+        // Logujemy dane diagnostyczne
         console.log('Data to save:', JSON.stringify(resultsToSave));
+        console.log('Context:', {
+            recordId: this.recordId,
+            objectApiName: this.objectApiName,
+            isCandidate: this.isCandidate,
+            isJobApplication: this.isJobApplication
+        });
         
         saveAnalysisResults({
             recordId: this.recordId,
