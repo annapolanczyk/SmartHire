@@ -66,7 +66,6 @@
         <members>aiAnalysisViewer</members>
         <members>cvAnalyzer</members>
         <members>messageBanner</members>
-        <members>parentComponent</members>
         <name>LightningComponentBundle</name>
     </types>
     <types>
