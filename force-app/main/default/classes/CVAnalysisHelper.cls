@@ -8,7 +8,7 @@
  * 
  * @author ChangeMeIn@UserSettingsUnder.SFDoc
  * @group 
- * @last modified on  : 03-17-2025
+ * @last modified on  : 03-18-2025
  * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 **/
 public with sharing class CVAnalysisHelper {
@@ -388,103 +388,36 @@ public with sharing class CVAnalysisHelper {
     }
     
     /**
-     * @description Ekstrahuje tekst z dokumentu CV
+     * @description Ekstrahuje tekst z CV
      * @param cv Wersja zawartości dokumentu CV
-     * @return Wyekstrahowany tekst z dokumentu
+     * @return Tekst CV
      */
     private static String extractTextFromCV(ContentVersion cv) {
-        if (cv.FileType == null) {
-            throw new CVAnalysisException('Typ pliku nie został określony');
-        }
-        
-        return convertToText(cv);
-    }
-    
-    /**
-     * @description Pobiera dane stanowiska
-     * @param positionId Id stanowiska
-     * @return Obiekt stanowiska lub null jeśli nie znaleziono
-     */
-    private static Position__c getPosition(Id positionId) {
         try {
-            // Walidacja uprawnień CRUD
-            validatePositionAccess();
+            // Sprawdź format pliku
+            String fileType = determineFileType(cv);
+            System.debug(LoggingLevel.DEBUG, 'Typ pliku: ' + fileType);
             
-            // Wykonaj zapytanie SOQL
-            List<Position__c> positionList = [
-                SELECT Id, Name, Job_Description__c, Required_Skills__c 
-                FROM Position__c 
-                WHERE Id = :positionId 
-                WITH SECURITY_ENFORCED
-                LIMIT 1
-            ];
-            return positionList.isEmpty() ? null : positionList[0];
-        } catch (Exception e) {
-            Logger.error('Error fetching Position', e);
-            return null;
-        }
-    }
-    
-    /**
-     * @description Waliduje uprawnienia dostępu do obiektu Position__c
-     * @throws Exception jeśli użytkownik nie ma wymaganych uprawnień
-     */
-    private static void validatePositionAccess() {
-        // Walidacja uprawnień CRUD
-        if (!Schema.SObjectType.Position__c.isAccessible()) {
-            throw new CVAnalysisException('Brak uprawnień do odczytu obiektów Position__c');
-        }
-        
-        // Walidacja uprawnień do pól
-        Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.Position__c.fields.getMap();
-        for (String field : new List<String>{'Id', 'Name', 'Job_Description__c', 'Required_Skills__c'}) {
-            if (!fieldMap.get(field).getDescribe().isAccessible()) {
-                throw new CVAnalysisException('Brak uprawnień do odczytu pola Position__c.' + field);
+            // Obsługa plików PDF
+            if (fileType == PDF_TYPE) {
+                return parsePDF(cv.VersionData);
+            } 
+            // Obsługa innych typów plików
+            else if (fileType == TXT_TYPE) {
+                return cv.VersionData.toString();
+            } else {
+                throw new CVAnalysisException('Nieobsługiwany format pliku: ' + fileType + '. Aplikacja obsługuje tylko pliki PDF i TXT.');
             }
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Błąd podczas ekstrakcji tekstu z CV: ' + e.getMessage());
+            throw new CVAnalysisException('Błąd podczas ekstrakcji tekstu z CV: ' + e.getMessage());
         }
     }
     
     /**
-     * @description Parsuje listę umiejętności z tekstu
-     * @param skillsString Tekst zawierający umiejętności oddzielone przecinkami
-     * @return Lista umiejętności
-     */
-    private static List<String> parseSkills(String skillsString) {
-        if (String.isBlank(skillsString)) {
-            return new List<String>();
-        }
-        
-        List<String> skills = skillsString.split(',');
-        for (Integer i = 0; i < skills.size(); i++) {
-            skills[i] = skills[i].trim();
-        }
-        return skills;
-    }
-    
-    /**
-     * @description Konwertuje dokument na tekst
-     * @param cv Wersja zawartości dokumentu
-     * @return Wyekstrahowany tekst z dokumentu
-     */
-    private static String convertToText(ContentVersion cv) {
-        if (cv.FileType == null) {
-            throw new CVAnalysisException('Typ pliku nie został określony');
-        }
-        
-        String fileType = cv.FileType.toUpperCase();
-        
-        if (fileType == PDF_TYPE) {
-            return parsePDF(cv.VersionData);
-        } else {
-            throw new CVAnalysisException('Nieobsługiwany format pliku: ' + cv.FileType + '. Aplikacja obsługuje tylko pliki PDF.');
-        }
-    }
-    
-    /**
-     * @description Parsuje dokument PDF
-     * Wykorzystuje Google Vision API do ekstrakcji tekstu z dokumentu PDF
-     * @param pdfData Dane dokumentu PDF w formacie Blob
-     * @return Wyekstrahowany tekst z dokumentu PDF
+     * @description Parsuje plik PDF i ekstrahuje tekst
+     * @param pdfData Dane PDF w formacie Blob
+     * @return Wyekstrahowany tekst
      */
     private static String parsePDF(Blob pdfData) {
         try {
@@ -494,79 +427,48 @@ public with sharing class CVAnalysisHelper {
                 throw new CVAnalysisException('Plik PDF jest pusty lub uszkodzony. Proszę sprawdzić plik i spróbować ponownie.');
             }
             
-            // Logowanie rozmiaru pliku PDF dla celów diagnostycznych
             Integer pdfSize = pdfData.size();
             Logger.info('CVAnalysisHelper', 'parsePDF', 'Rozmiar pliku PDF: ' + pdfSize + ' bajtów');
             
-            // Sprawdź, czy plik PDF ma minimalny rozmiar (puste pliki PDF mają zwykle kilkaset bajtów)
-            if (pdfSize < 500) {
+            // Sprawdź, czy plik nie jest zbyt mały (potencjalnie uszkodzony)
+            if (pdfSize < 100) {
                 Logger.warn('CVAnalysisHelper', 'parsePDF', 'Plik PDF jest bardzo mały (' + pdfSize + ' bajtów), może być uszkodzony lub pusty');
             }
             
-            // Sprawdź, czy plik PDF ma poprawny nagłówek (pliki PDF zaczynają się od "%PDF-")
-            String pdfHeader = EncodingUtil.base64Encode(pdfData).substring(0, Math.min(20, EncodingUtil.base64Encode(pdfData).length()));
+            // Zapisz pierwsze kilka bajtów dla diagnostyki
+            String pdfHeader = EncodingUtil.base64Encode(pdfData).substring(0, Math.min(20, pdfSize));
             Logger.info('CVAnalysisHelper', 'parsePDF', 'Nagłówek pliku PDF (Base64): ' + pdfHeader);
             
-            // Próba użycia Google Vision API do ekstrakcji tekstu
+            // 1. Próba użycia serwisu PDF Extractor
             try {
-                String extractedText = extractTextUsingGoogleVision(pdfData, PDF_MIME_TYPE);
-                
-                // Jeśli Google Vision API zadziałało, zwróć wynik
+                String extractedText = extractTextUsingPdfExtractor(pdfData);
                 if (String.isNotBlank(extractedText)) {
                     Logger.info('CVAnalysisHelper', 'parsePDF', 'Pomyślnie wyekstrahowano tekst z PDF. Długość tekstu: ' + extractedText.length());
                     return extractedText;
+                } else {
+                    Logger.warn('CVAnalysisHelper', 'parsePDF', 'PDF Extractor zwrócił pusty tekst');
                 }
-                
-                // Jeśli Google Vision API nie zwróciło tekstu, rzuć wyjątek
-                Logger.error('CVAnalysisHelper', 'parsePDF', 'Google Vision API nie zwróciło tekstu', null);
-                throw new CVAnalysisException('Nie udało się wyekstrahować tekstu z pliku PDF. Sprawdź, czy plik zawiera tekst możliwy do odczytania.');
-            } catch (CVAnalysisException e) {
-                // Jeśli wystąpił błąd "Bad image data", spróbuj użyć naszej usługi PDF Extractor
-                if (e.getMessage().contains('Bad image data')) {
-                    Logger.error('CVAnalysisHelper', 'parsePDF', 'Błąd "Bad image data" z Google Vision API. Próba użycia usługi PDF Extractor.', null);
-                    
-                    // Próba użycia usługi PDF Extractor
-                    try {
-                        String pdfExtractorText = extractTextUsingPdfExtractor(pdfData);
-                        if (String.isNotBlank(pdfExtractorText)) {
-                            Logger.info('CVAnalysisHelper', 'parsePDF', 'Pomyślnie wyekstrahowano tekst z PDF używając usługi PDF Extractor. Długość tekstu: ' + pdfExtractorText.length());
-                            return pdfExtractorText;
-                        } else {
-                            Logger.warn('CVAnalysisHelper', 'parsePDF', 'Usługa PDF Extractor zwróciła pusty tekst');
-                            
-                            // Jeśli usługa PDF Extractor nie zadziałała, spróbuj alternatywnej metody
-                            String alternativeText = extractTextAlternative(pdfData);
-                            if (String.isNotBlank(alternativeText)) {
-                                Logger.info('CVAnalysisHelper', 'parsePDF', 'Pomyślnie wyekstrahowano tekst z PDF używając alternatywnej metody. Długość tekstu: ' + alternativeText.length());
-                                return alternativeText;
-                            } else {
-                                Logger.warn('CVAnalysisHelper', 'parsePDF', 'Alternatywna metoda ekstrakcji tekstu zwróciła pusty tekst');
-                                throw new CVAnalysisException('Nie udało się wyekstrahować tekstu z pliku PDF używając żadnej z dostępnych metod. Sprawdź, czy plik zawiera tekst możliwy do odczytania.');
-                            }
-                        }
-                    } catch (Exception extEx) {
-                        Logger.error('CVAnalysisHelper', 'parsePDF', 'Błąd podczas używania usługi PDF Extractor: ' + extEx.getMessage(), extEx);
-                        
-                        // Jeśli usługa PDF Extractor nie zadziałała, spróbuj alternatywnej metody
-                        try {
-                            String alternativeText = extractTextAlternative(pdfData);
-                            if (String.isNotBlank(alternativeText)) {
-                                Logger.info('CVAnalysisHelper', 'parsePDF', 'Pomyślnie wyekstrahowano tekst z PDF używając alternatywnej metody. Długość tekstu: ' + alternativeText.length());
-                                return alternativeText;
-                            } else {
-                                Logger.warn('CVAnalysisHelper', 'parsePDF', 'Alternatywna metoda ekstrakcji tekstu zwróciła pusty tekst');
-                                throw new CVAnalysisException('Nie udało się wyekstrahować tekstu z pliku PDF używając żadnej z dostępnych metod. Sprawdź, czy plik zawiera tekst możliwy do odczytania.');
-                            }
-                        } catch (Exception altEx) {
-                            Logger.error('CVAnalysisHelper', 'parsePDF', 'Błąd podczas używania alternatywnej metody ekstrakcji tekstu: ' + altEx.getMessage(), altEx);
-                            throw new CVAnalysisException('Błąd podczas analizy pliku PDF: Google Vision API zgłosiło "Bad image data", a żadna z alternatywnych metod ekstrakcji tekstu nie zadziałała. ' +
-                                                         'Sprawdź, czy plik PDF jest poprawny, nie jest zabezpieczony hasłem i jest w standardowym formacie PDF.');
-                        }
-                    }
-                }
-                // Przekazujemy dalej inne wyjątki CVAnalysisException
-                throw e;
+            } catch (Exception extEx) {
+                Logger.error('CVAnalysisHelper', 'parsePDF', 'Błąd podczas używania usługi PDF Extractor: ' + extEx.getMessage(), extEx);
+                // Kontynuuj do alternatywnej metody
             }
+            
+            // 2. Próba alternatywnej metody jako backup
+            try {
+                String alternativeText = extractTextAlternative(pdfData);
+                if (String.isNotBlank(alternativeText)) {
+                    Logger.info('CVAnalysisHelper', 'parsePDF', 'Pomyślnie wyekstrahowano tekst z PDF używając alternatywnej metody. Długość tekstu: ' + alternativeText.length());
+                    return alternativeText;
+                } else {
+                    Logger.warn('CVAnalysisHelper', 'parsePDF', 'Alternatywna metoda ekstrakcji tekstu zwróciła pusty tekst');
+                }
+            } catch (Exception altEx) {
+                Logger.error('CVAnalysisHelper', 'parsePDF', 'Błąd podczas używania alternatywnej metody ekstrakcji tekstu: ' + altEx.getMessage(), altEx);
+                throw new CVAnalysisException('Nie udało się wyekstrahować tekstu z pliku PDF. Sprawdź, czy plik zawiera tekst możliwy do odczytania.');
+            }
+            
+            // Jeśli żadna metoda nie zadziałała
+            throw new CVAnalysisException('Nie udało się wyekstrahować tekstu z pliku PDF używając żadnej z dostępnych metod. Sprawdź, czy plik zawiera tekst możliwy do odczytania.');
         } catch (CVAnalysisException e) {
             // Przekazujemy dalej wyjątki CVAnalysisException
             throw e;
@@ -686,498 +588,95 @@ public with sharing class CVAnalysisHelper {
     }
     
     /**
-     * @description Ekstrahuje tekst z dokumentu używając Google Vision API
-     * @param documentData Dane dokumentu w formacie Blob
-     * @param contentType Typ zawartości dokumentu (MIME type)
-     * @return Wyekstrahowany tekst lub null w przypadku niepowodzenia
+     * @description Pobiera dane stanowiska
+     * @param positionId Id stanowiska
+     * @return Obiekt stanowiska lub null jeśli nie znaleziono
      */
-    private static String extractTextUsingGoogleVision(Blob documentData, String contentType) {
+    private static Position__c getPosition(Id positionId) {
         try {
-            // Walidacja uprawnień do Custom Settings
-            validateGoogleVisionSettingsAccess();
+            // Walidacja uprawnień CRUD
+            validatePositionAccess();
             
-            // Pobierz ustawienia Google Vision API
-            Google_Vision_API_Settings__c settings = Google_Vision_API_Settings__c.getInstance();
-            if (settings == null || String.isBlank(settings.Vision_API_Key__c)) {
-                Logger.warn('Google Vision API settings not configured');
-                throw new CVAnalysisException('Brak skonfigurowanego klucza API dla Google Vision. Skontaktuj się z administratorem.');
-            }
-            
-            // Przygotuj i wykonaj zapytanie do Google Vision API
-            HttpResponse res = callGoogleVisionAPI(documentData, contentType);
-            
-            // Przetwórz odpowiedź
-            return processVisionAPIResponse(res);
-        } catch (CVAnalysisException e) {
-            // Przekazujemy dalej wyjątki CVAnalysisException
-            throw e;
+            // Wykonaj zapytanie SOQL
+            List<Position__c> positionList = [
+                SELECT Id, Name, Job_Description__c, Required_Skills__c 
+                FROM Position__c 
+                WHERE Id = :positionId 
+                WITH SECURITY_ENFORCED
+                LIMIT 1
+            ];
+            return positionList.isEmpty() ? null : positionList[0];
         } catch (Exception e) {
-            Logger.error('Błąd podczas używania Google Vision API: ' + e.getMessage(), e);
-            throw new CVAnalysisException('Błąd podczas używania Google Vision API: ' + e.getMessage());
+            Logger.error('Error fetching Position', e);
+            return null;
         }
     }
     
     /**
-     * @description Waliduje uprawnienia dostępu do obiektu Google_Vision_API_Settings__c
+     * @description Waliduje uprawnienia dostępu do obiektu Position__c
      * @throws Exception jeśli użytkownik nie ma wymaganych uprawnień
      */
-    private static void validateGoogleVisionSettingsAccess() {
+    private static void validatePositionAccess() {
         // Walidacja uprawnień CRUD
-        if (!Schema.SObjectType.Google_Vision_API_Settings__c.isAccessible()) {
-            throw new CVAnalysisException('Brak uprawnień do odczytu obiektów Google_Vision_API_Settings__c');
+        if (!Schema.SObjectType.Position__c.isAccessible()) {
+            throw new CVAnalysisException('Brak uprawnień do odczytu obiektów Position__c');
         }
         
         // Walidacja uprawnień do pól
-        Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.Google_Vision_API_Settings__c.fields.getMap();
-        if (!fieldMap.get('Vision_API_Key__c').getDescribe().isAccessible()) {
-            throw new CVAnalysisException('Brak uprawnień do odczytu pola Google_Vision_API_Settings__c.Vision_API_Key__c');
-        }
-    }
-    
-    /**
-     * @description Wywołuje Google Vision API
-     * @param documentData Dane dokumentu w formacie Blob
-     * @param contentType Typ zawartości dokumentu (MIME type)
-     * @return Odpowiedź HTTP z Google Vision API
-     */
-    private static HttpResponse callGoogleVisionAPI(Blob documentData, String contentType) {
-        try {
-            // Pobierz ustawienia i waliduj dane wejściowe
-            Google_Vision_API_Settings__c settings = getAndValidateAPISettings();
-            validateDocumentData(documentData);
-            
-            // Przygotuj i wykonaj zapytanie HTTP
-            HttpRequest req = prepareHttpRequest(settings.Vision_API_Key__c, documentData, contentType);
-            return executeHttpRequest(req);
-        } catch (CVAnalysisException e) {
-            throw e;
-        } catch (Exception e) {
-            Logger.error('Nieoczekiwany błąd: ' + e.getMessage(), e);
-            throw new CVAnalysisException('Błąd podczas wywołania Google Vision API: ' + e.getMessage());
-        }
-    }
-    
-    /**
-     * @description Pobiera i waliduje ustawienia API Google Vision
-     * @return Obiekt ustawień Google Vision API
-     * @throws Exception jeśli ustawienia są nieprawidłowe
-     */
-    private static Google_Vision_API_Settings__c getAndValidateAPISettings() {
-        Google_Vision_API_Settings__c settings = Google_Vision_API_Settings__c.getInstance();
-        if (settings == null || String.isBlank(settings.Vision_API_Key__c)) {
-            Logger.warn('Google Vision API settings not configured');
-            throw new CVAnalysisException('Brak skonfigurowanego klucza API dla Google Vision. Skontaktuj się z administratorem.');
-        }
-        
-        Logger.info('CVAnalysisHelper', 'getAndValidateAPISettings', 'Rozpoczynam wywołanie Google Vision API');
-        Logger.info('CVAnalysisHelper', 'getAndValidateAPISettings', 'Klucz API: ' + 
-                   (settings.Vision_API_Key__c != null ? 'Skonfigurowany (pierwsze 5 znaków: ' + 
-                    settings.Vision_API_Key__c.substring(0, Math.min(5, settings.Vision_API_Key__c.length())) + '...)' : 'Brak'));
-        
-        return settings;
-    }
-    
-    /**
-     * @description Waliduje dane dokumentu
-     * @param documentData Dane dokumentu w formacie Blob
-     * @throws Exception jeśli dane są nieprawidłowe
-     */
-    private static void validateDocumentData(Blob documentData) {
-        // Sprawdź, czy dane dokumentu nie są puste
-        if (documentData == null || documentData.size() == 0) {
-            Logger.warn('CVAnalysisHelper', 'validateDocumentData', 'Dane dokumentu są puste');
-            throw new CVAnalysisException('Dane dokumentu są puste. Nie można przeprowadzić analizy.');
-        }
-        
-        // Sprawdź, czy rozmiar dokumentu nie przekracza limitu Google Vision API (10MB)
-        if (documentData.size() > 10 * 1024 * 1024) {
-            Logger.warn('CVAnalysisHelper', 'validateDocumentData', 'Rozmiar dokumentu przekracza limit 10MB: ' + documentData.size() + ' bajtów');
-            throw new CVAnalysisException('Rozmiar dokumentu przekracza limit 10MB. Proszę użyć mniejszego pliku.');
-        }
-    }
-    
-    /**
-     * @description Przygotowuje zapytanie HTTP do Google Vision API
-     * @param apiKey Klucz API Google Vision
-     * @param documentData Dane dokumentu w formacie Blob
-     * @param contentType Typ zawartości dokumentu (MIME type)
-     * @return Obiekt HttpRequest gotowy do wysłania
-     */
-    private static HttpRequest prepareHttpRequest(String apiKey, Blob documentData, String contentType) {
-        HttpRequest req = new HttpRequest();
-        String endpoint = 'https://vision.googleapis.com/v1/images:annotate?key=' + apiKey;
-        req.setEndpoint(endpoint);
-        req.setMethod('POST');
-        req.setHeader('Content-Type', 'application/json');
-        req.setTimeout(120000); // Zwiększamy timeout do 120 sekund
-        
-        // Konwersja dokumentu do Base64
-        String base64Data = EncodingUtil.base64Encode(documentData);
-        Logger.info('CVAnalysisHelper', 'prepareHttpRequest', 'Długość danych Base64: ' + base64Data.length());
-        
-        // Przygotuj ciało zapytania
-        Map<String, Object> requestBody = prepareVisionAPIRequestBody(contentType, base64Data);
-        String requestBodyJson = JSON.serialize(requestBody);
-        req.setBody(requestBodyJson);
-        
-        Logger.info('CVAnalysisHelper', 'prepareHttpRequest', 'Endpoint: ' + endpoint.substring(0, endpoint.indexOf('?')) + '?key=HIDDEN');
-        Logger.info('CVAnalysisHelper', 'prepareHttpRequest', 'Metoda: ' + req.getMethod());
-        Logger.info('CVAnalysisHelper', 'prepareHttpRequest', 'Długość ciała zapytania: ' + requestBodyJson.length());
-        
-        return req;
-    }
-    
-    /**
-     * @description Wykonuje zapytanie HTTP i obsługuje odpowiedź
-     * @param req Obiekt HttpRequest do wysłania
-     * @return Odpowiedź HTTP z Google Vision API
-     * @throws Exception w przypadku błędu
-     */
-    private static HttpResponse executeHttpRequest(HttpRequest req) {
-        Http http = new Http();
-        HttpResponse res;
-        
-        try {
-            res = http.send(req);
-            
-            // Logowanie dla celów diagnostycznych
-            Logger.info('CVAnalysisHelper', 'executeHttpRequest', 'Kod statusu odpowiedzi: ' + res.getStatusCode());
-            Logger.info('CVAnalysisHelper', 'executeHttpRequest', 'Długość odpowiedzi: ' + res.getBodyAsBlob().size());
-            
-            return handleHttpResponse(res);
-        } catch (System.CalloutException e) {
-            Logger.error('Błąd podczas wywołania Google Vision API: ' + e.getMessage(), e);
-            throw new CVAnalysisException('Błąd podczas wywołania Google Vision API: ' + e.getMessage());
-        }
-    }
-    
-    /**
-     * @description Obsługuje odpowiedź HTTP z Google Vision API
-     * @param res Odpowiedź HTTP z Google Vision API
-     * @return Odpowiedź HTTP jeśli status 200, w przeciwnym razie rzuca wyjątek
-     * @throws Exception w przypadku błędu
-     */
-    private static HttpResponse handleHttpResponse(HttpResponse res) {
-        if (res.getStatusCode() == 200) {
-            // Sprawdź, czy odpowiedź zawiera błąd "Bad image data"
-            if (res.getBody().contains('Bad image data')) {
-                Logger.error('Błąd "Bad image data" w odpowiedzi Google Vision API: ' + res.getBody(), null);
-                throw new CVAnalysisException('Błąd Google Vision API: Bad image data. ' +
-                                            'Sprawdź, czy plik PDF jest poprawny, nie jest zabezpieczony hasłem i jest w standardowym formacie PDF.');
+        Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.Position__c.fields.getMap();
+        for (String field : new List<String>{'Id', 'Name', 'Job_Description__c', 'Required_Skills__c'}) {
+            if (!fieldMap.get(field).getDescribe().isAccessible()) {
+                throw new CVAnalysisException('Brak uprawnień do odczytu pola Position__c.' + field);
             }
-            return res;
-        } else if (res.getStatusCode() == 400) {
-            // Błąd w zapytaniu
-            String errorDetails = extractErrorDetails(res.getBody());
-            Logger.error('Błąd w zapytaniu do Google Vision API: ' + errorDetails, null);
-            
-            // Sprawdź, czy błąd dotyczy "Bad image data"
-            if (errorDetails.contains('Bad image data')) {
-                throw new CVAnalysisException('Błąd Google Vision API: Bad image data. ' +
-                                            'Sprawdź, czy plik PDF jest poprawny, nie jest zabezpieczony hasłem i jest w standardowym formacie PDF.');
-            } else {
-                throw new CVAnalysisException('Błąd w zapytaniu do Google Vision API. Sprawdź format dokumentu. Szczegóły: ' + errorDetails);
-            }
-        } else if (res.getStatusCode() == 401 || res.getStatusCode() == 403) {
-            // Błąd autoryzacji
-            String errorDetails = extractErrorDetails(res.getBody());
-            Logger.error('Błąd autoryzacji Google Vision API: ' + errorDetails, null);
-            throw new CVAnalysisException('Błąd autoryzacji Google Vision API. Sprawdź klucz API. Szczegóły: ' + errorDetails);
-        } else if (res.getStatusCode() == 429) {
-            // Przekroczono limit zapytań
-            String errorDetails = extractErrorDetails(res.getBody());
-            Logger.error('Przekroczono limit zapytań do Google Vision API: ' + errorDetails, null);
-            throw new CVAnalysisException('Przekroczono limit zapytań do Google Vision API. Spróbuj ponownie później. Szczegóły: ' + errorDetails);
+        }
+    }
+    
+    /**
+     * @description Parsuje listę umiejętności z tekstu
+     * @param skillsString Tekst zawierający umiejętności oddzielone przecinkami
+     * @return Lista umiejętności
+     */
+    private static List<String> parseSkills(String skillsString) {
+        if (String.isBlank(skillsString)) {
+            return new List<String>();
+        }
+        
+        List<String> skills = skillsString.split(',');
+        for (Integer i = 0; i < skills.size(); i++) {
+            skills[i] = skills[i].trim();
+        }
+        return skills;
+    }
+    
+    /**
+     * @description Konwertuje dokument na tekst
+     * @param cv Wersja zawartości dokumentu
+     * @return Wyekstrahowany tekst z dokumentu
+     */
+    private static String convertToText(ContentVersion cv) {
+        if (cv.FileType == null) {
+            throw new CVAnalysisException('Typ pliku nie został określony');
+        }
+        
+        String fileType = cv.FileType.toUpperCase();
+        
+        if (fileType == PDF_TYPE) {
+            return parsePDF(cv.VersionData);
         } else {
-            // Inny błąd
-            String errorDetails = extractErrorDetails(res.getBody());
-            Logger.error('Błąd Google Vision API: ' + res.getStatusCode() + ' - ' + errorDetails, null);
-            throw new CVAnalysisException('Błąd Google Vision API. Kod statusu: ' + res.getStatusCode() + '. Szczegóły: ' + errorDetails);
+            throw new CVAnalysisException('Nieobsługiwany format pliku: ' + cv.FileType + '. Aplikacja obsługuje tylko pliki PDF.');
         }
     }
     
     /**
-     * @description Extracts error details from Google Vision API response
-     * @param responseBody Response body
-     * @return Error details
+     * @description Sprawdza format pliku
+     * @param cv Wersja zawartości dokumentu CV
+     * @return Typ pliku
      */
-    private static String extractErrorDetails(String responseBody) {
-        try {
-            if (String.isBlank(responseBody)) {
-                return 'No error details available';
-            }
-            
-            // Try to parse response as JSON
-            Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(responseBody);
-            
-            // Initialize error variables
-            String errorCode = '';
-            String errorMessage = '';
-            String errorDetails = '';
-            
-            // Check if response contains "error" field
-            if (responseMap.containsKey('error')) {
-                Map<String, Object> errorMap = (Map<String, Object>) responseMap.get('error');
-                
-                // Get error code and message
-                errorCode = errorMap.containsKey('code') ? String.valueOf(errorMap.get('code')) : '';
-                errorMessage = errorMap.containsKey('message') ? String.valueOf(errorMap.get('message')) : '';
-                
-                // Get error details if they exist
-                if (errorMap.containsKey('details') && errorMap.get('details') instanceof List<Object>) {
-                    List<Object> detailsList = (List<Object>)errorMap.get('details');
-                    for (Object detail : detailsList) {
-                        if (detail instanceof Map<String, Object>) {
-                            Map<String, Object> detailMap = (Map<String, Object>) detail;
-                            if (detailMap.containsKey('detail')) {
-                                errorDetails += String.valueOf(detailMap.get('detail')) + ' ';
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Return formatted error details
-            return 'Code: ' + errorCode + ', Message: ' + errorMessage + (String.isNotBlank(errorDetails) ? ', Details: ' + errorDetails : '');
-        } catch (Exception e) {
-            // In case of parsing error, return the original response (limited to 500 characters)
-            return 'Error parsing response: ' + e.getMessage() + '. Original response: ' + 
-                   (responseBody.length() > 500 ? responseBody.substring(0, 500) + '...' : responseBody);
+    private static String determineFileType(ContentVersion cv) {
+        if (cv.FileType == null) {
+            throw new CVAnalysisException('Typ pliku nie został określony');
         }
-    }
-    
-    /**
-     * @description Przygotowuje ciało zapytania dla Google Vision API
-     * @param contentType Typ zawartości dokumentu (MIME type)
-     * @param base64Data Dane dokumentu w formacie Base64
-     * @return Mapa zawierająca ciało zapytania
-     */
-    private static Map<String, Object> prepareVisionAPIRequestBody(String contentType, String base64Data) {
-        // Przygotuj ciało zapytania zgodnie z dokumentacją Google Vision API
-        // https://cloud.google.com/vision/docs/reference/rest/v1/images/annotate
-        
-        // Logowanie dla celów diagnostycznych
-        Logger.info('CVAnalysisHelper', 'prepareVisionAPIRequestBody', 'Przygotowuję ciało zapytania dla Google Vision API');
-        
-        // Sprawdź, czy dane Base64 są poprawne
-        if (String.isBlank(base64Data)) {
-            Logger.error('CVAnalysisHelper', 'prepareVisionAPIRequestBody', 'Dane Base64 są puste', null);
-            throw new CVAnalysisException('Dane Base64 są puste. Nie można przeprowadzić analizy.');
-        }
-        
-        // Logowanie długości danych Base64 i fragmentów dla celów diagnostycznych
-        Integer base64Length = base64Data.length();
-        Logger.info('CVAnalysisHelper', 'prepareVisionAPIRequestBody', 'Długość danych Base64: ' + base64Length);
-        
-        // Loguj pierwsze i ostatnie 100 znaków danych Base64 (lub mniej, jeśli dane są krótsze)
-        String base64Start = base64Data.substring(0, Math.min(100, base64Length));
-        String base64End = base64Length > 100 ? base64Data.substring(base64Length - 100, base64Length) : '';
-        
-        Logger.info('CVAnalysisHelper', 'prepareVisionAPIRequestBody', 'Początek danych Base64: ' + base64Start);
-        Logger.info('CVAnalysisHelper', 'prepareVisionAPIRequestBody', 'Koniec danych Base64: ' + base64End);
-        
-        // Sprawdź, czy dane Base64 mają poprawny format (powinny zawierać tylko znaki Base64)
-        if (!Pattern.matches('^[A-Za-z0-9+/=]+$', base64Data)) {
-            Logger.warn('CVAnalysisHelper', 'prepareVisionAPIRequestBody', 'Dane Base64 zawierają nieprawidłowe znaki');
-        }
-        
-        // Uproszczone zapytanie, które działa poprawnie z Google Vision API
-        Map<String, Object> requestBody = new Map<String, Object>{
-            'requests' => new List<Object>{
-                new Map<String, Object>{
-                    'image' => new Map<String, Object>{
-                        'content' => base64Data
-                    },
-                    'features' => new List<Object>{
-                        new Map<String, Object>{
-                            'type' => 'DOCUMENT_TEXT_DETECTION',
-                            'maxResults' => 10
-                        }
-                    }
-                }
-            }
-        };
-        
-        Logger.info('CVAnalysisHelper', 'prepareVisionAPIRequestBody', 'Ciało zapytania przygotowane poprawnie');
-        return requestBody;
-    }
-    
-    /**
-     * @description Przetwarza odpowiedź z Google Vision API
-     * @param res Odpowiedź HTTP z Google Vision API
-     * @return Wyekstrahowany tekst lub null w przypadku niepowodzenia
-     */
-    private static String processVisionAPIResponse(HttpResponse res) {
-        try {
-            // Walidacja odpowiedzi
-            validateVisionAPIResponse(res);
-            
-            // Deserializacja odpowiedzi
-            Map<String, Object> responseMap = deserializeResponse(res.getBody());
-            
-            // Ekstrakcja tekstu z odpowiedzi
-            return extractTextFromResponse(responseMap);
-        } catch (CVAnalysisException e) {
-            throw e;
-        } catch (Exception e) {
-            Logger.error('Błąd podczas przetwarzania odpowiedzi z Google Vision API: ' + e.getMessage(), e);
-            throw new CVAnalysisException('Błąd podczas przetwarzania odpowiedzi z Google Vision API: ' + e.getMessage());
-        }
-    }
-    
-    /**
-     * @description Waliduje odpowiedź z Google Vision API
-     * @param res Odpowiedź HTTP z Google Vision API
-     * @throws Exception jeśli odpowiedź jest nieprawidłowa
-     */
-    private static void validateVisionAPIResponse(HttpResponse res) {
-        if (res.getStatusCode() != 200) {
-            Logger.error('Błąd Google Vision API: ' + res.getStatusCode() + ' - ' + res.getBody(), null);
-            throw new CVAnalysisException('Błąd odpowiedzi z Google Vision API. Kod statusu: ' + res.getStatusCode());
-        }
-        
-        Logger.info('CVAnalysisHelper', 'validateVisionAPIResponse', 'Otrzymano odpowiedź z Google Vision API. Status: ' + res.getStatusCode());
-    }
-    
-    /**
-     * @description Deserializuje odpowiedź z Google Vision API
-     * @param responseBody Ciało odpowiedzi z Google Vision API
-     * @return Mapa zawierająca zdeserializowaną odpowiedź
-     * @throws Exception jeśli odpowiedź jest nieprawidłowa
-     */
-    private static Map<String, Object> deserializeResponse(String responseBody) {
-        Logger.info('CVAnalysisHelper', 'deserializeResponse', 'Długość odpowiedzi: ' + responseBody.length());
-        Logger.info('CVAnalysisHelper', 'deserializeResponse', 'Pierwsze 200 znaków odpowiedzi: ' + 
-                   (responseBody.length() > 200 ? responseBody.substring(0, 200) + '...' : responseBody));
-        
-        try {
-            return (Map<String, Object>) JSON.deserializeUntyped(responseBody);
-        } catch (Exception e) {
-            Logger.error('Błąd podczas deserializacji odpowiedzi: ' + e.getMessage(), e);
-            throw new CVAnalysisException('Błąd podczas deserializacji odpowiedzi z Google Vision API: ' + e.getMessage());
-        }
-    }
-    
-    /**
-     * @description Ekstrahuje tekst z odpowiedzi Google Vision API
-     * @param responseMap Mapa zawierająca zdeserializowaną odpowiedź
-     * @return Wyekstrahowany tekst
-     * @throws Exception jeśli nie można wyekstrahować tekstu
-     */
-    private static String extractTextFromResponse(Map<String, Object> responseMap) {
-        // Sprawdź, czy odpowiedź zawiera wyniki
-        if (!responseMap.containsKey('responses')) {
-            Logger.warn('CVAnalysisHelper', 'extractTextFromResponse', 'Odpowiedź nie zawiera klucza "responses"');
-            throw new CVAnalysisException('Odpowiedź z Google Vision API nie zawiera wyników.');
-        }
-        
-        List<Object> responses = (List<Object>)responseMap.get('responses');
-        if (responses.isEmpty()) {
-            Logger.warn('CVAnalysisHelper', 'extractTextFromResponse', 'Lista "responses" jest pusta');
-            throw new CVAnalysisException('Odpowiedź z Google Vision API zawiera pustą listę wyników.');
-        }
-        
-        // Pobierz pierwszą odpowiedź
-        Map<String, Object> firstResponse = (Map<String, Object>)responses[0];
-        Logger.info('CVAnalysisHelper', 'extractTextFromResponse', 'Klucze w pierwszej odpowiedzi: ' + firstResponse.keySet());
-        
-        // Próba ekstrakcji tekstu z fullTextAnnotation
-        String extractedText = extractTextFromFullTextAnnotation(firstResponse);
-        if (String.isNotBlank(extractedText)) {
-            return extractedText;
-        }
-        
-        // Próba ekstrakcji tekstu z textAnnotations
-        extractedText = extractTextFromTextAnnotations(firstResponse);
-        if (String.isNotBlank(extractedText)) {
-            return extractedText;
-        }
-        
-        // Sprawdź, czy odpowiedź zawiera błędy
-        checkForErrors(firstResponse);
-        
-        // Jeśli nie znaleziono tekstu ani błędów, rzuć wyjątek
-        Logger.warn('CVAnalysisHelper', 'extractTextFromResponse', 'Odpowiedź nie zawiera tekstu ani w fullTextAnnotation, ani w textAnnotations');
-        throw new CVAnalysisException('Odpowiedź z Google Vision API nie zawiera tekstu. Sprawdź, czy plik PDF zawiera tekst możliwy do odczytania.');
-    }
-    
-    /**
-     * @description Ekstrahuje tekst z fullTextAnnotation
-     * @param response Mapa zawierająca odpowiedź
-     * @return Wyekstrahowany tekst lub null jeśli nie znaleziono
-     */
-    private static String extractTextFromFullTextAnnotation(Map<String, Object> response) {
-        if (response.containsKey('fullTextAnnotation')) {
-            Map<String, Object> fullTextAnnotation = (Map<String, Object>)response.get('fullTextAnnotation');
-            if (fullTextAnnotation.containsKey('text')) {
-                String extractedText = (String)fullTextAnnotation.get('text');
-                if (String.isNotBlank(extractedText)) {
-                    Logger.info('CVAnalysisHelper', 'extractTextFromFullTextAnnotation', 'Wyekstrahowano tekst z fullTextAnnotation. Długość: ' + extractedText.length());
-                    Logger.info('CVAnalysisHelper', 'extractTextFromFullTextAnnotation', 'Pierwsze 100 znaków: ' + 
-                               (extractedText.length() > 100 ? extractedText.substring(0, 100) + '...' : extractedText));
-                    return extractedText;
-                } else {
-                    Logger.warn('CVAnalysisHelper', 'extractTextFromFullTextAnnotation', 'Tekst w fullTextAnnotation jest pusty');
-                }
-            } else {
-                Logger.warn('CVAnalysisHelper', 'extractTextFromFullTextAnnotation', 'fullTextAnnotation nie zawiera klucza "text"');
-            }
-        } else {
-            Logger.warn('CVAnalysisHelper', 'extractTextFromFullTextAnnotation', 'Odpowiedź nie zawiera fullTextAnnotation');
-        }
-        return null;
-    }
-    
-    /**
-     * @description Ekstrahuje tekst z textAnnotations
-     * @param response Mapa zawierająca odpowiedź
-     * @return Wyekstrahowany tekst lub null jeśli nie znaleziono
-     */
-    private static String extractTextFromTextAnnotations(Map<String, Object> response) {
-        if (response.containsKey('textAnnotations') && !((List<Object>)response.get('textAnnotations')).isEmpty()) {
-            List<Object> textAnnotations = (List<Object>)response.get('textAnnotations');
-            Logger.info('CVAnalysisHelper', 'extractTextFromTextAnnotations', 'Znaleziono ' + textAnnotations.size() + ' adnotacji tekstowych');
-            
-            Map<String, Object> firstTextAnnotation = (Map<String, Object>)textAnnotations[0];
-            if (firstTextAnnotation.containsKey('description')) {
-                String extractedText = (String)firstTextAnnotation.get('description');
-                if (String.isNotBlank(extractedText)) {
-                    Logger.info('CVAnalysisHelper', 'extractTextFromTextAnnotations', 'Wyekstrahowano tekst z textAnnotations. Długość: ' + extractedText.length());
-                    Logger.info('CVAnalysisHelper', 'extractTextFromTextAnnotations', 'Pierwsze 100 znaków: ' + 
-                               (extractedText.length() > 100 ? extractedText.substring(0, 100) + '...' : extractedText));
-                    return extractedText;
-                } else {
-                    Logger.warn('CVAnalysisHelper', 'extractTextFromTextAnnotations', 'Tekst w textAnnotations jest pusty');
-                }
-            } else {
-                Logger.warn('CVAnalysisHelper', 'extractTextFromTextAnnotations', 'Pierwsza adnotacja tekstowa nie zawiera klucza "description"');
-            }
-        } else {
-            Logger.warn('CVAnalysisHelper', 'extractTextFromTextAnnotations', 'Odpowiedź nie zawiera textAnnotations lub lista jest pusta');
-        }
-        return null;
-    }
-    
-    /**
-     * @description Sprawdza, czy odpowiedź zawiera błędy
-     * @param response Mapa zawierająca odpowiedź
-     * @throws Exception jeśli znaleziono błędy
-     */
-    private static void checkForErrors(Map<String, Object> response) {
-        if (response.containsKey('error')) {
-            Map<String, Object> error = (Map<String, Object>)response.get('error');
-            String errorMessage = error.containsKey('message') ? (String)error.get('message') : 'Nieznany błąd';
-            Logger.error('Błąd w odpowiedzi Google Vision API: ' + errorMessage, null);
-            throw new CVAnalysisException('Błąd Google Vision API: ' + errorMessage);
-        }
-    }
-    
-    /**
-     * @description Ta metoda została zmodyfikowana, aby zapobiec używaniu mockowanych danych
-     * @throws Exception zawsze rzuca wyjątek, aby zapobiec używaniu mockowanych danych
-     */
-    private static String getMockPDFContent() {
-        throw new CVAnalysisException('Funkcja mockowania danych została wyłączona. Aplikacja obsługuje tylko rzeczywiste dane z plików PDF.');
+        return cv.FileType.toUpperCase();
     }
 
     // Generowanie klucza cache

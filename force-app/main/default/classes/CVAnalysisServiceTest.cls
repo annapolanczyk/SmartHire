@@ -11,6 +11,15 @@ private class CVAnalysisServiceTest {
             return;
         }
         
+        // Tworzenie testowego stanowiska
+        Position__c testPosition = new Position__c(
+            Name = 'Test Position',
+            Department__c = 'IT',
+            Job_Description__c = 'Test job description',
+            Required_Skills__c = 'Apex, Salesforce, Lightning'
+        );
+        insert testPosition;
+        
         // Tworzenie dokumentu CV
         ContentVersion cv = new ContentVersion();
         cv.Title = 'Test Resume';
@@ -23,9 +32,6 @@ private class CVAnalysisServiceTest {
         // Konwersja do ContentDocument
         Id conDocId = [SELECT ContentDocumentId FROM ContentVersion WHERE Id = :cv.Id].ContentDocumentId;
         
-        // Pobierz ID stanowiska do testu
-        Position__c position = [SELECT Id FROM Position__c LIMIT 1];
-        
         // Mock dla OpenAI i parsera plików
         Test.setMock(HttpCalloutMock.class, new CVMockCallout());
         
@@ -34,7 +40,7 @@ private class CVAnalysisServiceTest {
         // Spodziewamy się wyjątku, ponieważ w teście nie możemy naprawdę wywołać OpenAI,
         // ale przynajmniej sprawdzimy, czy metoda kontrolera prawidłowo deleguje wywołanie do usługi
         try {
-            Map<String, Object> results = CVAnalysisController.analyzeCandidateResume(conDocId, position.Id, false);
+            Map<String, Object> results = CVAnalysisController.analyzeCandidateResume(conDocId, testPosition.Id, false);
             // Jeśli dojdziemy do tego miejsca, oznacza to, że mamy poprawnie skonfigurowane mocki
             System.assertNotEquals(null, results, 'Results should not be null');
         } catch (AuraHandledException e) {
@@ -97,15 +103,10 @@ private class CVAnalysisServiceTest {
                 res.setHeader('Content-Type', 'application/json');
                 res.setBody('{"id":"chatcmpl-123","object":"chat.completion","created":1677652288,"model":"gpt-4","choices":[{"index":0,"message":{"role":"assistant","content":"{\\"skills\\":[\\"Java\\",\\"Apex\\",\\"Salesforce\\"],\\"workExperience\\":\\"<p>Developer Experience</p>\\",\\"education\\":\\"<p>University Education</p>\\",\\"matchScore\\":75}"},"finish_reason":"stop"}],"usage":{"prompt_tokens":55,"completion_tokens":114,"total_tokens":169}}');
                 res.setStatusCode(200);
-            } else if (req.getEndpoint().contains('PDF_Parser_Service')) {
+            } else if (req.getEndpoint().contains('smarthire-pdf-service')) {
                 // Mock dla parsera PDF
-                res.setHeader('Content-Type', 'text/plain');
-                res.setBody('Test PDF content extracted');
-                res.setStatusCode(200);
-            } else if (req.getEndpoint().contains('DOCX_Parser_Service')) {
-                // Mock dla parsera DOCX
-                res.setHeader('Content-Type', 'text/plain');
-                res.setBody('Test DOCX content extracted');
+                res.setHeader('Content-Type', 'application/json');
+                res.setBody('{"success":true,"text":"Test PDF content extracted"}');
                 res.setStatusCode(200);
             } else {
                 // Domyślna odpowiedź
