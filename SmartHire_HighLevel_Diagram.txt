@@ -34,7 +34,6 @@
 - Job_Application__c (Aplikacja)
 - Position__c (Stanowisko)
 - Candidate__c (Kandydat)
-- Skill__c (Umiejętność)
 - ApplicationStatusHistory__c (Historia statusów)
 - CandidateConversionHistory__c (Historia konwersji)
 - Error_Log__c (Logi błędów)

@@ -61,17 +61,6 @@ Obiekt reprezentujący stanowisko pracy, na które mogą aplikować kandydaci. Z
 **Opis:**
 Obiekt reprezentujący kandydata w procesie rekrutacji. Przechowuje podstawowe informacje o kandydacie, jego umiejętnościach i doświadczeniu.
 
-### Skill__c (Umiejętność)
-
-**Pola:**
-- Name (text)
-- Category__c (picklist: Techniczne, Miękkie, Językowe, Certyfikaty)
-- Description__c (text area)
-- Weight__c (number)
-
-**Opis:**
-Obiekt reprezentujący umiejętność, która może być wymagana na stanowisku lub posiadana przez kandydata. Umożliwia kategoryzację i ważenie umiejętności.
-
 ### ApplicationStatusHistory__c (Historia statusów aplikacji)
 
 **Pola:**

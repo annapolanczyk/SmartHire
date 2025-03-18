@@ -1,92 +1,77 @@
-# SmartHire - Diagram architektury technicznej
+# SmartHire - Architektura techniczna
 
-## Warstwy aplikacji:
+## Główne komponenty techniczne:
 
-### 1. Warstwa prezentacji (UI)
-- **Lightning Web Components (LWC)**
-  - cvAnalyzer - komponent do analizy CV
-  - candidateConversion - komponent do konwersji kandydatów
-  - parentComponent - komponent nadrzędny
-  - messageBanner - komponent do wyświetlania powiadomień
+### Warstwa danych:
+- Obiekty niestandardowe Salesforce do przechowywania danych
+- Relacje między obiektami
+- Platform Events do obsługi asynchronicznych operacji
 
-### 2. Warstwa kontrolerów
-- **Apex Controllers**
-  - ApplicationController - zarządzanie aplikacjami
-  - CandidateController - zarządzanie kandydatami
-  - CVAnalysisController - kontroler analizy CV
-  - PositionController - zarządzanie stanowiskami
-  - CandidateConversionController - kontroler konwersji kandydatów
+### Warstwa logiki biznesowej:
+- Klasy Apex do przetwarzania danych
+- Triggery do automatyzacji procesów
+- Queueable Apex do operacji asynchronicznych
+- Integracja z API zewnętrznych serwisów
 
-### 3. Warstwa serwisów
-- **Service Classes**
-  - CVAnalysisService - serwis analizy CV
-  - CandidateService - serwis zarządzania kandydatami
-  - OpenAIService - serwis integracji z OpenAI
-  - JobApplicationService - serwis zarządzania aplikacjami
-  - PositionService - serwis zarządzania stanowiskami
-  - CandidateConversionService - serwis konwersji kandydatów
-  - ResumeAnalysisService - serwis analizy CV
+### Warstwa interfejsu użytkownika:
+- Lightning Web Components (LWC) do tworzenia interfejsu
+- Lightning App Builder do konfiguracji stron
+- SLDS (Salesforce Lightning Design System) do stylizacji
 
-### 4. Warstwa pomocnicza
-- **Helper Classes**
-  - CVAnalysisHelper - klasa pomocnicza do analizy CV
-  - CVAnalysisFactory - fabryka analizatorów CV
-  - SecurityUtils - narzędzia bezpieczeństwa
-  - Logger - system logowania
-  - SmartHireConfig - konfiguracja aplikacji
+### Warstwa integracyjna:
+- Named Credentials do zarządzania integracjami
+- Callout Apex do wywoływania zewnętrznych API
+- JSON/XML parsery do przetwarzania odpowiedzi
 
-### 5. Warstwa asynchroniczna
-- **Asynchronous Processing**
-  - ResumeAnalysisQueueable - asynchroniczna analiza CV
+## Kluczowe klasy Apex:
 
-### 6. Warstwa danych
-- **Data Access**
-  - SOQL Queries - zapytania do bazy danych
-  - DML Operations - operacje modyfikacji danych
+- **CVAnalysisController** - kontroler do analizy CV
+- **CVAnalysisService** - serwis do analizy CV
+- **OpenAIService** - integracja z OpenAI
+- **JobApplicationService** - obsługa aplikacji
+- **CandidateService** - zarządzanie kandydatami
+- **PositionService** - zarządzanie stanowiskami
+- **SecurityUtils** - narzędzia bezpieczeństwa
+- **Logger** - logowanie błędów i zdarzeń
 
-### 7. Warstwa integracji
-- **External Integrations**
-  - OpenAI API - integracja z AI
-  - Document Storage Systems - systemy przechowywania dokumentów
+## Kluczowe komponenty LWC:
 
-## Przepływ danych:
+- **aiAnalysisViewer** - wyświetlanie wyników analizy AI
+- **cvAnalyzer** - komponent do analizy CV
+- **candidateViewer** - wyświetlanie danych kandydata
+- **jobApplicationManager** - zarządzanie aplikacjami
 
-1. Użytkownik wchodzi w interakcję z komponentem LWC
-2. Komponent LWC wywołuje metodę kontrolera Apex
-3. Kontroler deleguje logikę biznesową do odpowiedniego serwisu
-4. Serwis wykonuje operacje na danych lub wywołuje inne serwisy
-5. W przypadku analizy CV, zadanie jest przekazywane do kolejki asynchronicznej
-6. ResumeAnalysisQueueable wywołuje OpenAIService do analizy CV
-7. Wyniki analizy są zapisywane w bazie danych
-8. Użytkownik jest powiadamiany o zakończeniu analizy
+## Przepływ przetwarzania CV:
 
-## Obiekty danych i relacje:
+1. Upload CV (PDF/DOCX) przez rekrutera
+2. Ekstrakcja tekstu z pliku
+3. Wywołanie OpenAI API z tekstem CV
+4. Przetworzenie odpowiedzi AI
+5. Zapisanie wyników do bazy danych
+6. Aktualizacja statusu aplikacji
+7. Wyświetlenie wyników analizy rekruterowi
+
+## Struktury danych:
+
+### Obiekty niestandardowe:
 
 - **Job_Application__c**
+  - Name (auto-number)
   - Candidate__c (lookup)
   - Position__c (lookup)
   - Status__c (picklist)
-  - Resume__c (text)
-  - Cover_Letter__c (text)
-  - Application_Date__c (date)
-  - Assigned_Reviewer__c (lookup to User)
-  - Notes__c (text area)
-  - Analysis_Results__c (long text area)
+  - Analysis_Results__c (long text)
   - Analysis_Score__c (number)
-  - Skills_Identified__c (text)
-  - Analysis_Date__c (datetime)
 
 - **Position__c**
-  - Title__c (text)
-  - Description__c (text area)
+  - Name (text)
+  - Description__c (text)
   - Required_Skills__c (text)
-  - Department__c (text)
   - Status__c (picklist)
-  - Hiring_Manager__c (lookup to User)
+  - Hiring_Manager__c (lookup)
 
 - **Candidate__c**
-  - First_Name__c (text)
-  - Last_Name__c (text)
+  - Name (text)
   - Email__c (email)
   - Phone__c (phone)
   - Skills__c (text)
@@ -96,11 +81,6 @@
   - Analysis_Results__c (long text area)
   - Last_Analysis_Date__c (datetime)
 
-- **Skill__c**
-  - Name (text)
-  - Category__c (picklist)
-  - Description__c (text)
-
 ## Mechanizmy bezpieczeństwa:
 
 - SecurityUtils do walidacji dostępu do rekordów
@@ -108,98 +88,53 @@
 - Ochrona przed SOQL Injection
 - Zarządzanie uprawnieniami użytkowników
 
-## Obsługa błędów i logowanie:
+## Integracje:
 
-- Logger do rejestrowania zdarzeń i błędów
-- Różne poziomy logowania (DEBUG, INFO, ERROR)
-- Mechanizmy powiadamiania o błędach 
+### OpenAI API:
+- Named Credential: AI_CV_Analysis_API
+- Endpoint: https://api.openai.com/v1/chat/completions
+- Metoda: POST
+- Format danych: JSON
+- Autoryzacja: Bearer Token
 
-## Architektura techniczna SmartHire
+### PDF Extractor:
+- Named Credential: PDFExtractorService
+- Endpoint: https://pdf-extractor.example.com/extract
+- Metoda: POST
+- Format danych: Multipart Form
+- Autoryzacja: API Key
 
-### Warstwy aplikacji
+## Obsługa błędów:
 
-1. **Warstwa prezentacji**
-   - Lightning Web Components (LWC)
-   - Lightning App Pages
-   - Lightning Record Pages
+- Obsługa wyjątków w każdej klasie
+- Logowanie błędów do obiektu Error_Log__c
+- Komunikaty błędów dla użytkowników
+- Mechanizm retry dla integracji
 
-2. **Warstwa kontrolerów**
-   - PositionController - zarządzanie stanowiskami
-   - CandidateController - zarządzanie kandydatami
-   - ApplicationController - zarządzanie aplikacjami
-   - CVAnalysisController - analiza CV
-   - CandidateConversionController - konwersja kandydatów
+## Skalowanie i wydajność:
 
-3. **Warstwa serwisów**
-   - PositionService - logika biznesowa dla stanowisk
-   - CandidateService - logika biznesowa dla kandydatów
-   - JobApplicationService - logika biznesowa dla aplikacji
-   - CVAnalysisService - logika analizy CV
-   - OpenAIService - integracja z OpenAI
-   - CandidateConversionService - logika konwersji kandydatów
+- Asynchroniczne przetwarzanie danych za pomocą Queueable Apex
+- Bulkifikacja triggerów i klas Apex
+- Cachowanie odpowiedzi API
+- Paginacja dla dużych zbiorów danych
 
-4. **Warstwa dostępu do danych**
-   - Standardowe operacje SOQL/DML
-   - Selektory (przyszły rozwój)
+## Monitoring i analityka:
 
-5. **Warstwa integracji**
-   - OpenAI API
-   - PDF Parser Service
-   - DOCX Parser Service
+- Logowanie operacji w Logger
+- Śledzenie statusów aplikacji
+- Raportowanie na temat procesu rekrutacji
+- Dashboardy wydajności rekrutacji
 
-### Wzorce projektowe
+## Środowiska:
 
-1. **Service Layer Pattern** - Separacja logiki biznesowej od kontrolerów
-2. **Factory Pattern** - Tworzenie obiektów analizy CV
-3. **Singleton Pattern** - Konfiguracja aplikacji
-4. **Dependency Injection** - Wstrzykiwanie zależności do serwisów
+- Deweloperskie (sandbox)
+- Testowe (partial sandbox)
+- Przedprodukcyjne (full sandbox)
+- Produkcyjne (production org)
 
-### Obiekty niestandardowe
+## Strategie deploymentu:
 
-- **Position__c** - Stanowiska rekrutacyjne
-- **Candidate__c** - Kandydaci
-- **Job_Application__c** - Aplikacje kandydatów
-- **Skill__c** - Umiejętności
-- **Error_Log__c** - Logi błędów
-- **SmartHire_Setting__mdt** - Metadane konfiguracyjne
-
-### Integracje
-
-1. **OpenAI API**
-   - Analiza CV
-   - Dopasowanie kandydatów do stanowisk
-   - Generowanie rekomendacji
-
-2. **Usługi parsowania dokumentów**
-   - Parsowanie PDF
-   - Parsowanie DOCX/DOC
-
-### Zabezpieczenia
-
-1. **Kontrola dostępu**
-   - Klasa SecurityUtils do centralnego zarządzania uprawnieniami
-   - Sprawdzanie uprawnień do obiektów i pól przed każdą operacją
-
-2. **Bezpieczne wywołania API**
-   - Named Credentials do bezpiecznego przechowywania kluczy API
-   - Walidacja danych wejściowych
-
-### Obsługa błędów
-
-1. **Centralne logowanie**
-   - Klasa Logger do spójnego logowania błędów
-   - Zapisywanie błędów w obiekcie Error_Log__c
-
-2. **Obsługa wyjątków**
-   - Szczegółowe komunikaty błędów
-   - Odpowiednie propagowanie wyjątków
-
-### Wydajność
-
-1. **Optymalizacja zapytań**
-   - Minimalizacja liczby zapytań SOQL
-   - Bulkifikacja operacji DML
-
-2. **Cachowanie**
-   - Cachowanie wyników analizy CV
-   - Wykorzystanie Platform Cache 
+- CI/CD z wykorzystaniem SFDX
+- Automatyczne testy jednostkowe
+- Kontrola kodu z GitHub
+- Zarządzanie pakietami i zależnościami 

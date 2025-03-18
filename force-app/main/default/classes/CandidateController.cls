@@ -84,22 +84,6 @@ public with sharing class CandidateController {
     }
     
     /**
-     * Get candidate skills
-     * @param candidateId Candidate Id
-     * @return List of candidate skills
-     */
-    @AuraEnabled(cacheable=true)
-    public static List<Skill__c> getCandidateSkills(Id candidateId) {
-        try {
-            validateReadPermissions();
-            return CandidateService.getCandidateSkills(candidateId);
-        } catch (Exception e) {
-            Logger.error(CLASS_NAME, 'getCandidateSkills', 'Error fetching skills for candidate: ' + candidateId, e);
-            throw new AuraHandledException(e.getMessage());
-        }
-    }
-    
-    /**
      * Check if email exists for another candidate
      * @param email Email to check
      * @param candidateId Current candidate Id (optional)

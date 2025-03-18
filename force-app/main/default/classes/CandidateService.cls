@@ -184,61 +184,16 @@ public with sharing class CandidateService {
      */
     public static List<Candidate__c> searchCandidates(String searchKey) {
         try {
-            // Sprawdzamy uprawnienia dla Candidate__c
-            if (!Schema.SObjectType.Candidate__c.isAccessible()) {
-                throw new AuraHandledException('Insufficient permissions to access Candidate__c');
-            }
-            
-            // Sprawdzamy dostęp do pól
-            Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.Candidate__c.fields.getMap();
-            for (String field : BASIC_FIELDS) {
-                if (!fieldMap.get(field).getDescribe().isAccessible()) {
-                    throw new AuraHandledException('Insufficient permissions to access Candidate__c.' + field);
-                }
-            }
-            
-            String searchTerm = '%' + searchKey + '%';
-            
-            return [SELECT Id, Name, Email__c, Phone__c, Status__c, 
-                           Current_Employer__c, Current_Position__c 
-                    FROM Candidate__c 
-                    WHERE Name LIKE :searchTerm 
-                       OR Email__c LIKE :searchTerm 
-                       OR Current_Employer__c LIKE :searchTerm 
-                       OR Current_Position__c LIKE :searchTerm 
-                    ORDER BY Name ASC];
+            String searchPattern = '%' + searchKey + '%';
+            return [SELECT Id, Name, Email__c, Phone__c, Status__c, LinkedIn_Profile__c, Resume_Text__c
+                    FROM Candidate__c
+                    WHERE Name LIKE :searchPattern
+                    OR Email__c LIKE :searchPattern
+                    OR Phone__c LIKE :searchPattern
+                    ORDER BY Name ASC
+                    LIMIT 100];
         } catch (Exception e) {
             Logger.error(CLASS_NAME, 'searchCandidates', 'Error searching candidates with key: ' + searchKey, e);
-            throw new AuraHandledException(e.getMessage());
-        }
-    }
-    
-    /**
-     * Get candidate skills
-     * @param candidateId Candidate Id
-     * @return List of candidate skills
-     */
-    public static List<Skill__c> getCandidateSkills(Id candidateId) {
-        try {
-            // Sprawdzamy uprawnienia dla Skill__c
-            if (!Schema.SObjectType.Skill__c.isAccessible()) {
-                throw new AuraHandledException('Insufficient permissions to access Skill__c');
-            }
-            
-            // Sprawdzamy dostęp do pól
-            Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.Skill__c.fields.getMap();
-            for (String field : new List<String>{'Name', 'Category__c', 'Proficiency_Level__c'}) {
-                if (!fieldMap.get(field).getDescribe().isAccessible()) {
-                    throw new AuraHandledException('Insufficient permissions to access Skill__c.' + field);
-                }
-            }
-            
-            return [SELECT Id, Name, Category__c, Proficiency_Level__c 
-                    FROM Skill__c 
-                    WHERE Candidate__c = :candidateId 
-                    ORDER BY Category__c, Name ASC];
-        } catch (Exception e) {
-            Logger.error(CLASS_NAME, 'getCandidateSkills', 'Error retrieving skills for candidate: ' + candidateId, e);
             throw new AuraHandledException(e.getMessage());
         }
     }
