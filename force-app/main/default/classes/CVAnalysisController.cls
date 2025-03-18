@@ -279,16 +279,24 @@ public with sharing class CVAnalysisController {
             System.debug(LoggingLevel.ERROR, '=== createAiAnalysisResult - START ===');
             System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - recordId: ' + recordId);
             System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - objectType: ' + objectType);
-            System.debug(LoggingLevel.ERROR, 'createAiAnalysisResult - results: ' + JSON.serialize(results));
             
-            // Simplified approach - create minimal record with required fields only
+            // Ensure we have valid data
+            if (recordId == null || String.isBlank(objectType)) {
+                throw new AuraHandledException('Invalid input: recordId and objectType are required');
+            }
+            
+            // Standardize keys for easier field mapping
+            Map<String, Object> standardizedResults = standardizeResultKeys(results);
+            System.debug(LoggingLevel.ERROR, 'Standardized keys: ' + standardizedResults.keySet());
+            
+            // Create AiAnalysisResult__c record
             AiAnalysisResult__c result = new AiAnalysisResult__c();
             
-            // Set core fields only
+            // Set relationship fields based on object type
             if (objectType == 'Job_Application__c') {
                 result.Job_Application__c = recordId;
                 
-                // Try to get position and candidate from job application
+                // Get position and candidate from job application
                 try {
                     Job_Application__c jobApp = [
                         SELECT Id, Position__c, Candidate__c 
@@ -304,8 +312,6 @@ public with sharing class CVAnalysisController {
                     if (jobApp.Candidate__c != null) {
                         result.Candidate__c = jobApp.Candidate__c;
                     }
-                    
-                    System.debug(LoggingLevel.ERROR, 'Job app data: Position=' + result.Position__c + ', Candidate=' + result.Candidate__c);
                 } catch (Exception e) {
                     System.debug(LoggingLevel.ERROR, 'Error getting Job_Application__c data: ' + e.getMessage());
                 }
@@ -313,44 +319,142 @@ public with sharing class CVAnalysisController {
                 result.Candidate__c = recordId;
             }
             
-            // Set minimal raw analysis results
-            result.RawAnalysisResults__c = JSON.serialize(results).left(131000); // Ensure we don't exceed max length
+            // Set raw analysis results (truncate if needed to avoid exceeding field length limits)
+            String rawResultsJson = JSON.serialize(results);
+            result.RawAnalysisResults__c = rawResultsJson.length() > 131000 ? rawResultsJson.substring(0, 131000) : rawResultsJson;
             
-            // Set mandatory summary if missing
-            if (String.isBlank(result.AnalysisSummary__c)) {
-                result.AnalysisSummary__c = 'Analysis performed on ' + Datetime.now().format();
+            // Set numeric fields
+            if (standardizedResults.containsKey('matchScore')) {
+                result.MatchScore__c = extractMatchScore(standardizedResults.get('matchScore'));
+                System.debug(LoggingLevel.ERROR, 'Set MatchScore__c: ' + result.MatchScore__c);
             }
             
-            // Use extremely simple insertion with detailed error handling
-            SavePoint sp = Database.setSavepoint();
-            try {
-                System.debug(LoggingLevel.ERROR, 'Attempting to insert AiAnalysisResult__c with fields:');
-                System.debug(LoggingLevel.ERROR, 'Job_Application__c: ' + result.Job_Application__c);
-                System.debug(LoggingLevel.ERROR, 'Candidate__c: ' + result.Candidate__c);
-                System.debug(LoggingLevel.ERROR, 'Position__c: ' + result.Position__c);
-                System.debug(LoggingLevel.ERROR, 'AnalysisSummary__c: ' + (result.AnalysisSummary__c != null));
-                System.debug(LoggingLevel.ERROR, 'RawAnalysisResults__c: ' + (result.RawAnalysisResults__c != null ? result.RawAnalysisResults__c.length() + ' chars' : 'null'));
-                
-                // Try database method instead of DML
-                Database.SaveResult sr = Database.insert(result, false);
-                
-                if (sr.isSuccess()) {
-                    System.debug(LoggingLevel.ERROR, 'Successfully created AiAnalysisResult__c with ID: ' + sr.getId());
-                    return sr.getId();
-                } else {
-                    String errorMsg = 'Insert error: ';
-                    for (Database.Error err : sr.getErrors()) {
-                        errorMsg += err.getMessage() + ' (fields: ' + String.join(err.getFields(), ', ') + '); ';
-                        System.debug(LoggingLevel.ERROR, 'Field: ' + String.join(err.getFields(), ', ') + ', Error: ' + err.getMessage());
-                    }
-                    throw new AuraHandledException(errorMsg);
+            // Set list fields (comma-separated strings)
+            if (standardizedResults.containsKey('matchedSkills')) {
+                Object matchedSkillsObj = standardizedResults.get('matchedSkills');
+                if (matchedSkillsObj instanceof List<Object>) {
+                    List<String> skillsList = extractSkillsAsList((List<Object>)matchedSkillsObj);
+                    result.MatchedSkills__c = String.join(skillsList, ', ').left(255);
+                    System.debug(LoggingLevel.ERROR, 'Set MatchedSkills__c: ' + result.MatchedSkills__c);
+                } else if (matchedSkillsObj instanceof String) {
+                    result.MatchedSkills__c = ((String)matchedSkillsObj).left(255);
                 }
-            } catch (Exception e) {
-                Database.rollback(sp);
-                String errorMessage = 'Type: ' + e.getTypeName() + ', Message: ' + e.getMessage();
-                System.debug(LoggingLevel.ERROR, 'Error inserting AiAnalysisResult__c: ' + errorMessage);
-                System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
-                throw new AuraHandledException(errorMessage);
+            }
+            
+            if (standardizedResults.containsKey('additionalSkills')) {
+                Object additionalSkillsObj = standardizedResults.get('additionalSkills');
+                if (additionalSkillsObj instanceof List<Object>) {
+                    List<String> skillsList = extractSkillsAsList((List<Object>)additionalSkillsObj);
+                    result.AdditionalSkills__c = String.join(skillsList, ', ').left(255);
+                    System.debug(LoggingLevel.ERROR, 'Set AdditionalSkills__c: ' + result.AdditionalSkills__c);
+                } else if (additionalSkillsObj instanceof String) {
+                    result.AdditionalSkills__c = ((String)additionalSkillsObj).left(255);
+                }
+            }
+            
+            if (standardizedResults.containsKey('missingSkills')) {
+                Object missingSkillsObj = standardizedResults.get('missingSkills');
+                if (missingSkillsObj instanceof List<Object>) {
+                    List<String> skillsList = extractSkillsAsList((List<Object>)missingSkillsObj);
+                    result.MissingSkills__c = String.join(skillsList, ', ').left(255);
+                    System.debug(LoggingLevel.ERROR, 'Set MissingSkills__c: ' + result.MissingSkills__c);
+                } else if (missingSkillsObj instanceof String) {
+                    result.MissingSkills__c = ((String)missingSkillsObj).left(255);
+                }
+            }
+            
+            // Set text fields
+            if (standardizedResults.containsKey('recommendationLevel')) {
+                Object recLevelObj = standardizedResults.get('recommendationLevel');
+                if (recLevelObj != null) {
+                    result.RecommendationLevel__c = String.valueOf(recLevelObj).left(100);
+                    System.debug(LoggingLevel.ERROR, 'Set RecommendationLevel__c: ' + result.RecommendationLevel__c);
+                }
+            }
+            
+            // Handle both summary and analysisSummary keys
+            if (standardizedResults.containsKey('analysisSummary')) {
+                Object summaryObj = standardizedResults.get('analysisSummary');
+                if (summaryObj != null) {
+                    result.AnalysisSummary__c = String.valueOf(summaryObj).left(32768);
+                    System.debug(LoggingLevel.ERROR, 'Set AnalysisSummary__c from analysisSummary key');
+                }
+            } else if (standardizedResults.containsKey('summary')) {
+                Object summaryObj = standardizedResults.get('summary');
+                if (summaryObj != null) {
+                    result.AnalysisSummary__c = String.valueOf(summaryObj).left(32768);
+                    System.debug(LoggingLevel.ERROR, 'Set AnalysisSummary__c from summary key');
+                }
+            }
+            
+            // Set fallback summary if still empty
+            if (String.isBlank(result.AnalysisSummary__c)) {
+                result.AnalysisSummary__c = 'Analysis performed on ' + Datetime.now().format();
+                System.debug(LoggingLevel.ERROR, 'Set default AnalysisSummary__c');
+            }
+            
+            if (standardizedResults.containsKey('keyHighlights')) {
+                Object highlightsObj = standardizedResults.get('keyHighlights');
+                if (highlightsObj instanceof List<Object>) {
+                    List<String> highlightsList = new List<String>();
+                    for (Object item : (List<Object>)highlightsObj) {
+                        highlightsList.add(String.valueOf(item));
+                    }
+                    result.KeyHighlights__c = String.join(highlightsList, '\n• ').left(32768);
+                    if (!result.KeyHighlights__c.startsWith('• ')) {
+                        result.KeyHighlights__c = '• ' + result.KeyHighlights__c;
+                    }
+                } else if (highlightsObj != null) {
+                    result.KeyHighlights__c = String.valueOf(highlightsObj).left(32768);
+                }
+                System.debug(LoggingLevel.ERROR, 'Set KeyHighlights__c: ' + (result.KeyHighlights__c != null ? result.KeyHighlights__c.length() + ' chars' : 'null'));
+            }
+            
+            if (standardizedResults.containsKey('potentialConcerns')) {
+                Object concernsObj = standardizedResults.get('potentialConcerns');
+                if (concernsObj instanceof List<Object>) {
+                    List<String> concernsList = new List<String>();
+                    for (Object item : (List<Object>)concernsObj) {
+                        concernsList.add(String.valueOf(item));
+                    }
+                    result.PotentialConcerns__c = String.join(concernsList, '\n• ').left(32768);
+                    if (!result.PotentialConcerns__c.startsWith('• ')) {
+                        result.PotentialConcerns__c = '• ' + result.PotentialConcerns__c;
+                    }
+                } else if (concernsObj != null) {
+                    result.PotentialConcerns__c = String.valueOf(concernsObj).left(32768);
+                }
+                System.debug(LoggingLevel.ERROR, 'Set PotentialConcerns__c: ' + (result.PotentialConcerns__c != null ? result.PotentialConcerns__c.length() + ' chars' : 'null'));
+            }
+            
+            // Log field values before insert
+            System.debug(LoggingLevel.ERROR, 'Field values before insert:');
+            System.debug(LoggingLevel.ERROR, 'Job_Application__c: ' + result.Job_Application__c);
+            System.debug(LoggingLevel.ERROR, 'Candidate__c: ' + result.Candidate__c);
+            System.debug(LoggingLevel.ERROR, 'Position__c: ' + result.Position__c);
+            System.debug(LoggingLevel.ERROR, 'MatchScore__c: ' + result.MatchScore__c);
+            System.debug(LoggingLevel.ERROR, 'MatchedSkills__c: ' + result.MatchedSkills__c);
+            System.debug(LoggingLevel.ERROR, 'AdditionalSkills__c: ' + result.AdditionalSkills__c);
+            System.debug(LoggingLevel.ERROR, 'MissingSkills__c: ' + result.MissingSkills__c);
+            System.debug(LoggingLevel.ERROR, 'RecommendationLevel__c: ' + result.RecommendationLevel__c);
+            System.debug(LoggingLevel.ERROR, 'AnalysisSummary__c: ' + (result.AnalysisSummary__c != null));
+            System.debug(LoggingLevel.ERROR, 'KeyHighlights__c: ' + (result.KeyHighlights__c != null));
+            System.debug(LoggingLevel.ERROR, 'PotentialConcerns__c: ' + (result.PotentialConcerns__c != null));
+            System.debug(LoggingLevel.ERROR, 'RawAnalysisResults__c: ' + (result.RawAnalysisResults__c != null ? result.RawAnalysisResults__c.length() + ' chars' : 'null'));
+            
+            // Use database method with error details
+            Database.SaveResult sr = Database.insert(result, false);
+            
+            if (sr.isSuccess()) {
+                System.debug(LoggingLevel.ERROR, 'Successfully created AiAnalysisResult__c with ID: ' + sr.getId());
+                return sr.getId();
+            } else {
+                String errorMsg = 'Insert error: ';
+                for (Database.Error err : sr.getErrors()) {
+                    errorMsg += err.getMessage() + ' (fields: ' + String.join(err.getFields(), ', ') + '); ';
+                    System.debug(LoggingLevel.ERROR, 'Field: ' + String.join(err.getFields(), ', ') + ', Error: ' + err.getMessage());
+                }
+                throw new AuraHandledException(errorMsg);
             }
         } catch (Exception e) {
             String errorMessage = 'Type: ' + e.getTypeName() + ', Message: ' + e.getMessage();
