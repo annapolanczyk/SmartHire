@@ -147,4 +147,4 @@ public with sharing class CandidateUserConversionService {
             throw e;
         }
     }
-} 
+}

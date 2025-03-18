@@ -3,4 +3,10 @@
     <context>All</context>
     <endpointUrl>https://smarthire-pdf-service-3d672936eec0.herokuapp.com</endpointUrl>
     <isActive>true</isActive>
-</CspTrustedSite> 
+    <isApplicableToConnectSrc>false</isApplicableToConnectSrc>
+    <isApplicableToFontSrc>false</isApplicableToFontSrc>
+    <isApplicableToFrameSrc>false</isApplicableToFrameSrc>
+    <isApplicableToImgSrc>true</isApplicableToImgSrc>
+    <isApplicableToMediaSrc>false</isApplicableToMediaSrc>
+    <isApplicableToStyleSrc>false</isApplicableToStyleSrc>
+</CspTrustedSite>

@@ -70,4 +70,4 @@ public with sharing class CandidateConversionHistory {
                 WHERE Candidate__c = :candidateId 
                 ORDER BY Conversion_Date__c DESC];
     }
-} 
+}

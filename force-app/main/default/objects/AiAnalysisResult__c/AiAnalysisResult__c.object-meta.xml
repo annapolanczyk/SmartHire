@@ -158,10 +158,11 @@
     <nameField>
         <displayFormat>AIR-{0000}</displayFormat>
         <label>Analysis Number</label>
+        <trackHistory>false</trackHistory>
         <type>AutoNumber</type>
     </nameField>
     <pluralLabel>AI Analysis Results</pluralLabel>
     <searchLayouts></searchLayouts>
     <sharingModel>ReadWrite</sharingModel>
     <visibility>Public</visibility>
-</CustomObject> 
+</CustomObject>

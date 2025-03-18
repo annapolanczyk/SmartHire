@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Application__c</fullName>
-    <deleteConstraint>Restrict</deleteConstraint>
     <externalId>false</externalId>
-    <label>Application</label>
-    <referenceTo>Job_Application__c</referenceTo>
-    <relationshipLabel>Conversion History</relationshipLabel>
-    <relationshipName>Conversion_History</relationshipName>
-    <required>true</required>
+    <label>Application Reference</label>
+    <length>255</length>
+    <required>false</required>
     <trackTrending>false</trackTrending>
-    <type>Lookup</type>
+    <type>Text</type>
+    <unique>false</unique>
 </CustomField>
