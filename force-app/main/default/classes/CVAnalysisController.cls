@@ -797,38 +797,44 @@ public with sharing class CVAnalysisController {
         
         System.debug(LoggingLevel.INFO, '=== KONIEC SPRAWDZANIA CERTYFIKATÓW ===');
         
-        // Zapewnij, że certifications jest zawsze listą
+        // Zapewnij, że certifications jest zawsze listą i zawiera oczyszczone nazwy certyfikatów
         Object certObj = standardized.get('certifications');
         if (certObj != null) {
+            List<String> rawCertList = new List<String>();
+            
             if (certObj instanceof String) {
                 String certStr = (String)certObj;
-                List<String> certList = new List<String>();
                 
                 // Obsłuż różne formaty separacji certyfikatów
                 if (certStr.contains(',')) {
                     for (String cert : certStr.split(',')) {
-                        certList.add(cert.trim());
+                        rawCertList.add(cert.trim());
                     }
                 } else if (certStr.contains('\n')) {
                     for (String cert : certStr.split('\n')) {
-                        certList.add(cert.trim());
+                        rawCertList.add(cert.trim());
                     }
                 } else if (certStr.contains(';')) {
                     for (String cert : certStr.split(';')) {
-                        certList.add(cert.trim());
+                        rawCertList.add(cert.trim());
                     }
                 } else {
-                    certList.add(certStr.trim());
+                    rawCertList.add(certStr.trim());
                 }
-                
-                standardized.put('certifications', certList);
-                System.debug(LoggingLevel.DEBUG, 'Przekonwertowano certifications ze string na listę: ' + certList);
-            } else if (!(certObj instanceof List<Object>)) {
+            } else if (certObj instanceof List<Object>) {
+                List<Object> certObjList = (List<Object>)certObj;
+                for (Object cert : certObjList) {
+                    rawCertList.add(String.valueOf(cert));
+                }
+            } else {
                 // Jeśli to nie jest ani String, ani List, konwertuj na String i dodaj jako pojedynczy element listy
-                List<String> certList = new List<String>{String.valueOf(certObj)};
-                standardized.put('certifications', certList);
-                System.debug(LoggingLevel.DEBUG, 'Przekonwertowano certifications z typu innego niż lista na listę: ' + certList);
+                rawCertList.add(String.valueOf(certObj));
             }
+            
+            // Wyodrębnij konkretne nazwy certyfikatów z surowych danych
+            List<String> cleanedCertList = extractCertificationNames(rawCertList);
+            standardized.put('certifications', cleanedCertList);
+            System.debug(LoggingLevel.INFO, 'Przekonwertowano certifications na oczyszczoną listę: ' + cleanedCertList);
         }
         
         // Handle "technicalSkills" key (English version)
@@ -1313,5 +1319,120 @@ public with sharing class CVAnalysisController {
             }
         }
         return null;
+    }
+
+    /**
+     * Wyodrębnia nazwy certyfikatów Salesforce z dłuższych fraz tekstowych
+     * @param rawCertifications Lista surowych tekstów zawierających informacje o certyfikatach
+     * @return Lista przetworzonych nazw certyfikatów
+     */
+    private static List<String> extractCertificationNames(List<String> rawCertifications) {
+        List<String> cleanedCertifications = new List<String>();
+        Set<String> uniqueCertifications = new Set<String>(); // Aby uniknąć duplikatów
+        
+        // Popularne prefiksy certyfikatów Salesforce
+        List<String> certPrefixes = new List<String>{
+            'Salesforce Certified',
+            'Certified Salesforce',
+            'Salesforce',
+            'Certified'
+        };
+        
+        // Standardowe nazwy certyfikatów Salesforce
+        Map<String, String> standardCertNames = new Map<String, String>{
+            'admin' => 'Salesforce Certified Administrator',
+            'administrator' => 'Salesforce Certified Administrator',
+            'advanced admin' => 'Salesforce Certified Advanced Administrator',
+            'advanced administrator' => 'Salesforce Certified Advanced Administrator',
+            'platform developer i' => 'Salesforce Certified Platform Developer I',
+            'platform developer 1' => 'Salesforce Certified Platform Developer I',
+            'platform developer ii' => 'Salesforce Certified Platform Developer II',
+            'platform developer 2' => 'Salesforce Certified Platform Developer II',
+            'platform app builder' => 'Salesforce Certified Platform App Builder',
+            'service cloud consultant' => 'Salesforce Certified Service Cloud Consultant',
+            'sales cloud consultant' => 'Salesforce Certified Sales Cloud Consultant',
+            'community cloud consultant' => 'Salesforce Certified Community Cloud Consultant',
+            'experience cloud consultant' => 'Salesforce Certified Experience Cloud Consultant',
+            'app builder' => 'Salesforce Certified Platform App Builder',
+            'javascript developer' => 'Salesforce Certified JavaScript Developer I',
+            'integration architect' => 'Salesforce Certified Integration Architect',
+            'system architect' => 'Salesforce Certified System Architect',
+            'application architect' => 'Salesforce Certified Application Architect',
+            'technical architect' => 'Salesforce Certified Technical Architect',
+            'architect' => 'Salesforce Certified Architect'
+        };
+        
+        for (String rawCert : rawCertifications) {
+            if (String.isBlank(rawCert)) continue;
+            
+            String lowerCert = rawCert.toLowerCase();
+            Boolean foundExactMatch = false;
+            
+            // Sprawdź czy pełna fraza zawiera standardową nazwę certyfikatu
+            for (String standardKey : standardCertNames.keySet()) {
+                if (lowerCert.contains(standardKey)) {
+                    uniqueCertifications.add(standardCertNames.get(standardKey));
+                    foundExactMatch = true;
+                    System.debug(LoggingLevel.INFO, 'Znaleziono dopasowanie certyfikatu: ' + standardKey + ' -> ' + standardCertNames.get(standardKey));
+                    // Nie przerywamy pętli, aby znaleźć wszystkie certyfikaty w jednej frazie
+                }
+            }
+            
+            // Specjalna obsługa dla certyfikatu Platform Developer I
+            if (lowerCert.contains('platform developer') && 
+                (lowerCert.contains(' i ') || lowerCert.contains(' i,') || 
+                 lowerCert.contains(' i.') || lowerCert.contains(' i)') || 
+                 lowerCert.contains(' 1 ') || lowerCert.contains(' 1,') || 
+                 lowerCert.contains(' 1.') || lowerCert.contains(' 1)'))) {
+                uniqueCertifications.add('Salesforce Certified Platform Developer I');
+                foundExactMatch = true;
+                System.debug(LoggingLevel.INFO, 'Znaleziono certyfikat Platform Developer I w: ' + rawCert);
+            }
+            
+            // Jeśli nie znaleziono dokładnego dopasowania, dodaj oryginalny tekst (oczyszczony)
+            if (!foundExactMatch) {
+                // Usuń zbędne prefiksy
+                String cleanedCert = rawCert;
+                for (String prefix : certPrefixes) {
+                    if (rawCert.startsWithIgnoreCase(prefix)) {
+                        cleanedCert = rawCert.substring(prefix.length()).trim();
+                        if (cleanedCert.startsWithIgnoreCase('-')) {
+                            cleanedCert = cleanedCert.substring(1).trim();
+                        }
+                        break;
+                    }
+                }
+                
+                // Jeśli certyfikat zawiera "(12x certified)" lub podobne, usuń tę część
+                if (cleanedCert.contains('certified)')) {
+                    Integer startPos = cleanedCert.indexOf('(');
+                    Integer endPos = cleanedCert.indexOf(')', startPos);
+                    if (startPos >= 0 && endPos > startPos) {
+                        String beforePart = startPos > 0 ? cleanedCert.substring(0, startPos).trim() : '';
+                        String afterPart = endPos < cleanedCert.length() - 1 ? cleanedCert.substring(endPos + 1).trim() : '';
+                        cleanedCert = (beforePart + ' ' + afterPart).trim();
+                    }
+                }
+                
+                // Jeśli certyfikat zawiera więcej informacji po przecinku, weź tylko pierwszą część
+                if (cleanedCert.contains(',')) {
+                    cleanedCert = cleanedCert.split(',')[0].trim();
+                }
+                
+                // Jeśli wciąż jest to długie zdanie, ale zawiera "certified", dodaj jako ogólny "Salesforce Certified"
+                if (cleanedCert.length() > 50 && cleanedCert.containsIgnoreCase('certified')) {
+                    cleanedCert = 'Salesforce Certified Professional';
+                }
+                
+                if (String.isNotBlank(cleanedCert)) {
+                    uniqueCertifications.add(cleanedCert);
+                    System.debug(LoggingLevel.INFO, 'Dodano oczyszczony certyfikat: ' + cleanedCert);
+                }
+            }
+        }
+        
+        // Konwersja Set na List
+        cleanedCertifications.addAll(uniqueCertifications);
+        return cleanedCertifications;
     }
 }
