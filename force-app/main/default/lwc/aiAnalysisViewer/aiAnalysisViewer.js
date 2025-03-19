@@ -218,10 +218,20 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
     }
     
     get recommendations() {
-        // Używamy pola AnalysisSummary__c jako rekomendacji, jeśli nie ma osobnego pola
-        const rec = this.analysisRecord.data ? getFieldValue(this.analysisRecord.data, ANALYSIS_SUMMARY_FIELD) : null;
-        console.log('Recommendations value: ', rec);
-        return rec;
+        // Zamiast używać tego samego pola co dla analysisSummary, możemy utworzyć dostosowaną rekomendację
+        // opartą na poziomie rekomendacji lub sformatować ją inaczej niż analysisSummary
+        const level = this.recommendationLevel ? this.recommendationLevel.toLowerCase() : 'none';
+        
+        switch(level) {
+            case 'high':
+                return 'Kandydat jest silnym dopasowaniem do stanowiska. Zalecamy szybkie przeprowadzenie procesu rekrutacyjnego.';
+            case 'medium':
+                return 'Kandydat ma potencjał na tym stanowisku, ale może wymagać dodatkowego szkolenia. Zalecamy dalszą ocenę.';
+            case 'low':
+                return 'Kandydat nie spełnia kluczowych wymagań stanowiska. Zalecamy rozważenie innych kandydatów.';
+            default:
+                return 'Brak dostępnych rekomendacji dla tego kandydata.';
+        }
     }
     
     get rawAnalysisResults() {
