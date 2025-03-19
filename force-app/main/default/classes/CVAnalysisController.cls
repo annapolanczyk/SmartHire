@@ -227,7 +227,7 @@ public with sharing class CVAnalysisController {
      * @param positionId Id stanowiska
      * @return Lista wymaganych umiejętności
      */
-    private static List<String> getPositionSkills(Id positionId) {
+    public static List<String> getPositionSkills(Id positionId) {
         List<String> requiredSkills = new List<String>();
         
         try {
@@ -509,7 +509,7 @@ public with sharing class CVAnalysisController {
      * @param results Mapa wyników analizy
      * @return Mapa wyników analizy ze standaryzowanymi kluczami
      */
-    private static Map<String, Object> standardizeResultKeys(Map<String, Object> results) {
+    public static Map<String, Object> standardizeResultKeys(Map<String, Object> results) {
         Map<String, Object> standardized = new Map<String, Object>();
         
         // Log keys before standardization
@@ -959,10 +959,33 @@ public with sharing class CVAnalysisController {
                 for (String skill : allSkills) {
                     Boolean matched = false;
                     for (String requiredSkill : requiredSkills) {
-                        if (skill.toLowerCase().contains(requiredSkill.toLowerCase()) || 
-                            requiredSkill.toLowerCase().contains(skill.toLowerCase())) {
+                        // Normalizacja do małych liter dla porównania
+                        String skillLower = skill.toLowerCase();
+                        String requiredSkillLower = requiredSkill.toLowerCase();
+                        
+                        // Obsługa specjalnych przypadków umiejętności, które mogą mieć różne nazwy
+                        if (skillLower.contains(requiredSkillLower) || 
+                            requiredSkillLower.contains(skillLower)) {
                             matchedSkills.add(skill);
                             matched = true;
+                            break;
+                        }
+                        
+                        // Szczególne przypadki dla LWC i Lightning Web Components
+                        if ((skillLower.contains('lwc') || skillLower.contains('lightning')) && 
+                            (requiredSkillLower.contains('lwc') || requiredSkillLower.contains('lightning'))) {
+                            matchedSkills.add(skill);
+                            matched = true;
+                            System.debug(LoggingLevel.DEBUG, 'Znaleziono dopasowanie LWC/Lightning: ' + skill + ' do ' + requiredSkill);
+                            break;
+                        }
+                        
+                        // Szczególne przypadki dla REST/SOAP API
+                        if ((skillLower.contains('rest') || skillLower.contains('soap') || skillLower.contains('api')) && 
+                            (requiredSkillLower.contains('rest') || requiredSkillLower.contains('soap') || requiredSkillLower.contains('api'))) {
+                            matchedSkills.add(skill);
+                            matched = true;
+                            System.debug(LoggingLevel.DEBUG, 'Znaleziono dopasowanie API: ' + skill + ' do ' + requiredSkill);
                             break;
                         }
                     }
