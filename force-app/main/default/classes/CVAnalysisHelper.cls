@@ -172,18 +172,31 @@ public with sharing class CVAnalysisHelper {
             + '4. Certificates and qualifications, especially related to Salesforce, that are EXPLICITLY mentioned\n'
             + '5. Level of professional experience that is EXPLICITLY mentioned\n'
             + '6. ONLY list skills that are EXPLICITLY stated - DO NOT infer or assume skills that are not directly mentioned\n\n'
+            + 'Pay special attention to Salesforce certifications. Look for any mention of standard Salesforce certifications such as:\n'
+            + '- Salesforce Administrator\n'
+            + '- Advanced Administrator\n'
+            + '- Platform App Builder\n'
+            + '- Platform Developer I or II\n'
+            + '- Sales Cloud Consultant\n'
+            + '- Service Cloud Consultant\n'
+            + '- Experience Cloud Consultant\n'
+            + '- Marketing Cloud certifications\n'
+            + '- CPQ Specialist\n'
+            + '- Integration Architecture Designer\n'
+            + '... and any other Salesforce certifications mentioned\n\n'
+            + 'Parse years of experience only if numeric values are explicitly mentioned (e.g., "5 years of Apex experience", "worked with Salesforce for 3 years"). Do not infer years of experience from employment periods unless explicitly stated.\n\n'
             + 'Extract the following information in JSON format:\n'
-            + '1. personalData (name, surname, email, phone)\n'
+            + '1. personalData (name, surname, email, phone). If any of these fields are missing, return them as null.\n'
             + '2. education (degree, field, university, graduation year)\n'
             + '3. workExperience (list of positions, companies, employment periods, responsibilities)\n'
             + '4. technicalSkills (list, ONLY include skills that are EXPLICITLY mentioned in the resume)\n'
             + '5. languages (list with proficiency level)\n'
-            + '6. certifications (list)\n'
+            + '6. certifications (list, with special attention to Salesforce certifications)\n'
             + '7. matchScore (percentage match score from 0 to 100, even without position data provide an estimated skill level score)\n';
             
         // Modify the prompt to emphasize matching skills based on position description
         if (context.hasPositionDetails()) {
-            prompt += '8. matchedSkills (array of skills that are EXPLICITLY mentioned in BOTH the resume AND the position description. DO NOT include any skills that are not explicitly mentioned in the resume, even if they appear in the position description)\n';
+            prompt += '8. matchedSkills (array of skills that are EXPLICITLY mentioned in BOTH the resume AND the position description. DO NOT include any skills that are not explicitly mentioned in the resume, even if they appear in the position description. For matchedSkills, prioritize ordering based on importance from the job description.)\n';
         } else {
             prompt += '8. matchedSkills (array of skills EXPLICITLY mentioned in the resume that are relevant to Salesforce development. DO NOT include assumed or inferred skills)\n';
         }
@@ -200,7 +213,8 @@ public with sharing class CVAnalysisHelper {
             prompt += '13. missingSkills (common Salesforce skills that are NOT mentioned in the resume)\n';
         }
             
-        prompt += '14. recommendationLevel (string value, one of: "High", "Medium", "Low")\n\n';
+        prompt += '14. recommendationLevel (string value, one of: "High", "Medium", "Low")\n\n'
+            + 'Handle incomplete data gracefully. If certain information is missing from the resume, include null values or empty arrays for those fields in the JSON but do not make assumptions about the missing data.\n\n';
         
         // Add position information if available
         if (context.hasPositionDetails()) {
@@ -218,7 +232,8 @@ public with sharing class CVAnalysisHelper {
         }
         
         // Add resume content
-        prompt += 'Resume text:\n"""\n' + context.resumeText + '\n"""';
+        prompt += 'Resume text:\n"""\n' + context.resumeText + '\n"""\n\n'
+            + 'Validate JSON output before completion. If invalid, retry until you can produce a valid, well-formed JSON.';
         
         return prompt;
     }

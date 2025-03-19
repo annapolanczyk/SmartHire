@@ -312,170 +312,169 @@ public with sharing class CVAnalysisController {
                     if (jobApp.Candidate__c != null) {
                         result.Candidate__c = jobApp.Candidate__c;
                     }
-                } catch (Exception e) {
-                    System.debug(LoggingLevel.ERROR, 'Error getting Job_Application__c data: ' + e.getMessage());
+                } catch (QueryException e) {
+                    System.debug(LoggingLevel.ERROR, 'Error getting Job_Application__c: ' + e.getMessage());
                 }
             } else if (objectType == 'Candidate__c') {
                 result.Candidate__c = recordId;
+                
+                // Position might be available in the results from context
+                if (standardizedResults.containsKey('positionId') && standardizedResults.get('positionId') instanceof Id) {
+                    result.Position__c = (Id)standardizedResults.get('positionId');
+                }
             }
             
-            // Set raw analysis results (truncate if needed to avoid exceeding field length limits)
-            String rawResultsJson = JSON.serialize(results);
-            result.RawAnalysisResults__c = rawResultsJson.length() > 131000 ? rawResultsJson.substring(0, 131000) : rawResultsJson;
+            // Store raw analysis results
+            result.RawAnalysisResults__c = JSON.serialize(results);
             
-            // Set numeric fields
+            // Map standard fields from standardized results
             if (standardizedResults.containsKey('matchScore')) {
-                result.MatchScore__c = extractMatchScore(standardizedResults.get('matchScore'));
-                System.debug(LoggingLevel.ERROR, 'Set MatchScore__c: ' + result.MatchScore__c);
+                Object matchScoreObj = standardizedResults.get('matchScore');
+                if (matchScoreObj instanceof Decimal) {
+                    result.MatchScore__c = (Decimal)matchScoreObj;
+                } else if (matchScoreObj instanceof Integer) {
+                    result.MatchScore__c = (Integer)matchScoreObj;
+                } else if (matchScoreObj instanceof String) {
+                    try {
+                        result.MatchScore__c = Decimal.valueOf((String)matchScoreObj);
+                    } catch (Exception e) {
+                        System.debug(LoggingLevel.ERROR, 'Could not convert matchScore to Decimal: ' + e.getMessage());
+                    }
+                }
             }
             
-            // Set list fields (comma-separated strings)
+            // Handle matched skills
             if (standardizedResults.containsKey('matchedSkills')) {
                 Object matchedSkillsObj = standardizedResults.get('matchedSkills');
                 if (matchedSkillsObj instanceof List<Object>) {
-                    List<String> skillsList = extractSkillsAsList((List<Object>)matchedSkillsObj);
-                    result.MatchingSkills__c = String.join(skillsList, ', ').left(255);
-                    System.debug(LoggingLevel.ERROR, 'Set MatchingSkills__c: ' + result.MatchingSkills__c);
-                } else if (matchedSkillsObj instanceof String) {
-                    result.MatchingSkills__c = ((String)matchedSkillsObj).left(255);
+                    List<Object> matchedSkillsList = (List<Object>)matchedSkillsObj;
+                    List<String> skillStrings = new List<String>();
+                    
+                    for (Object skill : matchedSkillsList) {
+                        if (skill instanceof String) {
+                            skillStrings.add((String)skill);
+                        }
+                    }
+                    
+                    result.MatchingSkills__c = String.join(skillStrings, ', ');
                 }
             }
             
+            // Handle additional skills
             if (standardizedResults.containsKey('additionalSkills')) {
                 Object additionalSkillsObj = standardizedResults.get('additionalSkills');
                 if (additionalSkillsObj instanceof List<Object>) {
-                    List<String> skillsList = extractSkillsAsList((List<Object>)additionalSkillsObj);
-                    result.AdditionalSkills__c = String.join(skillsList, ', ').left(255);
-                    System.debug(LoggingLevel.ERROR, 'Set AdditionalSkills__c: ' + result.AdditionalSkills__c);
-                } else if (additionalSkillsObj instanceof String) {
-                    result.AdditionalSkills__c = ((String)additionalSkillsObj).left(255);
+                    List<Object> additionalSkillsList = (List<Object>)additionalSkillsObj;
+                    List<String> skillStrings = new List<String>();
+                    
+                    for (Object skill : additionalSkillsList) {
+                        if (skill instanceof String) {
+                            skillStrings.add((String)skill);
+                        }
+                    }
+                    
+                    result.AdditionalSkills__c = String.join(skillStrings, ', ');
                 }
             }
             
+            // Handle missing skills
             if (standardizedResults.containsKey('missingSkills')) {
                 Object missingSkillsObj = standardizedResults.get('missingSkills');
                 if (missingSkillsObj instanceof List<Object>) {
-                    List<String> skillsList = extractSkillsAsList((List<Object>)missingSkillsObj);
-                    result.MissingSkills__c = String.join(skillsList, ', ').left(255);
-                    System.debug(LoggingLevel.ERROR, 'Set MissingSkills__c: ' + result.MissingSkills__c);
-                } else if (missingSkillsObj instanceof String) {
-                    result.MissingSkills__c = ((String)missingSkillsObj).left(255);
-                }
-            }
-            
-            // Set text fields
-            if (standardizedResults.containsKey('recommendationLevel')) {
-                Object recLevelObj = standardizedResults.get('recommendationLevel');
-                if (recLevelObj != null) {
-                    String recommendationLevel = String.valueOf(recLevelObj).trim();
-                    // Walidacja wartości listy wyboru
-                    if (recommendationLevel.equalsIgnoreCase('High') || recommendationLevel.equalsIgnoreCase('Highly Recommended')) {
-                        result.RecommendationLevel__c = 'High';
-                    } else if (recommendationLevel.equalsIgnoreCase('Medium') || recommendationLevel.equalsIgnoreCase('Recommended')) {
-                        result.RecommendationLevel__c = 'Medium';
-                    } else if (recommendationLevel.equalsIgnoreCase('Low') || recommendationLevel.equalsIgnoreCase('Not Recommended')) {
-                        result.RecommendationLevel__c = 'Low';
-                    } else {
-                        // Jeśli wartość nie pasuje do dozwolonych wartości, map na domyślną wartość
-                        if (recommendationLevel.containsIgnoreCase('high') || recommendationLevel.containsIgnoreCase('strong')) {
-                            result.RecommendationLevel__c = 'High';
-                        } else if (recommendationLevel.containsIgnoreCase('low') || recommendationLevel.containsIgnoreCase('weak') || 
-                                  recommendationLevel.containsIgnoreCase('not')) {
-                            result.RecommendationLevel__c = 'Low';
-                        } else {
-                            result.RecommendationLevel__c = 'Medium'; // Domyślna wartość
+                    List<Object> missingSkillsList = (List<Object>)missingSkillsObj;
+                    List<String> skillStrings = new List<String>();
+                    
+                    for (Object skill : missingSkillsList) {
+                        if (skill instanceof String) {
+                            skillStrings.add((String)skill);
                         }
                     }
-                    System.debug(LoggingLevel.ERROR, 'Set RecommendationLevel__c: ' + result.RecommendationLevel__c + ' (original value: ' + recommendationLevel + ')');
+                    
+                    result.MissingSkills__c = String.join(skillStrings, ', ');
                 }
             }
             
-            // Handle both summary and analysisSummary keys
-            if (standardizedResults.containsKey('analysisSummary')) {
-                Object summaryObj = standardizedResults.get('analysisSummary');
-                if (summaryObj != null) {
-                    result.AnalysisSummary__c = String.valueOf(summaryObj).left(32768);
-                    System.debug(LoggingLevel.ERROR, 'Set AnalysisSummary__c from analysisSummary key');
-                }
-            } else if (standardizedResults.containsKey('summary')) {
-                Object summaryObj = standardizedResults.get('summary');
-                if (summaryObj != null) {
-                    result.AnalysisSummary__c = String.valueOf(summaryObj).left(32768);
-                    System.debug(LoggingLevel.ERROR, 'Set AnalysisSummary__c from summary key');
+            // Handle certifications - new field
+            if (standardizedResults.containsKey('certifications')) {
+                Object certificationsObj = standardizedResults.get('certifications');
+                if (certificationsObj instanceof List<Object>) {
+                    List<Object> certificationsList = (List<Object>)certificationsObj;
+                    List<String> certStrings = new List<String>();
+                    
+                    for (Object cert : certificationsList) {
+                        if (cert instanceof String) {
+                            certStrings.add((String)cert);
+                        }
+                    }
+                    
+                    result.Certifications__c = String.join(certStrings, '\n');
                 }
             }
             
-            // Set fallback summary if still empty
-            if (String.isBlank(result.AnalysisSummary__c)) {
-                result.AnalysisSummary__c = 'Analysis performed on ' + Datetime.now().format();
-                System.debug(LoggingLevel.ERROR, 'Set default AnalysisSummary__c');
+            // Handle recommendation level
+            if (standardizedResults.containsKey('recommendationLevel')) {
+                Object recLevelObj = standardizedResults.get('recommendationLevel');
+                if (recLevelObj instanceof String) {
+                    String recLevel = (String)recLevelObj;
+                    result.RecommendationLevel__c = recLevel;
+                }
             }
             
+            // Handle analysis summary
+            if (standardizedResults.containsKey('analysisSummary') || standardizedResults.containsKey('summary')) {
+                Object summaryObj = standardizedResults.containsKey('analysisSummary') ? 
+                    standardizedResults.get('analysisSummary') : standardizedResults.get('summary');
+                
+                if (summaryObj instanceof String) {
+                    result.AnalysisSummary__c = (String)summaryObj;
+                }
+            }
+            
+            // Handle key highlights
             if (standardizedResults.containsKey('keyHighlights')) {
                 Object highlightsObj = standardizedResults.get('keyHighlights');
                 if (highlightsObj instanceof List<Object>) {
-                    List<String> highlightsList = new List<String>();
-                    for (Object item : (List<Object>)highlightsObj) {
-                        highlightsList.add(String.valueOf(item));
+                    List<Object> highlightsList = (List<Object>)highlightsObj;
+                    List<String> highlightStrings = new List<String>();
+                    
+                    for (Object highlight : highlightsList) {
+                        if (highlight instanceof String) {
+                            highlightStrings.add((String)highlight);
+                        }
                     }
-                    result.KeyHighlights__c = String.join(highlightsList, '\n• ').left(32768);
-                    if (!result.KeyHighlights__c.startsWith('• ')) {
-                        result.KeyHighlights__c = '• ' + result.KeyHighlights__c;
-                    }
-                } else if (highlightsObj != null) {
-                    result.KeyHighlights__c = String.valueOf(highlightsObj).left(32768);
+                    
+                    result.KeyHighlights__c = String.join(highlightStrings, '\n');
+                } else if (highlightsObj instanceof String) {
+                    result.KeyHighlights__c = (String)highlightsObj;
                 }
-                System.debug(LoggingLevel.ERROR, 'Set KeyHighlights__c: ' + (result.KeyHighlights__c != null ? result.KeyHighlights__c.length() + ' chars' : 'null'));
             }
             
+            // Handle potential concerns
             if (standardizedResults.containsKey('potentialConcerns')) {
                 Object concernsObj = standardizedResults.get('potentialConcerns');
                 if (concernsObj instanceof List<Object>) {
-                    List<String> concernsList = new List<String>();
-                    for (Object item : (List<Object>)concernsObj) {
-                        concernsList.add(String.valueOf(item));
+                    List<Object> concernsList = (List<Object>)concernsObj;
+                    List<String> concernStrings = new List<String>();
+                    
+                    for (Object concern : concernsList) {
+                        if (concern instanceof String) {
+                            concernStrings.add((String)concern);
+                        }
                     }
-                    result.PotentialConcerns__c = String.join(concernsList, '\n• ').left(32768);
-                    if (!result.PotentialConcerns__c.startsWith('• ')) {
-                        result.PotentialConcerns__c = '• ' + result.PotentialConcerns__c;
-                    }
-                } else if (concernsObj != null) {
-                    result.PotentialConcerns__c = String.valueOf(concernsObj).left(32768);
+                    
+                    result.PotentialConcerns__c = String.join(concernStrings, '\n');
+                } else if (concernsObj instanceof String) {
+                    result.PotentialConcerns__c = (String)concernsObj;
                 }
-                System.debug(LoggingLevel.ERROR, 'Set PotentialConcerns__c: ' + (result.PotentialConcerns__c != null ? result.PotentialConcerns__c.length() + ' chars' : 'null'));
             }
             
-            // Log field values before insert
-            System.debug(LoggingLevel.ERROR, 'Field values before insert:');
-            System.debug(LoggingLevel.ERROR, 'Job_Application__c: ' + result.Job_Application__c);
-            System.debug(LoggingLevel.ERROR, 'Candidate__c: ' + result.Candidate__c);
-            System.debug(LoggingLevel.ERROR, 'Position__c: ' + result.Position__c);
-            System.debug(LoggingLevel.ERROR, 'MatchScore__c: ' + result.MatchScore__c);
-            System.debug(LoggingLevel.ERROR, 'MatchingSkills__c: ' + result.MatchingSkills__c);
-            System.debug(LoggingLevel.ERROR, 'AdditionalSkills__c: ' + result.AdditionalSkills__c);
-            System.debug(LoggingLevel.ERROR, 'MissingSkills__c: ' + result.MissingSkills__c);
-            System.debug(LoggingLevel.ERROR, 'RecommendationLevel__c: ' + result.RecommendationLevel__c);
-            System.debug(LoggingLevel.ERROR, 'AnalysisSummary__c: ' + (result.AnalysisSummary__c != null));
-            System.debug(LoggingLevel.ERROR, 'KeyHighlights__c: ' + (result.KeyHighlights__c != null));
-            System.debug(LoggingLevel.ERROR, 'PotentialConcerns__c: ' + (result.PotentialConcerns__c != null));
-            System.debug(LoggingLevel.ERROR, 'RawAnalysisResults__c: ' + (result.RawAnalysisResults__c != null ? result.RawAnalysisResults__c.length() + ' chars' : 'null'));
+            // Insert record
+            insert result;
             
-            // Use database method with error details
-            Database.SaveResult sr = Database.insert(result, false);
-            
-            if (sr.isSuccess()) {
-                System.debug(LoggingLevel.ERROR, 'Successfully created AiAnalysisResult__c with ID: ' + sr.getId());
-                return sr.getId();
-            } else {
-                String errorMsg = 'Insert error: ';
-                for (Database.Error err : sr.getErrors()) {
-                    errorMsg += err.getMessage() + ' (fields: ' + String.join(err.getFields(), ', ') + '); ';
-                    System.debug(LoggingLevel.ERROR, 'Field: ' + String.join(err.getFields(), ', ') + ', Error: ' + err.getMessage());
-                }
-                throw new AuraHandledException(errorMsg);
-            }
+            return result.Id;
         } catch (Exception e) {
-            String errorMessage = 'Type: ' + e.getTypeName() + ', Message: ' + e.getMessage();
+            String errorMessage = 'Error creating AiAnalysisResult__c: ' + e.getMessage();
+            Logger.error('CVAnalysisController', 'createAiAnalysisResult', errorMessage, e);
             System.debug(LoggingLevel.ERROR, 'Error in createAiAnalysisResult: ' + errorMessage);
             System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
             throw new AuraHandledException(errorMessage);

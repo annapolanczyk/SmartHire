@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Certifications__c</fullName>
+    <description>Lista certyfikatów znalezionych w CV kandydata, ze szczególnym uwzględnieniem certyfikatów Salesforce.</description>
+    <externalId>false</externalId>
+    <inlineHelpText>Lista certyfikatów znalezionych w CV kandydata.</inlineHelpText>
+    <label>Certifications</label>
+    <length>32768</length>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>5</visibleLines>
+</CustomField> 

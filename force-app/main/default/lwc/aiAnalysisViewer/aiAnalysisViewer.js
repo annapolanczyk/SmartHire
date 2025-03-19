@@ -18,6 +18,7 @@ import RAW_ANALYSIS_RESULTS_FIELD from '@salesforce/schema/AiAnalysisResult__c.R
 import CANDIDATE_FIELD from '@salesforce/schema/AiAnalysisResult__c.Candidate__c';
 import POSITION_FIELD from '@salesforce/schema/AiAnalysisResult__c.Position__c';
 import JOB_APPLICATION_FIELD from '@salesforce/schema/AiAnalysisResult__c.Job_Application__c';
+import CERTIFICATIONS_FIELD from '@salesforce/schema/AiAnalysisResult__c.Certifications__c';
 
 export default class AiAnalysisViewer extends NavigationMixin(LightningElement) {
     @api recordId;
@@ -77,7 +78,8 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
         RAW_ANALYSIS_RESULTS_FIELD,
         CANDIDATE_FIELD,
         POSITION_FIELD,
-        JOB_APPLICATION_FIELD
+        JOB_APPLICATION_FIELD,
+        CERTIFICATIONS_FIELD
     ];
     
     // Wire the record data
@@ -204,6 +206,25 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
     
     get jobApplicationId() {
         return this.analysisRecord.data ? getFieldValue(this.analysisRecord.data, JOB_APPLICATION_FIELD) : null;
+    }
+    
+    get certifications() {
+        const certifications = this.analysisRecord.data ? getFieldValue(this.analysisRecord.data, CERTIFICATIONS_FIELD) : null;
+        console.log('Raw certifications value:', certifications);
+        
+        if (!certifications) return [];
+        
+        // Podziel na linie, usuń białe znaki oraz kropki na końcu każdego certyfikatu
+        const certificationsArray = certifications.split('\n')
+            .map(cert => {
+                // Usuń białe znaki z początku i końca, a następnie usuń kropkę jeśli występuje na końcu
+                let trimmedCert = cert.trim();
+                return trimmedCert.endsWith('.') ? trimmedCert.substring(0, trimmedCert.length - 1) : trimmedCert;
+            })
+            .filter(cert => cert.length > 0); // Filtruj puste elementy
+        
+        console.log('Processed certifications:', certificationsArray);
+        return certificationsArray;
     }
     
     // Lifecycle hooks
