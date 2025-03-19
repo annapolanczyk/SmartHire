@@ -173,6 +173,84 @@ public with sharing class CVAnalysisHelper {
             'heroku', 'mulesoft', 'einstein', 'ai', 'analytics', 'reports', 'dashboards',
             'cpq', 'pardot', 'marketing cloud', 'commerce cloud', 'service cloud', 'sales cloud'
         };
+
+        // Umiejętności Analityka Salesforce
+        List<String> analystSkills = new List<String>{
+            'sales cloud', 'service cloud', 'marketing cloud', 'experience cloud',
+            'requirement gathering', 'process mapping', 'user stories', 'use cases',
+            'data modeling', 'security model', 'sharing rules', 'role hierarchy',
+            'omnichannel', 'knowledge management', 'case management',
+            'reports', 'dashboards', 'flow', 'flow builder', 'process builder',
+            'validation rule', 'formula', 'jira', 'confluence',
+            'stakeholder management', 'communication skills', 'problem-solving',
+            'english', 'german', 'french', 'spanish', 'polish'
+        };
+        
+        // Umiejętności Konsultanta Salesforce
+        List<String> consultantSkills = new List<String>{
+            'sales cloud', 'service cloud', 'experience cloud', 'field service',
+            'marketing cloud', 'cpq', 'pardot', 'financial services cloud',
+            'data cloud', 'vlocity', 'omniscript', 'data raptor', 'integration procedures',
+            'flow', 'flow orchestrator', 'screen flow', 'process builder',
+            'change management', 'agile', 'scrum', 'jira', 'confluence',
+            'presentation skills', 'problem-solving', 'negotiation skills',
+            'english', 'german', 'french', 'spanish', 'italian', 'portuguese'
+        };
+        
+        // Umiejętności Administratora Salesforce
+        List<String> adminSkills = new List<String>{
+            'user management', 'permission set', 'profile', 'role hierarchy',
+            'validation rule', 'workflow', 'flow', 'flow builder', 'screen flow',
+            'data loader', 'reports', 'dashboards', 'approval process',
+            'record types', 'page layout', 'dynamic forms', 'sandbox management',
+            'change sets', 'security model', 'problem-solving', 'time management',
+            'english', 'polish', 'spanish', 'german', 'italian'
+        };
+        
+        // Umiejętności Developera Salesforce
+        List<String> devSkills = new List<String>{
+            'apex', 'lwc', 'aura', 'visualforce', 'soql', 'sosl',
+            'platform events', 'batch apex', 'future methods', 'queueable',
+            'integration', 'rest', 'soap', 'pub/sub api', 'tooling api',
+            'dynamic forms', 'dynamic interactions', 'screen flow', 'data cloud',
+            'sfdx', 'salesforce cli', 'git', 'ci/cd', 'copado', 'gearset',
+            'unit test', 'mocking', 'event-driven architecture',
+            'aws', 'azure', 'docker', 'kubernetes',
+            'english', 'german', 'polish', 'french', 'spanish'
+        };
+        
+        // Umiejętności Junior Developera Salesforce
+        List<String> juniorDevSkills = new List<String>{
+            'apex', 'lwc', 'soql', 'sosl', 'trigger', 'batch apex', 
+            'future methods', 'flow', 'flow builder', 'screen flow',
+            'rest', 'soap', 'integration', 'git', 'sfdx', 'salesforce cli',
+            'test class', 'unit test', 'problem-solving', 'agile',
+            'english', 'polish', 'spanish'
+        };
+        
+        // Umiejętności Architekta Salesforce
+        List<String> architectSkills = new List<String>{
+            'solution architecture', 'technical architecture', 'event-driven architecture',
+            'enterprise patterns', 'platform events', 'cdc', 'data cloud', 'genie',
+            'mulesoft', 'vlocity', 'integration procedures', 'elastic search',
+            'bulk api', 'tooling api', 'pub/sub api',
+            'devops', 'sfdx', 'gitflow', 'ci/cd', 'copado', 'gearset',
+            'governor limits', 'transaction control', 'security model',
+            'leadership', 'mentoring', 'stakeholder management',
+            'english', 'german', 'french', 'polish', 'spanish'
+        };
+        
+        // Połącz wszystkie listy umiejętności w jedną
+        commonSkills.addAll(analystSkills);
+        commonSkills.addAll(consultantSkills);
+        commonSkills.addAll(adminSkills);
+        commonSkills.addAll(devSkills);
+        commonSkills.addAll(juniorDevSkills);
+        commonSkills.addAll(architectSkills);
+        
+        // Usuń duplikaty przez konwersję do Set i z powrotem do List
+        Set<String> uniqueSkills = new Set<String>(commonSkills);
+        commonSkills = new List<String>(uniqueSkills);
         
         for (String skill : commonSkills) {
             if (lcDescription.contains(skill.toLowerCase())) {
