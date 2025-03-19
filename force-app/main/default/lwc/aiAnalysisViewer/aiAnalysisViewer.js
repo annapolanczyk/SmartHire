@@ -173,10 +173,10 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
     
     get recommendationLevelClass() {
         if (!this.recommendationLevel) return '';
-        if (this.recommendationLevel === 'High') return 'slds-theme_success';
-        if (this.recommendationLevel === 'Medium') return 'slds-theme_warning';
-        if (this.recommendationLevel === 'Low') return 'slds-theme_error';
-        return '';
+        if (this.recommendationLevel === 'High') return 'slds-theme_success slds-box slds-p-around_x-small';
+        if (this.recommendationLevel === 'Medium') return 'slds-theme_warning slds-box slds-p-around_x-small';
+        if (this.recommendationLevel === 'Low') return 'slds-theme_error slds-box slds-p-around_x-small';
+        return 'slds-box slds-p-around_x-small';
     }
     
     get keyHighlights() {
