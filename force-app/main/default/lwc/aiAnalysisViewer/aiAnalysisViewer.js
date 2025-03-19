@@ -143,7 +143,9 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
     
     get recommendations() {
         // Używamy pola AnalysisSummary__c jako rekomendacji, jeśli nie ma osobnego pola
-        return this.analysisRecord.data ? getFieldValue(this.analysisRecord.data, ANALYSIS_SUMMARY_FIELD) : null;
+        const rec = this.analysisRecord.data ? getFieldValue(this.analysisRecord.data, ANALYSIS_SUMMARY_FIELD) : null;
+        console.log('Recommendations value: ', rec);
+        return rec;
     }
     
     get rawAnalysisResults() {
@@ -205,6 +207,10 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
     // Navigate to the record
     navigateToRecord(event) {
         const recordId = event.currentTarget.dataset.id;
+        console.log('Navigating to record:', recordId);
+        console.log('analysisId value:', this.analysisId);
+        console.log('Current target dataset:', event.currentTarget.dataset);
+        
         if (recordId) {
             this[NavigationMixin.Navigate]({
                 type: 'standard__recordPage',
@@ -213,6 +219,8 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
                     actionName: 'view'
                 }
             });
+        } else {
+            console.error('No record ID found for navigation');
         }
     }
     
