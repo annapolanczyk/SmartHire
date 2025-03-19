@@ -209,9 +209,9 @@ public with sharing class CVAnalysisHelper {
             
         // Modify the prompt to emphasize missing skills based on position description
         if (context.hasPositionDetails()) {
-            prompt += '13. missingSkills (skills that are EXPLICITLY mentioned in the position description but are NOT found in the resume. IMPORTANT: Do NOT include Salesforce certifications here - they should ONLY be listed in the certifications field)\n';
+            prompt += '13. missingSkills (ONLY include skills that are EXPLICITLY mentioned in the position description text but are NOT found in the resume. DO NOT list any skills that are not clearly mentioned in the position description. IMPORTANT: Do NOT include common Salesforce skills like Apex, LWC, Visualforce, SOQL, Flow, etc. unless they are EXPLICITLY mentioned in the position description. Do NOT include Salesforce certifications here - they should ONLY be listed in the certifications field)\n';
         } else {
-            prompt += '13. missingSkills (common Salesforce skills that are NOT mentioned in the resume, but DO NOT include Salesforce certifications here)\n';
+            prompt += '13. missingSkills (this should be an empty array [] since there is no position description to compare against. DO NOT include any common Salesforce skills here if they are not from a position description)\n';
         }
             
         prompt += '14. recommendationLevel (string value, one of: "High", "Medium", "Low")\n\n'
@@ -226,11 +226,12 @@ public with sharing class CVAnalysisHelper {
                 + 'IMPORTANT: Be 100% factual and only include skills that are EXPLICITLY mentioned in the resume. Do not exaggerate, infer, or assume skills that are not clearly stated in the resume. '
                 + 'If there are few or no Salesforce skills mentioned, that\'s okay - report accurately what is found. '
                 + 'matchedSkills should ONLY include skills that appear in BOTH the position description AND are explicitly mentioned in the candidate resume. '
-                + 'missingSkills should ONLY include skills mentioned in the position description that are not found in the resume. '
+                + 'missingSkills should ONLY include skills mentioned in the position description that are not found in the resume. DO NOT list any "standard" or "expected" skills unless they are actually mentioned in the position description. '
                 + 'Remember that Salesforce certifications should ONLY be listed in the certifications field, not in missingSkills field.\n\n';
         } else {
             prompt += 'Return the results in a single, valid JSON object with the sections described above. '
                 + 'IMPORTANT: Be 100% factual and only include skills that are EXPLICITLY mentioned in the resume. Do not exaggerate, infer, or assume skills that are not clearly stated. '
+                + 'For the missingSkills field, return an empty array since there is no position description to compare against. '
                 + 'Remember to list ALL certifications in the certifications field, not in missingSkills field.\n\n';
         }
         
