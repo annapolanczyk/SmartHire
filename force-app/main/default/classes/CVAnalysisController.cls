@@ -223,69 +223,76 @@ public with sharing class CVAnalysisController {
     }
     
     /**
-     * @description Gets required skills for a position
-     * @param positionId Position Id
-     * @return List of required skills
+     * @description Pobiera listę wymaganych umiejętności dla stanowiska
+     * @param positionId Id stanowiska
+     * @return Lista wymaganych umiejętności
      */
     private static List<String> getPositionSkills(Id positionId) {
         List<String> requiredSkills = new List<String>();
         
         try {
-            // Get position description, which may contain information about required skills
-            Position__c position = [SELECT Id, Job_Description__c FROM Position__c WHERE Id = :positionId LIMIT 1];
+            // Użyj bezpiecznego podejścia z listą zamiast bezpośredniego przypisania
+            List<Position__c> positions = [
+                SELECT Id, Job_Description__c 
+                FROM Position__c 
+                WHERE Id = :positionId 
+                LIMIT 1
+            ];
             
-            if (position != null && String.isNotBlank(position.Job_Description__c)) {
-                // Use position description as a source of skills
-                // In a real scenario, you might use more advanced logic
-                // to extract skills from the description
+            if (!positions.isEmpty()) {
+                Position__c position = positions[0];
                 
-                // Simple implementation example - split description into words and filter
-                String description = position.Job_Description__c.toLowerCase();
-                
-                // List of common technical skills to search for in the description
-                List<String> commonSkills = new List<String>{
-                    'java', 'javascript', 'js', 'python', 'c#', 'c++', 'ruby', 'php', 'html', 'css',
-                    'sql', 'nosql', 'react', 'angular', 'vue', 'node', 'express', 'django', 'flask',
-                    'spring', 'hibernate', 'docker', 'kubernetes', 'aws', 'azure', 'gcp', 'git',
-                    'ci/cd', 'agile', 'scrum', 'kanban', 'rest', 'soap', 'api', 'microservices',
-                    'salesforce', 'apex', 'visualforce', 'lightning', 'aura', 'lwc', 'soql', 'sosl',
-                    'flow', 'flows', 'flow builder', 'process builder', 'formula', 'formulas',
-                    'validation rule', 'validation rules', 'workflow', 'workflows', 'approval process',
-                    'data loader', 'dataloader', 'integration', 'integrations', 'trigger', 'triggers',
-                    'batch', 'batch apex', 'test', 'test class', 'unit test', 'custom object',
-                    'custom field', 'permission set', 'profile', 'layouts', 'page layout',
-                    'lightning component', 'lightning web component', 'experience cloud', 'community cloud',
-                    'heroku', 'mulesoft', 'einstein', 'ai', 'analytics', 'reports', 'dashboards',
-                    'cpq', 'pardot', 'marketing cloud', 'commerce cloud', 'service cloud', 'sales cloud'
-                };
-                
-                // Przekształć opis stanowiska na małe litery dla ujednoliconego porównania
-                String lcDescription = description.toLowerCase();
-                
-                // Dodaj zarówno małe jak i duże litery dla kluczowych technologii Salesforce
-                Set<String> foundSkills = new Set<String>();
-                
-                for (String skill : commonSkills) {
-                    if (lcDescription.contains(skill.toLowerCase())) {
-                        // Zachowaj standaryzowany format dla umiejętności
-                        String standardizedSkill = standardizeSkillName(skill);
-                        foundSkills.add(standardizedSkill);
+                if (String.isNotBlank(position.Job_Description__c)) {
+                    // Use position description as a source of skills
+                    // In a real scenario, you might use more advanced logic
+                    // to extract skills from the description
+                    
+                    // Simple implementation example - split description into words and filter
+                    String description = position.Job_Description__c.toLowerCase();
+                    
+                    // List of common technical skills to search for in the description
+                    List<String> commonSkills = new List<String>{
+                        'java', 'javascript', 'js', 'python', 'c#', 'c++', 'ruby', 'php', 'html', 'css',
+                        'sql', 'nosql', 'react', 'angular', 'vue', 'node', 'express', 'django', 'flask',
+                        'spring', 'hibernate', 'docker', 'kubernetes', 'aws', 'azure', 'gcp', 'git',
+                        'ci/cd', 'agile', 'scrum', 'kanban', 'rest', 'soap', 'api', 'microservices',
+                        'salesforce', 'apex', 'visualforce', 'lightning', 'aura', 'lwc', 'soql', 'sosl',
+                        'flow', 'flows', 'flow builder', 'process builder', 'formula', 'formulas',
+                        'validation rule', 'validation rules', 'workflow', 'workflows', 'approval process',
+                        'data loader', 'dataloader', 'integration', 'integrations', 'trigger', 'triggers',
+                        'batch', 'batch apex', 'test', 'test class', 'unit test', 'custom object',
+                        'custom field', 'permission set', 'profile', 'layouts', 'page layout',
+                        'lightning component', 'lightning web component', 'experience cloud', 'community cloud',
+                        'heroku', 'mulesoft', 'einstein', 'ai', 'analytics', 'reports', 'dashboards',
+                        'cpq', 'pardot', 'marketing cloud', 'commerce cloud', 'service cloud', 'sales cloud'
+                    };
+                    
+                    // Przekształć opis stanowiska na małe litery dla ujednoliconego porównania
+                    String lcDescription = description.toLowerCase();
+                    
+                    // Dodaj zarówno małe jak i duże litery dla kluczowych technologii Salesforce
+                    Set<String> foundSkills = new Set<String>();
+                    
+                    for (String skill : commonSkills) {
+                        if (lcDescription.contains(skill.toLowerCase())) {
+                            // Zachowaj standaryzowany format dla umiejętności
+                            String standardizedSkill = standardizeSkillName(skill);
+                            foundSkills.add(standardizedSkill);
+                        }
                     }
+                    
+                    // Specjalne sprawdzenie dla Flow/flow
+                    if (lcDescription.contains('flow') || lcDescription.contains('flows')) {
+                        foundSkills.add('Flow');
+                    }
+                    
+                    requiredSkills = new List<String>(foundSkills);
                 }
-                
-                // Specjalne sprawdzenie dla Flow/flow
-                if (lcDescription.contains('flow') || lcDescription.contains('flows')) {
-                    foundSkills.add('Flow');
-                }
-                
-                // Konwersja Set na List, aby uniknąć duplikatów
-                requiredSkills = new List<String>(foundSkills);
-                
-                System.debug(LoggingLevel.INFO, 'Found ' + requiredSkills.size() + ' skills in position description: ' + requiredSkills);
+            } else {
+                System.debug(LoggingLevel.WARN, 'Nie znaleziono stanowiska o ID: ' + positionId);
             }
         } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'Error getting skills for position: ' + e.getMessage());
-            System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
+            System.debug(LoggingLevel.ERROR, 'Błąd podczas pobierania umiejętności stanowiska: ' + e.getMessage());
         }
         
         return requiredSkills;

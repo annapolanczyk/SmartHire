@@ -111,15 +111,17 @@ public with sharing class CVAnalysisHelper {
         
         // Pobierz dane stanowiska jeśli podano ID
         if (positionId != null) {
-            // Pobierz zarówno Job_Description__c jak i Required_Skills__c
-            Position__c position = [
+            // Użyj bezpiecznego podejścia z listą zamiast bezpośredniego przypisania
+            List<Position__c> positions = [
                 SELECT Id, Name, Job_Description__c, Required_Skills__c 
                 FROM Position__c 
                 WHERE Id = :positionId 
                 LIMIT 1
             ];
             
-            if (position != null) {
+            if (!positions.isEmpty()) {
+                Position__c position = positions[0];
+                
                 // Ustaw opis stanowiska - może być pusty
                 context.jobDescription = position.Job_Description__c != null ? position.Job_Description__c : '';
                 context.positionName = position.Name;
@@ -144,6 +146,9 @@ public with sharing class CVAnalysisHelper {
                 // Konwersja Set na List
                 context.requiredSkills = new List<String>(allSkills);
                 System.debug(LoggingLevel.INFO, 'Połączona lista wymaganych umiejętności: ' + context.requiredSkills);
+            } else {
+                // Logowanie ostrzeżenia jeśli nie znaleziono stanowiska
+                System.debug(LoggingLevel.WARN, 'Nie znaleziono stanowiska o ID: ' + positionId);
             }
         }
         
