@@ -43,11 +43,11 @@
                         <!-- Create New Analysis Form -->
                         <template if:true={showCreateForm}>
                             <div class="slds-box slds-theme_default slds-m-bottom_medium">
-                                <h2 class="slds-text-heading_medium slds-m-bottom_small">Create New Analysis Result</h2>
+                                <h2 class="slds-text-heading_medium slds-m-bottom_medium">Create New Analysis Result</h2>
                                 
                                 <div class="slds-form slds-form_stacked">
                                     <!-- Match Score -->
-                                    <div class="slds-form-element">
+                                    <div class="slds-form-element slds-m-bottom_small">
                                         <label class="slds-form-element__label" for="match-score">Match Score (%)</label>
                                         <div class="slds-form-element__control">
                                             <lightning-input 
@@ -63,7 +63,7 @@
                                     </div>
                                     
                                     <!-- Recommendation Level -->
-                                    <div class="slds-form-element">
+                                    <div class="slds-form-element slds-m-bottom_small">
                                         <label class="slds-form-element__label" for="recommendation-level">Recommendation Level</label>
                                         <div class="slds-form-element__control">
                                             <lightning-combobox
@@ -76,7 +76,7 @@
                                     </div>
                                     
                                     <!-- Matched Skills -->
-                                    <div class="slds-form-element">
+                                    <div class="slds-form-element slds-m-bottom_small">
                                         <label class="slds-form-element__label" for="matched-skills">Matched Skills (comma-separated)</label>
                                         <div class="slds-form-element__control">
                                             <lightning-textarea 
@@ -88,7 +88,7 @@
                                     </div>
                                     
                                     <!-- Missing Skills -->
-                                    <div class="slds-form-element">
+                                    <div class="slds-form-element slds-m-bottom_small">
                                         <label class="slds-form-element__label" for="missing-skills">Missing Skills (comma-separated)</label>
                                         <div class="slds-form-element__control">
                                             <lightning-textarea 
@@ -100,7 +100,7 @@
                                     </div>
                                     
                                     <!-- Additional Skills -->
-                                    <div class="slds-form-element">
+                                    <div class="slds-form-element slds-m-bottom_small">
                                         <label class="slds-form-element__label" for="additional-skills">Additional Skills (comma-separated)</label>
                                         <div class="slds-form-element__control">
                                             <lightning-textarea 
@@ -112,7 +112,7 @@
                                     </div>
                                     
                                     <!-- Analysis Summary -->
-                                    <div class="slds-form-element">
+                                    <div class="slds-form-element slds-m-bottom_small">
                                         <label class="slds-form-element__label" for="summary">Analysis Summary</label>
                                         <div class="slds-form-element__control">
                                             <lightning-textarea 
@@ -124,7 +124,7 @@
                                     </div>
                                     
                                     <!-- Key Highlights -->
-                                    <div class="slds-form-element">
+                                    <div class="slds-form-element slds-m-bottom_small">
                                         <label class="slds-form-element__label" for="key-highlights">Key Highlights (comma-separated)</label>
                                         <div class="slds-form-element__control">
                                             <lightning-textarea 
@@ -136,7 +136,7 @@
                                     </div>
                                     
                                     <!-- Potential Concerns -->
-                                    <div class="slds-form-element">
+                                    <div class="slds-form-element slds-m-bottom_small">
                                         <label class="slds-form-element__label" for="potential-concerns">Potential Concerns (comma-separated)</label>
                                         <div class="slds-form-element__control">
                                             <lightning-textarea 
@@ -167,8 +167,10 @@
                         </template>
                         
                         <!-- Existing Analysis Content -->
-                        <div class="slds-grid slds-wrap">
+                        <div class="slds-box slds-theme_default">
                             <template if:true={analysisRecord.data}>
+                                <h2 class="slds-text-heading_medium slds-m-bottom_medium">Analysis Results</h2>
+                                
                                 <!-- Match Score and Recommendation -->
                                 <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_medium">
                                     <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
