@@ -339,24 +339,45 @@ public with sharing class CVAnalysisHelper {
             jobDescriptionInfo = '\nJOB DESCRIPTION: ' + context.jobDescription;
         }
         
+        String criticalSkillsInstruction = '\nSPECIAL ATTENTION SKILLS: Be particularly vigilant in identifying the following critical Salesforce skills, which may appear in various forms:' +
+            '\n- Flow/Flows/Flow Builder/Process Builder/Flow automation/Flow development/Visual workflow/Declarative automation' +
+            '\n- SOQL/SOSL/Salesforce queries/Apex queries/Database queries/Object query language' +
+            '\n- Data Migration/Data integration/ETL/Data loading/Data import/Data transfer' +
+            '\n- API Integrations/REST API/SOAP API/External integrations/System integration/API development';
+        
+        String sectionSpecificInstructions = '\nSECTION ANALYSIS:' +
+            '\n1. In the EXPERIENCE section, look for job descriptions that mention Flow development, automation, SOQL queries, or integration work.' +
+            '\n2. Check SKILLS section for direct mentions of Flow, SOQL, SOSL, or any variation of these terms.' +
+            '\n3. In the SUMMARY section, identify any overview statements about automation, data querying, or integration experience.' +
+            '\n4. Carefully analyze job titles that might indicate experience with these skills (e.g., "Automation Specialist", "Integration Consultant").';
+            
         String prompt = 'Analyze the following resume' + 
                        ' against the position requirements.' +
                        positionInfo +
                        jobDescriptionInfo +
                        '\nREQUIRED SKILLS FOR THE POSITION: ' + requiredSkillsList + '\n\n' +
-                       'RESUME TEXT:\n' + resumeText + '\n\n' +
+                       criticalSkillsInstruction +
+                       sectionSpecificInstructions +
+                       '\n\nRESUME TEXT:\n' + resumeText + '\n\n' +
                        'Instructions:\n' +
                        '1. Identify all skills and certifications EXPLICITLY mentioned in the resume.\n' +
-                       '2. Calculate a match score (0-100) based on how well the candidate\'s skills match the required skills.\n' +
-                       '3. Provide matched skills that are both in the resume AND in the required skills list.\n' +
-                       '4. Provide missing skills that are in the required skills list but NOT in the resume.\n' +
-                       '5. Provide additional skills that are in the resume but NOT in the required skills list.\n' +
-                       '6. Provide a recommendation level (Low, Medium, High) based on the match score.\n' +
-                       '7. Provide a summary of the analysis, highlighting key strengths and areas of concern.\n' +
-                       '8. Identify key highlights from the candidate\'s experience relevant to the position.\n' +
-                       '9. Identify potential concerns or gaps in the candidate\'s experience.\n' +
-                       '10. Pay special attention to sections titled "CERTIFICATION", "CERTIFICATIONS", "SKILLS", or similar\n' +
-                       '    and extract all certifications mentioned there, especially Salesforce certifications.\n\n' +
+                       '2. Look for implicit mentions of skills based on described experiences (e.g., "created automated processes" could imply Flow experience).\n' +
+                       '3. Calculate a match score (0-100) based on how well the candidate\'s skills match the required skills.\n' +
+                       '4. Provide matched skills that are both in the resume AND in the required skills list.\n' +
+                       '5. Provide missing skills that are in the required skills list but NOT in the resume.\n' +
+                       '6. Provide additional skills that are in the resume but NOT in the required skills list.\n' +
+                       '7. Provide a recommendation level (Low, Medium, High) based on the match score.\n' +
+                       '8. Provide a summary of the analysis, highlighting key strengths and areas of concern.\n' +
+                       '9. Identify key highlights from the candidate\'s experience relevant to the position.\n' +
+                       '10. Identify potential concerns or gaps in the candidate\'s experience.\n' +
+                       '11. Pay special attention to sections titled "CERTIFICATION", "CERTIFICATIONS", "SKILLS", or similar.\n' +
+                       '12. Remember that CVs have various formats and sections. Look for certifications everywhere in the document.\n' +
+                       '13. Look for Salesforce certifications like "Platform Developer", "Administrator", "Architect", etc. throughout the document.\n' +
+                       '14. Be aware that certifications might be listed as bullet points, in sentences, or in dedicated sections.\n' +
+                       '15. Also look for phrases like "Certified", "certification", "(certified)", or similar throughout the document.\n' +
+                       '16. Pay particular attention to FLOW and SOQL/SOSL terms. These are crucial Salesforce skills that might appear in different forms.\n' +
+                       '17. For Flow-related skills, look for terms like: Flow, Flows, Flow Builder, Process Builder, declarative development, point-and-click development.\n' +
+                       '18. For query-related skills, look for: SOQL, SOSL, Salesforce queries, Apex queries, database queries, Object Query Language.\n\n' +
                        'Format your response as a JSON object with the following structure:\n' +
                        '{\n' +
                        '  "matchScore": number, // 0-100\n' +
@@ -370,12 +391,19 @@ public with sharing class CVAnalysisHelper {
                        '  "certification": string[] // All certifications found in the resume, especially from CERTIFICATION section\n' +
                        '}\n\n' +
                        'IMPORTANT NOTES:\n' +
-                       '1. DO NOT invent or assume skills not explicitly mentioned in the resume.\n' +
+                       '1. DO NOT invent or assume skills not explicitly mentioned in the resume or clearly implied by described experience.\n' +
                        '2. Only include in matchedSkills the skills that are EXPLICITLY mentioned in the resume AND in the required skills.\n' +
                        '3. Only include in missingSkills the skills from the required list that are NOT found in the resume.\n' +
                        '4. Include in additionalSkills any relevant skills mentioned in the resume but not in the required skills list.\n' +
                        '5. If there is a dedicated CERTIFICATION or CERTIFICATIONS section, include ALL certifications listed there in the "certification" array.\n' +
-                       '6. Provide your analysis ONLY in the specified JSON format, with no additional text.';
+                       '6. CV formats vary widely. Thoroughly analyze the ENTIRE document for skills and certifications, not just in dedicated sections.\n' +
+                       '7. The PDF text extraction might not be perfect. Try to recognize even partial or slightly misspelled certifications.\n' +
+                       '8. Pay special attention to job titles that might indicate certifications (e.g. "Salesforce Certified Developer").\n' +
+                       '9. Include ALL likely Salesforce certifications in the "certification" array, even if they appear in job titles or experience descriptions.\n' +
+                       '10. When checking for skills like Flow and SOQL, look beyond exact matches. Consider context and job descriptions.\n' +
+                       '11. If a candidate mentions "Process automation using declarative tools (Flows)" - this should be recognized as Flow experience.\n' +
+                       '12. If a candidate mentions "writing database queries" in a Salesforce context, this likely indicates SOQL experience.\n' +
+                       '13. Provide your analysis ONLY in the specified JSON format, with no additional text.';
         
         return prompt;
     }
