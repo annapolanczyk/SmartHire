@@ -3,7 +3,7 @@ import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import { NavigationMixin } from 'lightning/navigation';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import saveAnalysisResults from '@salesforce/apex/CVAnalysisController.saveAnalysisResults';
-import getLatestAnalysisForRecord from '@salesforce/apex/CVAnalysisController.getLatestAnalysisForRecord';
+import getLatestAnalysisForRecord from '@salesforce/apex/AiAnalysisController.getLatestAnalysisForRecord';
 
 // Import fields from AiAnalysisResult__c
 import MATCH_SCORE_FIELD from '@salesforce/schema/AiAnalysisResult__c.MatchScore__c';
