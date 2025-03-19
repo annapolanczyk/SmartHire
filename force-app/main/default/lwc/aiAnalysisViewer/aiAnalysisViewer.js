@@ -34,10 +34,9 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
     
     // Opcje dla listy rozwijanej poziomu rekomendacji
     recommendationOptions = [
-        { label: 'Highly Recommended', value: 'Highly Recommended' },
-        { label: 'Recommended', value: 'Recommended' },
-        { label: 'Consider', value: 'Consider' },
-        { label: 'Not Recommended', value: 'Not Recommended' }
+        { label: 'High', value: 'High' },
+        { label: 'Medium', value: 'Medium' },
+        { label: 'Low', value: 'Low' }
     ];
     
     // Computed properties for UI display
@@ -140,6 +139,11 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
     get potentialConcerns() {
         const concerns = this.analysisRecord.data ? getFieldValue(this.analysisRecord.data, POTENTIAL_CONCERNS_FIELD) : null;
         return concerns ? concerns.split('\n').filter(c => c.trim() !== '') : [];
+    }
+    
+    get recommendations() {
+        // Używamy pola AnalysisSummary__c jako rekomendacji, jeśli nie ma osobnego pola
+        return this.analysisRecord.data ? getFieldValue(this.analysisRecord.data, ANALYSIS_SUMMARY_FIELD) : null;
     }
     
     get rawAnalysisResults() {
