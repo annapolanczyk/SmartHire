@@ -133,24 +133,6 @@
                             <div aria-label="Analysis Results" class="slds-box slds-theme_default">
                                 <h2 class="slds-text-heading_medium slds-m-bottom_medium">Analysis Results</h2>
                                 
-                                <!-- Match Score -->
-                                <div class="slds-m-bottom_medium">
-                                    <lightning-tile label="JOB MATCH SCORE" class="slds-text-title_caps">
-                                        <div class={matchScoreClass}>
-                                            <lightning-progress-bar 
-                                                value={matchScore} 
-                                                size="large"
-                                                aria-valuemin="0"
-                                                aria-valuemax="100"
-                                                aria-valuenow={matchScore}>
-                                            </lightning-progress-bar>
-                                            <p class="slds-text-heading_small slds-text-align_center slds-m-top_x-small">
-                                                {matchScoreFormatted}
-                                            </p>
-                                        </div>
-                                    </lightning-tile>
-                                </div>
-                                
                                 <!-- Poziom rekomendacji -->
                                 <div class="slds-m-top_medium slds-m-bottom_medium">
                                     <h3 class="slds-text-heading_small slds-m-bottom_x-small">RECOMMENDATION LEVEL</h3>
