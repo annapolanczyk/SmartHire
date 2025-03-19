@@ -17,6 +17,7 @@
             </objects>
             <property name="showHeader" type="Boolean" default="true" label="Show Header" description="Show or hide the component header"/>
             <property name="showRawResults" type="Boolean" default="false" label="Show Raw Results" description="Show or hide the raw analysis results JSON"/>
+            <property name="showCreateNewButton" type="Boolean" default="false" label="Show Create New Button" description="Show or hide the button to create a new analysis record manually"/>
         </targetConfig>
     </targetConfigs>
 </LightningComponentBundle>

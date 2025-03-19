@@ -2,6 +2,8 @@ import { LightningElement, api, wire, track } from 'lwc';
 import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import { NavigationMixin } from 'lightning/navigation';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import saveAnalysisResults from '@salesforce/apex/CVAnalysisController.saveAnalysisResults';
+import getLatestAnalysisForRecord from '@salesforce/apex/CVAnalysisController.getLatestAnalysisForRecord';
 
 // Import fields from AiAnalysisResult__c
 import MATCH_SCORE_FIELD from '@salesforce/schema/AiAnalysisResult__c.MatchScore__c';
@@ -17,18 +19,18 @@ import CANDIDATE_FIELD from '@salesforce/schema/AiAnalysisResult__c.Candidate__c
 import POSITION_FIELD from '@salesforce/schema/AiAnalysisResult__c.Position__c';
 import JOB_APPLICATION_FIELD from '@salesforce/schema/AiAnalysisResult__c.Job_Application__c';
 
-// Import Apex methods
-import getLatestAnalysisForRecord from '@salesforce/apex/AiAnalysisController.getLatestAnalysisForRecord';
-
 export default class AiAnalysisViewer extends NavigationMixin(LightningElement) {
     @api recordId;
     @api objectApiName;
     @api showHeader = false;
     @api showRawResults = false;
+    @api showCreateNewButton = false;
     
     @track analysisId;
     @track isLoading = true;
     @track error;
+    @track showCreateForm = false;
+    @track newAnalysisResults = {};
     
     // Computed properties for UI display
     get isAiAnalysisResult() {
@@ -45,6 +47,14 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
     
     get hasError() {
         return this.error != null;
+    }
+    
+    get isCandidate() {
+        return this.objectApiName === 'Candidate__c';
+    }
+    
+    get isJobApplication() {
+        return this.objectApiName === 'Job_Application__c';
     }
     
     // Fields to retrieve from the AiAnalysisResult__c record
@@ -194,25 +204,121 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
         }
     }
     
-    // Helper method to reduce errors to a string
-    reduceErrors(errors) {
-        if (!Array.isArray(errors)) {
-            errors = [errors];
+    // Handle creating a new analysis record
+    handleCreateNewClick() {
+        this.showCreateForm = true;
+    }
+    
+    handleCancel() {
+        this.showCreateForm = false;
+        this.newAnalysisResults = {};
+    }
+    
+    handleInputChange(event) {
+        const field = event.target.dataset.field;
+        const value = event.target.value;
+        this.newAnalysisResults[field] = value;
+    }
+    
+    handleSkillsChange(event) {
+        const field = event.target.dataset.field;
+        const value = event.target.value;
+        // Split comma-separated skills into array
+        if (value) {
+            this.newAnalysisResults[field] = value.split(',').map(item => item.trim());
+        } else {
+            this.newAnalysisResults[field] = [];
+        }
+    }
+    
+    handleNumberChange(event) {
+        const field = event.target.dataset.field;
+        const value = event.target.value;
+        // Convert to number
+        this.newAnalysisResults[field] = parseFloat(value);
+    }
+    
+    handleSaveNewAnalysis() {
+        if (!this.recordId) {
+            this.showToast('Error', 'Missing record ID', 'error');
+            return;
         }
         
-        return errors
-            .filter(error => !!error)
-            .map(error => {
-                if (typeof error === 'string') {
-                    return error;
-                } else if (error.body && typeof error.body.message === 'string') {
-                    return error.body.message;
-                } else if (error.message) {
-                    return error.message;
-                } else {
-                    return JSON.stringify(error);
-                }
+        this.isLoading = true;
+        
+        // Prepare data for saving
+        const resultsToSave = { ...this.newAnalysisResults };
+        
+        // Add context information
+        resultsToSave.recordId = this.recordId;
+        resultsToSave.objectApiName = this.objectApiName;
+        
+        // Make sure recommendationLevel is a string
+        if (resultsToSave.recommendationLevel && typeof resultsToSave.recommendationLevel !== 'string') {
+            resultsToSave.recommendationLevel = String(resultsToSave.recommendationLevel);
+        }
+        
+        // Make sure skill fields are arrays
+        ['matchedSkills', 'missingSkills', 'additionalSkills'].forEach(field => {
+            if (resultsToSave[field] && !Array.isArray(resultsToSave[field])) {
+                resultsToSave[field] = [resultsToSave[field]];
+            }
+        });
+        
+        // Save the analysis results
+        saveAnalysisResults({
+            recordId: this.recordId,
+            analysisResults: JSON.stringify(resultsToSave)
+        })
+        .then(result => {
+            this.isLoading = false;
+            this.showCreateForm = false;
+            this.newAnalysisResults = {};
+            this.showToast('Success', 'Analysis results created successfully', 'success');
+            
+            // Update the view with the new analysis
+            this.analysisId = result;
+            
+            // Refresh the component
+            this.loadAnalysisData();
+        })
+        .catch(error => {
+            this.isLoading = false;
+            
+            // Error handling
+            let errorMessage = this.reduceErrors(error);
+            console.error('Error saving analysis results:', error);
+            console.error('Detailed error message:', errorMessage);
+            
+            this.showToast('Error', 'Failed to create analysis: ' + errorMessage, 'error');
+        });
+    }
+    
+    // Helper method to show toast notifications
+    showToast(title, message, variant) {
+        this.dispatchEvent(
+            new ShowToastEvent({
+                title: title,
+                message: message,
+                variant: variant
             })
-            .join(', ');
+        );
+    }
+    
+    // Error reducer similar to cvAnalyzer
+    reduceErrors(error) {
+        if (typeof error === 'string') {
+            return error;
+        }
+        
+        if (error.body && error.body.message) {
+            return error.body.message;
+        }
+        
+        if (error.message) {
+            return error.message;
+        }
+        
+        return 'Unknown error';
     }
 }
