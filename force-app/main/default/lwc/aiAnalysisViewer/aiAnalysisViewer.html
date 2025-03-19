@@ -172,177 +172,179 @@
                         </template>
                         
                         <!-- Existing Analysis Content -->
-                        <template if:true={analysisRecord.data}>
-                            <!-- Match Score and Recommendation -->
-                            <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_medium">
-                                <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
-                                    <div class="slds-m-bottom_medium">
-                                        <h3 class="slds-text-heading_small slds-m-bottom_x-small">JOB MATCH SCORE</h3>
-                                        <div class={matchScoreClass}>
-                                            <lightning-progress-bar 
-                                                value={matchScore} 
-                                                size="large">
-                                            </lightning-progress-bar>
-                                            <p class="slds-text-heading_small slds-text-align_center slds-m-top_x-small">
-                                                {matchScoreFormatted}
-                                            </p>
+                        <div class="slds-grid slds-wrap">
+                            <template if:true={analysisRecord.data}>
+                                <!-- Match Score and Recommendation -->
+                                <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_medium">
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
+                                        <div class="slds-m-bottom_medium">
+                                            <h3 class="slds-text-heading_small slds-m-bottom_x-small">JOB MATCH SCORE</h3>
+                                            <div class={matchScoreClass}>
+                                                <lightning-progress-bar 
+                                                    value={matchScore} 
+                                                    size="large">
+                                                </lightning-progress-bar>
+                                                <p class="slds-text-heading_small slds-text-align_center slds-m-top_x-small">
+                                                    {matchScoreFormatted}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
+                                        <div class="slds-m-bottom_medium">
+                                            <h3 class="slds-text-heading_small slds-m-bottom_x-small">RECOMMENDATION LEVEL</h3>
+                                            <div class={recommendationLevelClass}>
+                                                <p class="slds-text-heading_small slds-text-align_center slds-p-around_small">
+                                                    {recommendationLevel}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
-                                    <div class="slds-m-bottom_medium">
-                                        <h3 class="slds-text-heading_small slds-m-bottom_x-small">RECOMMENDATION LEVEL</h3>
-                                        <div class={recommendationLevelClass}>
-                                            <p class="slds-text-heading_small slds-text-align_center slds-p-around_small">
-                                                {recommendationLevel}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Analysis Summary -->
-                            <div class="slds-m-top_medium slds-m-bottom_medium">
-                                <h3 class="slds-text-heading_small slds-m-bottom_x-small">ANALYSIS SUMMARY</h3>
-                                <div class="slds-box slds-theme_shade slds-m-top_x-small">
-                                    <p>{analysisSummary}</p>
-                                </div>
-                            </div>
-                            
-                            <!-- Skills -->
-                            <div class="slds-grid slds-gutters slds-wrap slds-m-top_medium">
-                                <!-- Matching Skills -->
-                                <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-3">
-                                    <div class="slds-m-bottom_medium">
-                                        <h3 class="slds-text-heading_small slds-m-bottom_x-small">MATCHED SKILLS</h3>
-                                        <ul class="slds-list_dotted">
-                                            <template if:true={matchingSkills.length}>
-                                                <template for:each={matchingSkills} for:item="skill">
-                                                    <li key={skill} class="slds-m-bottom_x-small slds-text-color_success">{skill}</li>
-                                                </template>
-                                            </template>
-                                            <template if:false={matchingSkills.length}>
-                                                <li>No matched skills</li>
-                                            </template>
-                                        </ul>
-                                    </div>
-                                </div>
                                 
-                                <!-- Missing Skills -->
-                                <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-3">
-                                    <div class="slds-m-bottom_medium">
-                                        <h3 class="slds-text-heading_small slds-m-bottom_x-small">MISSING SKILLS</h3>
-                                        <ul class="slds-list_dotted">
-                                            <template if:true={missingSkills.length}>
-                                                <template for:each={missingSkills} for:item="skill">
-                                                    <li key={skill} class="slds-m-bottom_x-small slds-text-color_error">{skill}</li>
-                                                </template>
-                                            </template>
-                                            <template if:false={missingSkills.length}>
-                                                <li>No missing skills</li>
-                                            </template>
-                                        </ul>
-                                    </div>
-                                </div>
-                                
-                                <!-- Additional Skills -->
-                                <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-3">
-                                    <div class="slds-m-bottom_medium">
-                                        <h3 class="slds-text-heading_small slds-m-bottom_x-small">ADDITIONAL SKILLS</h3>
-                                        <ul class="slds-list_dotted">
-                                            <template if:true={additionalSkills.length}>
-                                                <template for:each={additionalSkills} for:item="skill">
-                                                    <li key={skill} class="slds-m-bottom_x-small">{skill}</li>
-                                                </template>
-                                            </template>
-                                            <template if:false={additionalSkills.length}>
-                                                <li>No additional skills</li>
-                                            </template>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Key Highlights and Potential Concerns -->
-                            <div class="slds-grid slds-gutters slds-wrap slds-m-top_medium">
-                                <!-- Key Highlights -->
-                                <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
-                                    <div class="slds-m-bottom_medium">
-                                        <h3 class="slds-text-heading_small slds-m-bottom_x-small">KEY HIGHLIGHTS</h3>
-                                        <ul class="slds-list_dotted slds-theme_success-container slds-p-around_medium">
-                                            <template if:true={keyHighlights.length}>
-                                                <template for:each={keyHighlights} for:item="highlight">
-                                                    <li key={highlight} class="slds-m-bottom_x-small">{highlight}</li>
-                                                </template>
-                                            </template>
-                                            <template if:false={keyHighlights.length}>
-                                                <li>No key highlights found</li>
-                                            </template>
-                                        </ul>
-                                    </div>
-                                </div>
-                                
-                                <!-- Potential Concerns -->
-                                <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
-                                    <div class="slds-m-bottom_medium">
-                                        <h3 class="slds-text-heading_small slds-m-bottom_x-small">POTENTIAL CONCERNS</h3>
-                                        <ul class="slds-list_dotted slds-theme_warning-container slds-p-around_medium">
-                                            <template if:true={potentialConcerns.length}>
-                                                <template for:each={potentialConcerns} for:item="concern">
-                                                    <li key={concern} class="slds-m-bottom_x-small">{concern}</li>
-                                                </template>
-                                            </template>
-                                            <template if:false={potentialConcerns.length}>
-                                                <li>No potential concerns found</li>
-                                            </template>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Related Records -->
-                            <div class="slds-grid slds-grid_align-center slds-m-top_medium">
-                                <lightning-button-group>
-                                    <template if:true={candidateId}>
-                                        <lightning-button 
-                                            label="View Candidate" 
-                                            icon-name="standard:people" 
-                                            variant="neutral" 
-                                            data-id={candidateId}
-                                            onclick={navigateToRecord}>
-                                        </lightning-button>
-                                    </template>
-                                    <template if:true={positionId}>
-                                        <lightning-button 
-                                            label="View Position" 
-                                            icon-name="standard:job_position" 
-                                            variant="neutral" 
-                                            data-id={positionId}
-                                            onclick={navigateToRecord}>
-                                        </lightning-button>
-                                    </template>
-                                    <template if:true={jobApplicationId}>
-                                        <lightning-button 
-                                            label="View Job Application" 
-                                            icon-name="standard:job_profile" 
-                                            variant="neutral" 
-                                            data-id={jobApplicationId}
-                                            onclick={navigateToRecord}>
-                                        </lightning-button>
-                                    </template>
-                                </lightning-button-group>
-                            </div>
-                            
-                            <!-- Raw Analysis Results -->
-                            <template if:true={showRawResults}>
+                                <!-- Analysis Summary -->
                                 <div class="slds-m-top_medium slds-m-bottom_medium">
-                                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">RAW ANALYSIS RESULTS</h3>
-                                    <div class="slds-box slds-theme_shade">
-                                        <pre class="slds-text-longform">{rawAnalysisResults}</pre>
+                                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">ANALYSIS SUMMARY</h3>
+                                    <div class="slds-box slds-theme_shade slds-m-top_x-small">
+                                        <p>{analysisSummary}</p>
                                     </div>
                                 </div>
+                                
+                                <!-- Skills -->
+                                <div class="slds-grid slds-gutters slds-wrap slds-m-top_medium">
+                                    <!-- Matching Skills -->
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-3">
+                                        <div class="slds-m-bottom_medium">
+                                            <h3 class="slds-text-heading_small slds-m-bottom_x-small">MATCHED SKILLS</h3>
+                                            <ul class="slds-list_dotted">
+                                                <template if:true={matchingSkills.length}>
+                                                    <template for:each={matchingSkills} for:item="skill">
+                                                        <li key={skill} class="slds-m-bottom_x-small slds-text-color_success">{skill}</li>
+                                                    </template>
+                                                </template>
+                                                <template if:false={matchingSkills.length}>
+                                                    <li>No matched skills</li>
+                                                </template>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Missing Skills -->
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-3">
+                                        <div class="slds-m-bottom_medium">
+                                            <h3 class="slds-text-heading_small slds-m-bottom_x-small">MISSING SKILLS</h3>
+                                            <ul class="slds-list_dotted">
+                                                <template if:true={missingSkills.length}>
+                                                    <template for:each={missingSkills} for:item="skill">
+                                                        <li key={skill} class="slds-m-bottom_x-small slds-text-color_error">{skill}</li>
+                                                    </template>
+                                                </template>
+                                                <template if:false={missingSkills.length}>
+                                                    <li>No missing skills</li>
+                                                </template>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Additional Skills -->
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-3">
+                                        <div class="slds-m-bottom_medium">
+                                            <h3 class="slds-text-heading_small slds-m-bottom_x-small">ADDITIONAL SKILLS</h3>
+                                            <ul class="slds-list_dotted">
+                                                <template if:true={additionalSkills.length}>
+                                                    <template for:each={additionalSkills} for:item="skill">
+                                                        <li key={skill} class="slds-m-bottom_x-small">{skill}</li>
+                                                    </template>
+                                                </template>
+                                                <template if:false={additionalSkills.length}>
+                                                    <li>No additional skills</li>
+                                                </template>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Key Highlights and Potential Concerns -->
+                                <div class="slds-grid slds-gutters slds-wrap slds-m-top_medium">
+                                    <!-- Key Highlights -->
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
+                                        <div class="slds-m-bottom_medium">
+                                            <h3 class="slds-text-heading_small slds-m-bottom_x-small">KEY HIGHLIGHTS</h3>
+                                            <ul class="slds-list_dotted slds-theme_success-container slds-p-around_medium">
+                                                <template if:true={keyHighlights.length}>
+                                                    <template for:each={keyHighlights} for:item="highlight">
+                                                        <li key={highlight} class="slds-m-bottom_x-small">{highlight}</li>
+                                                    </template>
+                                                </template>
+                                                <template if:false={keyHighlights.length}>
+                                                    <li>No key highlights found</li>
+                                                </template>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Potential Concerns -->
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
+                                        <div class="slds-m-bottom_medium">
+                                            <h3 class="slds-text-heading_small slds-m-bottom_x-small">POTENTIAL CONCERNS</h3>
+                                            <ul class="slds-list_dotted slds-theme_warning-container slds-p-around_medium">
+                                                <template if:true={potentialConcerns.length}>
+                                                    <template for:each={potentialConcerns} for:item="concern">
+                                                        <li key={concern} class="slds-m-bottom_x-small">{concern}</li>
+                                                    </template>
+                                                </template>
+                                                <template if:false={potentialConcerns.length}>
+                                                    <li>No potential concerns found</li>
+                                                </template>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Related Records -->
+                                <div class="slds-grid slds-grid_align-center slds-m-top_medium">
+                                    <lightning-button-group>
+                                        <template if:true={candidateId}>
+                                            <lightning-button 
+                                                label="View Candidate" 
+                                                icon-name="standard:people" 
+                                                variant="neutral" 
+                                                data-id={candidateId}
+                                                onclick={navigateToRecord}>
+                                            </lightning-button>
+                                        </template>
+                                        <template if:true={positionId}>
+                                            <lightning-button 
+                                                label="View Position" 
+                                                icon-name="standard:job_position" 
+                                                variant="neutral" 
+                                                data-id={positionId}
+                                                onclick={navigateToRecord}>
+                                            </lightning-button>
+                                        </template>
+                                        <template if:true={jobApplicationId}>
+                                            <lightning-button 
+                                                label="View Job Application" 
+                                                icon-name="standard:job_profile" 
+                                                variant="neutral" 
+                                                data-id={jobApplicationId}
+                                                onclick={navigateToRecord}>
+                                            </lightning-button>
+                                        </template>
+                                    </lightning-button-group>
+                                </div>
+                                
+                                <!-- Raw Analysis Results -->
+                                <template if:true={showRawResults}>
+                                    <div class="slds-m-top_medium slds-m-bottom_medium">
+                                        <h3 class="slds-text-heading_small slds-m-bottom_x-small">RAW ANALYSIS RESULTS</h3>
+                                        <div class="slds-box slds-theme_shade">
+                                            <pre class="slds-text-longform">{rawAnalysisResults}</pre>
+                                        </div>
+                                    </div>
+                                </template>
                             </template>
-                        </template>
+                        </div>
                     </template>
                 </template>
             </template>
