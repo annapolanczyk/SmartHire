@@ -340,16 +340,18 @@ public with sharing class CVAnalysisHelper {
         }
         
         String criticalSkillsInstruction = '\nSPECIAL ATTENTION SKILLS: Be particularly vigilant in identifying the following critical Salesforce skills, which may appear in various forms:' +
-            '\n- Flow/Flows/Flow Builder/Process Builder/Flow automation/Flow development/Visual workflow/Declarative automation' +
-            '\n- SOQL/SOSL/Salesforce queries/Apex queries/Database queries/Object query language' +
-            '\n- Data Migration/Data integration/ETL/Data loading/Data import/Data transfer' +
-            '\n- API Integrations/REST API/SOAP API/External integrations/System integration/API development';
+            '\n- Flow/Flows/Flow Builder/Process Builder/Flow automation/Flow development/Visual workflow/Declarative automation/point-and-click development/declarative development' +
+            '\n- SOQL/SOSL/Salesforce queries/Apex queries/Database queries/Object query language/SQL/data retrieval/data querying' +
+            '\n- Data Migration/Data integration/ETL/Data loading/Data import/Data transfer/data transformation/data export/data import' +
+            '\n- API Integrations/REST API/SOAP API/External integrations/System integration/API development/third-party integration/external systems';
         
         String sectionSpecificInstructions = '\nSECTION ANALYSIS:' +
             '\n1. In the EXPERIENCE section, look for job descriptions that mention Flow development, automation, SOQL queries, or integration work.' +
             '\n2. Check SKILLS section for direct mentions of Flow, SOQL, SOSL, or any variation of these terms.' +
             '\n3. In the SUMMARY section, identify any overview statements about automation, data querying, or integration experience.' +
-            '\n4. Carefully analyze job titles that might indicate experience with these skills (e.g., "Automation Specialist", "Integration Consultant").';
+            '\n4. Carefully analyze job titles that might indicate experience with these skills (e.g., "Automation Specialist", "Integration Consultant").' +
+            '\n5. In bullet points within EXPERIENCE, identify phrases like "created custom reports", "designed dashboards", "integrated systems", or "migrated data" as likely indicators of SOQL knowledge.' +
+            '\n6. Look for mentions of "database", "query", "data retrieval", or "data extraction" which often imply SOQL usage in Salesforce context.';
             
         String prompt = 'Analyze the following resume' + 
                        ' against the position requirements.' +
@@ -377,7 +379,10 @@ public with sharing class CVAnalysisHelper {
                        '15. Also look for phrases like "Certified", "certification", "(certified)", or similar throughout the document.\n' +
                        '16. Pay particular attention to FLOW and SOQL/SOSL terms. These are crucial Salesforce skills that might appear in different forms.\n' +
                        '17. For Flow-related skills, look for terms like: Flow, Flows, Flow Builder, Process Builder, declarative development, point-and-click development.\n' +
-                       '18. For query-related skills, look for: SOQL, SOSL, Salesforce queries, Apex queries, database queries, Object Query Language.\n\n' +
+                       '18. For query-related skills, look for: SOQL, SOSL, Salesforce queries, Apex queries, database queries, Object Query Language.\n' +
+                       '19. SOQL is a critical Salesforce skill, commonly used with Apex, reporting, and data management. Even if not explicitly mentioned by name, nearly all Salesforce developers use SOQL.\n' +
+                       '20. Consider the following activities as strong indicators of SOQL/SOSL experience in Salesforce context: data extraction, data manipulation, report building, dashboard creation, data migration.\n' +
+                       '21. If a candidate mentions working with custom reports, dashboard development, data extraction, or data integration in Salesforce, they almost certainly have SOQL experience.\n\n' +
                        'Format your response as a JSON object with the following structure:\n' +
                        '{\n' +
                        '  "matchScore": number, // 0-100\n' +
@@ -403,7 +408,10 @@ public with sharing class CVAnalysisHelper {
                        '10. When checking for skills like Flow and SOQL, look beyond exact matches. Consider context and job descriptions.\n' +
                        '11. If a candidate mentions "Process automation using declarative tools (Flows)" - this should be recognized as Flow experience.\n' +
                        '12. If a candidate mentions "writing database queries" in a Salesforce context, this likely indicates SOQL experience.\n' +
-                       '13. Provide your analysis ONLY in the specified JSON format, with no additional text.';
+                       '13. Also consider activities like "developed custom reports", "created dashboards", or "data integration" as strong indicators of SOQL knowledge in Salesforce context.\n' +
+                       '14. If a candidate has experience with Apex development, it\'s very likely they also have SOQL experience, as the two are commonly used together.\n' +
+                       '15. If a resume mentions data migration, ETL, or integration work in Salesforce, this typically involves SOQL knowledge.\n' +
+                       '16. Provide your analysis ONLY in the specified JSON format, with no additional text.';
         
         return prompt;
     }
