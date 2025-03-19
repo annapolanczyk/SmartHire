@@ -401,13 +401,62 @@ public with sharing class CVAnalysisController {
                     List<Object> certificationsList = (List<Object>)certificationsObj;
                     List<String> certStrings = new List<String>();
                     
+                    // Logowanie do debugowania
+                    System.debug(LoggingLevel.INFO, 'Found certifications list with ' + certificationsList.size() + ' items');
+                    
                     for (Object cert : certificationsList) {
                         if (cert instanceof String) {
                             certStrings.add((String)cert);
+                            System.debug(LoggingLevel.INFO, 'Added certification (String): ' + (String)cert);
+                        } else {
+                            String certStr = String.valueOf(cert);
+                            certStrings.add(certStr);
+                            System.debug(LoggingLevel.INFO, 'Added certification (converted to String): ' + certStr);
                         }
                     }
                     
+                    // Zapisujemy wszystkie certyfikaty rozdzielone nową linią
                     result.Certifications__c = String.join(certStrings, '\n');
+                    System.debug(LoggingLevel.INFO, 'Set Certifications__c field to: ' + result.Certifications__c);
+                } else if (certificationsObj instanceof String) {
+                    // Jeśli to pojedynczy string, sprawdź czy zawiera separatory
+                    String certStr = (String)certificationsObj;
+                    
+                    // Logowanie do debugowania
+                    System.debug(LoggingLevel.INFO, 'Found certifications as a String: ' + certStr);
+                    
+                    if (certStr.contains(',')) {
+                        // Jeśli zawiera przecinki, rozdziel i połącz nową linią
+                        List<String> certList = new List<String>();
+                        for (String cert : certStr.split(',')) {
+                            String trimmedCert = cert.trim();
+                            if (String.isNotBlank(trimmedCert)) {
+                                certList.add(trimmedCert);
+                                System.debug(LoggingLevel.INFO, 'Split certification by comma: ' + trimmedCert);
+                            }
+                        }
+                        result.Certifications__c = String.join(certList, '\n');
+                    } else if (certStr.contains(';')) {
+                        // Jeśli zawiera średniki, rozdziel i połącz nową linią
+                        List<String> certList = new List<String>();
+                        for (String cert : certStr.split(';')) {
+                            String trimmedCert = cert.trim();
+                            if (String.isNotBlank(trimmedCert)) {
+                                certList.add(trimmedCert);
+                                System.debug(LoggingLevel.INFO, 'Split certification by semicolon: ' + trimmedCert);
+                            }
+                        }
+                        result.Certifications__c = String.join(certList, '\n');
+                    } else {
+                        // Jeśli to pojedynczy string bez separatorów
+                        result.Certifications__c = certStr;
+                        System.debug(LoggingLevel.INFO, 'Set Certifications__c field to single string: ' + certStr);
+                    }
+                } else if (certificationsObj != null) {
+                    // Dla wszystkich innych typów, konwertuj na string
+                    String certStr = String.valueOf(certificationsObj);
+                    result.Certifications__c = certStr;
+                    System.debug(LoggingLevel.INFO, 'Set Certifications__c field to converted string: ' + certStr);
                 }
             }
             

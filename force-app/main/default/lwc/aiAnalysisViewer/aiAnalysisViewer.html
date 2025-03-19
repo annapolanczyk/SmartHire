@@ -1,16 +1,9 @@
 <!--
-  @description       : 
+  @description       : Komponent do wyświetlania wyników analizy AI zapisanych w obiekcie AiAnalysisResult__c
   @author            : ChangeMeIn@UserSettingsUnder.SFDoc
   @group             : 
   @last modified on  : 03-19-2025
   @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
--->
-<           : ChangeMeIn@UserSettingsUnder.SFDoc
-  @group             : 
-  @last modified on  : 03-19-2025
-  @last mod!--
-  @description       : Komponent do wyświetlania wyników analizy AI zapisanych w obiekcie AiAnalysisResult__c 
-  @author ified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 -->
 <template>
     <lightning-card title="AI Analysis Results" icon-name="standard:ai">
@@ -192,26 +185,6 @@
                                                 </template>
                                             </ul>
                                         </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Certyfikaty -->
-                                <div class="slds-m-top_medium slds-m-bottom_medium">
-                                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">CERTIFICATIONS</h3>
-                                    <div class="slds-box slds-theme_default slds-m-top_x-small">
-                                        <ul class="slds-list slds-theme_default slds-p-around_medium">
-                                            <template if:true={certifications.length}>
-                                                <template for:each={certifications} for:item="certification">
-                                                    <li key={certification} class="slds-m-bottom_x-small slds-text-color_success">
-                                                        <lightning-icon icon-name="utility:check" size="x-small" alternative-text="Certification" class="slds-m-right_x-small"></lightning-icon>
-                                                        {certification}
-                                                    </li>
-                                                </template>
-                                            </template>
-                                            <template if:false={certifications.length}>
-                                                <li class="slds-text-body_regular">No certifications found</li>
-                                            </template>
-                                        </ul>
                                     </div>
                                 </div>
                                 
