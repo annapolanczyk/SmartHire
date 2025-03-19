@@ -78,14 +78,6 @@
                                         onchange={handleSkillsChange}>
                                     </lightning-textarea>
                                     
-                                    <!-- Additional Skills -->
-                                    <lightning-textarea 
-                                        label="Additional Skills (comma-separated)" 
-                                        data-field="additionalSkills"
-                                        class="slds-m-bottom_small"
-                                        onchange={handleSkillsChange}>
-                                    </lightning-textarea>
-                                    
                                     <!-- Analysis Summary -->
                                     <lightning-textarea 
                                         label="Analysis Summary" 
@@ -132,46 +124,47 @@
                         <template if:true={analysisRecord.data}>
                             <div aria-label="Analysis Results" class="slds-card slds-m-top_medium">
                                 <div class="slds-card__body slds-card__body_inner">
-                                    <!-- Match Score and Recommendation -->
-                                    <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_medium">
-                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2">
-                                            <lightning-tile label="JOB MATCH SCORE" class="slds-text-title_caps">
-                                                <div class={matchScoreClass}>
-                                                    <lightning-progress-bar 
-                                                        value={matchScore} 
-                                                        size="large"
-                                                        aria-valuemin="0"
-                                                        aria-valuemax="100"
-                                                        aria-valuenow={matchScore}>
-                                                    </lightning-progress-bar>
-                                                    <p class="slds-text-heading_small slds-text-align_center slds-m-top_x-small">
-                                                        {matchScoreFormatted}
-                                                    </p>
-                                                </div>
-                                            </lightning-tile>
-                                        </div>
-                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2">
-                                            <lightning-tile label="RECOMMENDATION LEVEL" class="slds-text-title_caps">
-                                                <div class={recommendationLevelClass}>
-                                                    <p class="slds-text-heading_small slds-text-align_center slds-p-around_small">
-                                                        {recommendationLevel}
-                                                    </p>
-                                                </div>
-                                            </lightning-tile>
-                                        </div>
+                                    <!-- Match Score -->
+                                    <div class="slds-m-bottom_medium">
+                                        <lightning-tile label="JOB MATCH SCORE" class="slds-text-title_caps">
+                                            <div class={matchScoreClass}>
+                                                <lightning-progress-bar 
+                                                    value={matchScore} 
+                                                    size="large"
+                                                    aria-valuemin="0"
+                                                    aria-valuemax="100"
+                                                    aria-valuenow={matchScore}>
+                                                </lightning-progress-bar>
+                                                <p class="slds-text-heading_small slds-text-align_center slds-m-top_x-small">
+                                                    {matchScoreFormatted}
+                                                </p>
+                                            </div>
+                                        </lightning-tile>
+                                    </div>
+                                    
+                                    <!-- Recommendation Level -->
+                                    <div class="slds-m-bottom_medium">
+                                        <lightning-tile label="RECOMMENDATION LEVEL" class="slds-text-title_caps">
+                                            <div class={recommendationLevelClass}>
+                                                <p class="slds-text-heading_small slds-text-align_center slds-p-around_small">
+                                                    {recommendationLevel}
+                                                </p>
+                                            </div>
+                                        </lightning-tile>
                                     </div>
                                     
                                     <!-- Analysis Summary -->
-                                    <lightning-tile label="ANALYSIS SUMMARY" class="slds-text-title_caps slds-m-vertical_medium">
-                                        <div class="slds-box slds-theme_shade slds-m-top_x-small">
+                                    <div class="slds-box slds-theme_default slds-m-vertical_medium">
+                                        <h3 class="slds-text-title_caps slds-p-bottom_small">ANALYSIS SUMMARY</h3>
+                                        <div class="slds-p-around_small slds-text-longform">
                                             <lightning-formatted-text value={analysisSummary}></lightning-formatted-text>
                                         </div>
-                                    </lightning-tile>
+                                    </div>
                                     
                                     <!-- Skills -->
                                     <div class="slds-grid slds-gutters slds-wrap slds-m-top_medium">
                                         <!-- Matching Skills -->
-                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-large-size_1-of-3">
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2">
                                             <lightning-tile label="MATCHED SKILLS" class="slds-text-title_caps">
                                                 <ul class="slds-list_dotted" aria-label="Matched skills list">
                                                     <template if:true={matchingSkills.length}>
@@ -187,7 +180,7 @@
                                         </div>
                                         
                                         <!-- Missing Skills -->
-                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-large-size_1-of-3">
+                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2">
                                             <lightning-tile label="MISSING SKILLS" class="slds-text-title_caps">
                                                 <ul class="slds-list_dotted" aria-label="Missing skills list">
                                                     <template if:true={missingSkills.length}>
@@ -197,22 +190,6 @@
                                                     </template>
                                                     <template if:false={missingSkills.length}>
                                                         <li class="slds-text-body_regular">No missing skills</li>
-                                                    </template>
-                                                </ul>
-                                            </lightning-tile>
-                                        </div>
-                                        
-                                        <!-- Additional Skills -->
-                                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-large-size_1-of-3">
-                                            <lightning-tile label="ADDITIONAL SKILLS" class="slds-text-title_caps">
-                                                <ul class="slds-list_dotted" aria-label="Additional skills list">
-                                                    <template if:true={additionalSkills.length}>
-                                                        <template for:each={additionalSkills} for:item="skill">
-                                                            <li key={skill} class="slds-m-bottom_x-small">{skill}</li>
-                                                        </template>
-                                                    </template>
-                                                    <template if:false={additionalSkills.length}>
-                                                        <li class="slds-text-body_regular">No additional skills</li>
                                                     </template>
                                                 </ul>
                                             </lightning-tile>
