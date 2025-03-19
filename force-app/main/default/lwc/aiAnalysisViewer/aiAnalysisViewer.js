@@ -32,6 +32,14 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
     @track showCreateForm = false;
     @track newAnalysisResults = {};
     
+    // Opcje dla listy rozwijanej poziomu rekomendacji
+    recommendationOptions = [
+        { label: 'Highly Recommended', value: 'Highly Recommended' },
+        { label: 'Recommended', value: 'Recommended' },
+        { label: 'Consider', value: 'Consider' },
+        { label: 'Not Recommended', value: 'Not Recommended' }
+    ];
+    
     // Computed properties for UI display
     get isAiAnalysisResult() {
         return this.objectApiName === 'AiAnalysisResult__c';

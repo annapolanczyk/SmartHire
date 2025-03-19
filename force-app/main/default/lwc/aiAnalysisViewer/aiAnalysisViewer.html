@@ -69,12 +69,7 @@
                                             <lightning-combobox
                                                 id="recommendation-level"
                                                 data-field="recommendationLevel"
-                                                options={[
-                                                    { label: 'Highly Recommended', value: 'Highly Recommended' },
-                                                    { label: 'Recommended', value: 'Recommended' },
-                                                    { label: 'Consider', value: 'Consider' },
-                                                    { label: 'Not Recommended', value: 'Not Recommended' }
-                                                ]}
+                                                options={recommendationOptions}
                                                 onchange={handleInputChange}>
                                             </lightning-combobox>
                                         </div>
