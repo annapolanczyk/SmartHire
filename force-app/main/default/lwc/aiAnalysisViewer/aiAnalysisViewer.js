@@ -88,17 +88,19 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
     
     // Computed properties for the analysis data
     get matchScore() {
-        return this.analysisRecord.data ? getFieldValue(this.analysisRecord.data, MATCH_SCORE_FIELD) : null;
+        const score = this.analysisRecord.data ? getFieldValue(this.analysisRecord.data, MATCH_SCORE_FIELD) : null;
+        // Jeśli score jest null, zwracamy 0, w przeciwnym razie zwracamy wartość procentową (0-100)
+        return score !== null ? parseFloat(score) : 0;
     }
     
     get matchScoreFormatted() {
-        return this.matchScore ? Math.round(this.matchScore * 100) + '%' : '0%';
+        return this.matchScore ? Math.round(this.matchScore) + '%' : '0%';
     }
     
     get matchScoreClass() {
         if (!this.matchScore) return 'slds-theme_info';
-        if (this.matchScore >= 0.75) return 'slds-theme_success';
-        if (this.matchScore >= 0.5) return 'slds-theme_warning';
+        if (this.matchScore >= 75) return 'slds-theme_success';
+        if (this.matchScore >= 50) return 'slds-theme_warning';
         return 'slds-theme_error';
     }
     

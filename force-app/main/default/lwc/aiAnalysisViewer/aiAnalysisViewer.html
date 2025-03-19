@@ -131,21 +131,35 @@
                         <!-- Existing Analysis Content -->
                         <template if:true={analysisRecord.data}>
                             <div aria-label="Analysis Results" class="slds-box slds-theme_default">
-                                <!-- Poziom rekomendacji -->
-                                <div class="slds-m-top_medium slds-m-bottom_medium">
-                                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">RECOMMENDATION LEVEL</h3>
-                                    <div class={recommendationLevelClass}>
-                                        <p class="slds-text-heading_small slds-text-align_center slds-p-around_small">
-                                            {recommendationLevel}
-                                        </p>
+                                <!-- Sekcja z poziomem rekomendacji i match score -->
+                                <div class="slds-grid slds-gutters slds-wrap slds-m-top_medium slds-m-bottom_medium">
+                                    <!-- Poziom rekomendacji -->
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2">
+                                        <div class="slds-m-bottom_medium">
+                                            <h3 class="slds-text-heading_small slds-m-bottom_x-small">RECOMMENDATION LEVEL</h3>
+                                            <div class={recommendationLevelClass}>
+                                                <p class="slds-text-heading_small slds-text-align_center slds-p-around_small">
+                                                    {recommendationLevel}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <!-- Dodany pasek postępu dla wizualizacji wyniku -->
-                                    <div class="slds-m-top_small">
-                                        <lightning-progress-bar 
-                                            value={recommendationScoreValue} 
-                                            size="large" 
-                                            variant={recommendationProgressVariant}>
-                                        </lightning-progress-bar>
+                                    
+                                    <!-- Match Score - Procent dopasowania -->
+                                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2">
+                                        <div class="slds-m-bottom_medium">
+                                            <h3 class="slds-text-heading_small slds-m-bottom_x-small">MATCH SCORE</h3>
+                                            <div class="slds-m-top_small">
+                                                <p class="slds-text-heading_small slds-text-align_center slds-p-around_x-small">
+                                                    {matchScoreFormatted}
+                                                </p>
+                                                <lightning-progress-bar 
+                                                    value={matchScore} 
+                                                    size="large" 
+                                                    variant="info">
+                                                </lightning-progress-bar>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 
