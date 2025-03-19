@@ -721,6 +721,71 @@ public with sharing class CVAnalysisController {
                 }
             }
             
+            // Sprawdź, czy certyfikaty nie znajdują się w keyHighlights
+            if (!foundCertifications && containsKeyCaseInsensitive(results, 'keyHighlights')) {
+                Object keyHighlightsObj = getValueCaseInsensitive(results, 'keyHighlights');
+                System.debug(LoggingLevel.INFO, 'Sprawdzam certyfikaty w keyHighlights, typ: ' + getObjectType(keyHighlightsObj));
+                
+                List<String> certList = new List<String>();
+                
+                if (keyHighlightsObj instanceof List<Object>) {
+                    List<Object> highlightsList = (List<Object>)keyHighlightsObj;
+                    
+                    for (Object highlight : highlightsList) {
+                        if (highlight instanceof String) {
+                            String highlightStr = (String)highlight;
+                            System.debug(LoggingLevel.INFO, 'Analizuję highlight: ' + highlightStr);
+                            
+                            // Sprawdź czy highlight zawiera informacje o certyfikatach
+                            if ((highlightStr.containsIgnoreCase('certified') || 
+                                 highlightStr.containsIgnoreCase('certification') ||
+                                 highlightStr.containsIgnoreCase('certificate')) && 
+                                (highlightStr.containsIgnoreCase('Salesforce') || 
+                                 highlightStr.containsIgnoreCase('Administrator') ||
+                                 highlightStr.containsIgnoreCase('Developer') ||
+                                 highlightStr.containsIgnoreCase('Consultant') ||
+                                 highlightStr.containsIgnoreCase('Architect') ||
+                                 highlightStr.containsIgnoreCase('Platform'))) {
+                                
+                                certList.add(highlightStr);
+                                System.debug(LoggingLevel.INFO, 'Znalazłem certyfikat w highlight: ' + highlightStr);
+                            }
+                        }
+                    }
+                    
+                    if (!certList.isEmpty()) {
+                        standardized.put('certifications', certList);
+                        System.debug(LoggingLevel.INFO, 'Znaleziono certyfikaty w keyHighlights: ' + certList);
+                        foundCertifications = true;
+                    }
+                } else if (keyHighlightsObj instanceof String) {
+                    String highlightsStr = (String)keyHighlightsObj;
+                    
+                    // Próbuj podzielić na linie i znaleźć certyfikaty
+                    for (String line : highlightsStr.split('\\n')) {
+                        if ((line.containsIgnoreCase('certified') || 
+                             line.containsIgnoreCase('certification') ||
+                             line.containsIgnoreCase('certificate')) && 
+                            (line.containsIgnoreCase('Salesforce') || 
+                             line.containsIgnoreCase('Administrator') ||
+                             line.containsIgnoreCase('Developer') ||
+                             line.containsIgnoreCase('Consultant') ||
+                             line.containsIgnoreCase('Architect') ||
+                             line.containsIgnoreCase('Platform'))) {
+                            
+                            certList.add(line.trim());
+                            System.debug(LoggingLevel.INFO, 'Znalazłem certyfikat w line: ' + line);
+                        }
+                    }
+                    
+                    if (!certList.isEmpty()) {
+                        standardized.put('certifications', certList);
+                        System.debug(LoggingLevel.INFO, 'Znaleziono certyfikaty w keyHighlights(string): ' + certList);
+                        foundCertifications = true;
+                    }
+                }
+            }
+            
             // Jeśli ciągle nie znaleziono certyfikatów, ustaw jako pustą tablicę
             if (!foundCertifications) {
                 standardized.put('certifications', new List<String>());
