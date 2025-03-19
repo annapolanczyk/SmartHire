@@ -1428,8 +1428,42 @@ public with sharing class CVAnalysisController {
             'system architect' => 'Salesforce Certified System Architect',
             'application architect' => 'Salesforce Certified Application Architect',
             'technical architect' => 'Salesforce Certified Technical Architect',
-            'architect' => 'Salesforce Certified Architect'
+            'architect' => 'Salesforce Certified Architect',
+            'sharing and visibility architect' => 'Salesforce Certified Sharing and Visibility Architect',
+            'sharing and visibility' => 'Salesforce Certified Sharing and Visibility Architect',
+            'data architect' => 'Salesforce Certified Data Architect',
+            'development lifecycle and deployment architect' => 'Salesforce Certified Development Lifecycle and Deployment Architect',
+            'nonprofit cloud consultant' => 'Salesforce Certified Nonprofit Cloud Consultant',
+            'nonprofit cloud' => 'Salesforce Certified Nonprofit Cloud Consultant',
+            'health cloud' => 'Salesforce Certified Health Cloud Consultant',
+            'marketing cloud' => 'Salesforce Certified Marketing Cloud Consultant',
+            'education cloud' => 'Salesforce Certified Education Cloud Consultant',
+            'omni-studio' => 'Salesforce Certified OmniStudio Developer',
+            'omnistudio' => 'Salesforce Certified OmniStudio Developer',
+            'business analyst' => 'Salesforce Certified Business Analyst',
+            'cpq specialist' => 'Salesforce Certified CPQ Specialist',
+            'industries cpq' => 'Salesforce Certified Industries CPQ Developer',
+            'tableau' => 'Salesforce Certified Tableau CRM and Einstein Discovery Consultant',
+            'einstein analytics' => 'Salesforce Certified Einstein Analytics and Discovery Consultant',
+            'user experience designer' => 'Salesforce Certified User Experience Designer',
+            'identity and access management' => 'Salesforce Certified Identity and Access Management Architect',
+            'heroku' => 'Salesforce Certified Heroku Architect',
+            'mobile' => 'Salesforce Certified Mobile Solutions Architect',
+            'ai specialist' => 'Salesforce Certified AI Specialist',
+            'ai associate' => 'Salesforce Certified AI Associate'
         };
+        
+        // Typowe frazy wskazujące na certyfikaty
+        List<String> certificationPhrases = new List<String>{
+            'certified', 'certification', 'certificate', 'admin', 'administrator', 
+            'developer', 'architect', 'consultant', 'specialist', 'associate'
+        };
+        
+        // Lista wszystkich znanych certyfikatów Salesforce dla prostszego dopasowania
+        Set<String> knownCertifications = new Set<String>();
+        for (String standardName : standardCertNames.values()) {
+            knownCertifications.add(standardName);
+        }
         
         for (String rawCert : rawCertifications) {
             if (String.isBlank(rawCert)) continue;
@@ -1437,29 +1471,143 @@ public with sharing class CVAnalysisController {
             String lowerCert = rawCert.toLowerCase();
             Boolean foundExactMatch = false;
             
-            // Sprawdź czy pełna fraza zawiera standardową nazwę certyfikatu
-            for (String standardKey : standardCertNames.keySet()) {
-                if (lowerCert.contains(standardKey)) {
-                    uniqueCertifications.add(standardCertNames.get(standardKey));
+            // 1. Najpierw sprawdź, czy pełna fraza to już standardowy certyfikat
+            for (String knownCert : knownCertifications) {
+                if (rawCert.containsIgnoreCase(knownCert)) {
+                    uniqueCertifications.add(knownCert);
                     foundExactMatch = true;
-                    System.debug(LoggingLevel.INFO, 'Znaleziono dopasowanie certyfikatu: ' + standardKey + ' -> ' + standardCertNames.get(standardKey));
-                    // Nie przerywamy pętli, aby znaleźć wszystkie certyfikaty w jednej frazie
+                    System.debug(LoggingLevel.INFO, 'Znaleziono dokładne dopasowanie certyfikatu: ' + knownCert);
+                    break;
                 }
             }
             
-            // Specjalna obsługa dla certyfikatu Platform Developer I
-            if (lowerCert.contains('platform developer') && 
+            // 2. Sprawdź czy pełna fraza zawiera standardową nazwę certyfikatu
+            if (!foundExactMatch) {
+                for (String standardKey : standardCertNames.keySet()) {
+                    if (lowerCert.contains(standardKey)) {
+                        uniqueCertifications.add(standardCertNames.get(standardKey));
+                        foundExactMatch = true;
+                        System.debug(LoggingLevel.INFO, 'Znaleziono dopasowanie certyfikatu: ' + standardKey + ' -> ' + standardCertNames.get(standardKey));
+                        // Nie przerywamy pętli, aby znaleźć wszystkie certyfikaty w jednej frazie
+                    }
+                }
+            }
+            
+            // 3. Specjalna obsługa dla certyfikatu Platform Developer I
+            if (!foundExactMatch && (lowerCert.contains('platform developer') && 
                 (lowerCert.contains(' i ') || lowerCert.contains(' i,') || 
                  lowerCert.contains(' i.') || lowerCert.contains(' i)') || 
                  lowerCert.contains(' 1 ') || lowerCert.contains(' 1,') || 
-                 lowerCert.contains(' 1.') || lowerCert.contains(' 1)'))) {
+                 lowerCert.contains(' 1.') || lowerCert.contains(' 1)')))) {
                 uniqueCertifications.add('Salesforce Certified Platform Developer I');
                 foundExactMatch = true;
                 System.debug(LoggingLevel.INFO, 'Znaleziono certyfikat Platform Developer I w: ' + rawCert);
             }
             
-            // Jeśli nie znaleziono dokładnego dopasowania, dodaj oryginalny tekst (oczyszczony)
+            // 4. Sprawdź czy może to być Salesforce Administrator
+            if (!foundExactMatch && (lowerCert.contains('admin') || lowerCert.contains('administrator')) && 
+                (lowerCert.contains('salesforce') || lowerCert.contains('sf') || lowerCert.startsWith('admin'))) {
+                uniqueCertifications.add('Salesforce Certified Administrator');
+                foundExactMatch = true;
+                System.debug(LoggingLevel.INFO, 'Znaleziono certyfikat Administrator w: ' + rawCert);
+            }
+            
+            // 5. Sprawdź czy zaczyna się od typowej frazy certyfikacyjnej
             if (!foundExactMatch) {
+                for (String phrase : certificationPhrases) {
+                    if (lowerCert.containsIgnoreCase(phrase) && 
+                        (lowerCert.containsIgnoreCase('salesforce') || 
+                         lowerCert.containsIgnoreCase('platform') || 
+                         lowerCert.containsIgnoreCase('cloud') || 
+                         lowerCert.containsIgnoreCase('service') || 
+                         lowerCert.containsIgnoreCase('sales'))) {
+                        
+                        // Sprawdź czy należy usunąć prefiks
+                        String cleanedCert = rawCert;
+                        for (String prefix : certPrefixes) {
+                            if (rawCert.startsWithIgnoreCase(prefix)) {
+                                cleanedCert = rawCert.substring(prefix.length()).trim();
+                                if (cleanedCert.startsWithIgnoreCase('-')) {
+                                    cleanedCert = cleanedCert.substring(1).trim();
+                                }
+                                break;
+                            }
+                        }
+                        
+                        // Usuń niepotrzebne części
+                        if (cleanedCert.contains('(')) {
+                            Integer startPos = cleanedCert.indexOf('(');
+                            Integer endPos = cleanedCert.indexOf(')', startPos);
+                            if (startPos >= 0 && endPos > startPos) {
+                                String beforePart = startPos > 0 ? cleanedCert.substring(0, startPos).trim() : '';
+                                String afterPart = endPos < cleanedCert.length() - 1 ? cleanedCert.substring(endPos + 1).trim() : '';
+                                cleanedCert = (beforePart + ' ' + afterPart).trim();
+                            }
+                        }
+                        
+                        // Jeśli certyfikat zawiera więcej informacji po przecinku, weź tylko pierwszą część
+                        if (cleanedCert.contains(',')) {
+                            cleanedCert = cleanedCert.split(',')[0].trim();
+                        }
+                        
+                        if (String.isNotBlank(cleanedCert)) {
+                            uniqueCertifications.add(cleanedCert);
+                            foundExactMatch = true;
+                            System.debug(LoggingLevel.INFO, 'Znaleziono certyfikat z frazy: ' + phrase + ' -> ' + cleanedCert);
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // 6. Jeśli nie znaleziono dokładnego dopasowania, a fraza wygląda na samodzielny certyfikat, dodaj go bezpośrednio
+            if (!foundExactMatch && 
+                !lowerCert.contains(' with ') && 
+                !lowerCert.contains(' and ') && 
+                !lowerCert.contains(' in ') && 
+                !lowerCert.contains(':') && 
+                lowerCert.length() < 50 &&
+                (lowerCert.contains('cloud') || 
+                 lowerCert.contains('admin') || 
+                 lowerCert.contains('architect') || 
+                 lowerCert.contains('developer') || 
+                 lowerCert.contains('consultant'))) {
+                
+                // Wyczyść tekst z niepotrzebnych znaków
+                String cleanedCert = rawCert.trim();
+                
+                if (String.isNotBlank(cleanedCert)) {
+                    // Jeśli nie zawiera słowa Salesforce, a wygląda na certyfikat Salesforce, dodaj prefiks
+                    if (!cleanedCert.containsIgnoreCase('salesforce') && 
+                        (cleanedCert.containsIgnoreCase('admin') || 
+                         cleanedCert.containsIgnoreCase('architect') || 
+                         cleanedCert.containsIgnoreCase('developer') || 
+                         cleanedCert.containsIgnoreCase('consultant') ||
+                         cleanedCert.containsIgnoreCase('cloud'))) {
+                        
+                        // Sprawdź czy to już standardowy certyfikat
+                        Boolean isStandardCert = false;
+                        for (String standardName : standardCertNames.values()) {
+                            if (standardName.endsWithIgnoreCase(cleanedCert)) {
+                                uniqueCertifications.add(standardName);
+                                isStandardCert = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!isStandardCert) {
+                            uniqueCertifications.add('Salesforce ' + cleanedCert);
+                        }
+                    } else {
+                        uniqueCertifications.add(cleanedCert);
+                    }
+                    
+                    System.debug(LoggingLevel.INFO, 'Dodano samodzielny certyfikat: ' + cleanedCert);
+                }
+            }
+            
+            // 7. Jeśli to długie zdanie, ale wciąż nie znaleziono certyfikatu, próbujemy jeszcze raz
+            if (!foundExactMatch && !uniqueCertifications.contains(rawCert) && lowerCert.length() > 30) {
                 // Usuń zbędne prefiksy
                 String cleanedCert = rawCert;
                 for (String prefix : certPrefixes) {
