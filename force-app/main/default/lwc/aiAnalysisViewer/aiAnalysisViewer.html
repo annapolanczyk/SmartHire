@@ -1,34 +1,18 @@
 <!--
-  @description       : 
+  @description       : Komponent do wyświetlania wyników analizy AI zapisanych w obiekcie AiAnalysisResult__c 
   @author            : ChangeMeIn@UserSettingsUnder.SFDoc
   @group             : 
-  @last modified on  : 03-17-2025
+  @last modified on  : 03-19-2025
   @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
 -->
 <template>
-    <div class="slds-card">
-        <!-- Header -->
-        <template if:true={showHeader}>
-            <div class="slds-card__header slds-grid">
-                <header class="slds-media slds-media_center slds-has-flexi-truncate">
-                    <div class="slds-media__figure">
-                        <lightning-icon icon-name="standard:ai" size="medium"></lightning-icon>
-                    </div>
-                    <div class="slds-media__body">
-                        <h2 class="slds-card__header-title">
-                            <span class="slds-text-heading_medium">AI Analysis Results</span>
-                        </h2>
-                    </div>
-                </header>
-            </div>
-        </template>
-        
-        <!-- Body -->
-        <div class="slds-card__body slds-card__body_inner">
+    <lightning-card title="AI Analysis Results" icon-name="standard:ai">
+        <div class="slds-p-around_medium">
             <!-- Loading spinner -->
             <template if:true={isLoading}>
                 <div class="slds-is-relative slds-p-around_medium">
                     <lightning-spinner alternative-text="Loading analysis..." size="medium"></lightning-spinner>
+                    <p class="slds-text-align_center slds-m-top_large">Loading analysis results...</p>
                 </div>
             </template>
             
@@ -45,24 +29,24 @@
                     <!-- Match Score and Recommendation -->
                     <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_medium">
                         <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
-                            <div class="slds-box slds-box_small">
-                                <h3 class="slds-text-heading_small slds-m-bottom_small">Match Score</h3>
+                            <div class="slds-m-bottom_medium">
+                                <h3 class="slds-text-heading_small slds-m-bottom_x-small">JOB MATCH SCORE</h3>
                                 <div class={matchScoreClass}>
                                     <lightning-progress-bar 
                                         value={matchScore} 
                                         size="large">
                                     </lightning-progress-bar>
-                                    <p class="slds-text-heading_medium slds-text-align_center slds-m-top_x-small">
+                                    <p class="slds-text-heading_small slds-text-align_center slds-m-top_x-small">
                                         {matchScoreFormatted}
                                     </p>
                                 </div>
                             </div>
                         </div>
                         <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
-                            <div class="slds-box slds-box_small">
-                                <h3 class="slds-text-heading_small slds-m-bottom_small">Recommendation Level</h3>
+                            <div class="slds-m-bottom_medium">
+                                <h3 class="slds-text-heading_small slds-m-bottom_x-small">RECOMMENDATION LEVEL</h3>
                                 <div class={recommendationLevelClass}>
-                                    <p class="slds-text-heading_medium slds-text-align_center slds-p-around_small">
+                                    <p class="slds-text-heading_small slds-text-align_center slds-p-around_small">
                                         {recommendationLevel}
                                     </p>
                                 </div>
@@ -71,28 +55,27 @@
                     </div>
                     
                     <!-- Analysis Summary -->
-                    <div class="slds-box slds-box_small slds-m-bottom_medium">
-                        <h3 class="slds-text-heading_small slds-m-bottom_small">Analysis Summary</h3>
-                        <p class="slds-text-body_regular">{analysisSummary}</p>
+                    <div class="slds-m-top_medium slds-m-bottom_medium">
+                        <h3 class="slds-text-heading_small slds-m-bottom_x-small">ANALYSIS SUMMARY</h3>
+                        <div class="slds-box slds-theme_shade slds-m-top_x-small">
+                            <p>{analysisSummary}</p>
+                        </div>
                     </div>
                     
                     <!-- Skills -->
-                    <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_medium">
+                    <div class="slds-grid slds-gutters slds-wrap slds-m-top_medium">
                         <!-- Matching Skills -->
                         <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-3">
-                            <div class="slds-box slds-box_small slds-theme_success-container">
-                                <h3 class="slds-text-heading_small slds-m-bottom_small">Matching Skills</h3>
-                                <ul class="slds-has-dividers_bottom-space">
+                            <div class="slds-m-bottom_medium">
+                                <h3 class="slds-text-heading_small slds-m-bottom_x-small">MATCHED SKILLS</h3>
+                                <ul class="slds-list_dotted">
                                     <template if:true={matchingSkills.length}>
                                         <template for:each={matchingSkills} for:item="skill">
-                                            <li key={skill} class="slds-item slds-text-color_success">
-                                                <lightning-icon icon-name="utility:check" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                                                {skill}
-                                            </li>
+                                            <li key={skill} class="slds-m-bottom_x-small slds-text-color_success">{skill}</li>
                                         </template>
                                     </template>
                                     <template if:false={matchingSkills.length}>
-                                        <li class="slds-item">No matching skills found</li>
+                                        <li>No matched skills</li>
                                     </template>
                                 </ul>
                             </div>
@@ -100,19 +83,16 @@
                         
                         <!-- Missing Skills -->
                         <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-3">
-                            <div class="slds-box slds-box_small slds-theme_error-container">
-                                <h3 class="slds-text-heading_small slds-m-bottom_small">Missing Skills</h3>
-                                <ul class="slds-has-dividers_bottom-space">
+                            <div class="slds-m-bottom_medium">
+                                <h3 class="slds-text-heading_small slds-m-bottom_x-small">MISSING SKILLS</h3>
+                                <ul class="slds-list_dotted">
                                     <template if:true={missingSkills.length}>
                                         <template for:each={missingSkills} for:item="skill">
-                                            <li key={skill} class="slds-item slds-text-color_error">
-                                                <lightning-icon icon-name="utility:close" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                                                {skill}
-                                            </li>
+                                            <li key={skill} class="slds-m-bottom_x-small slds-text-color_error">{skill}</li>
                                         </template>
                                     </template>
                                     <template if:false={missingSkills.length}>
-                                        <li class="slds-item">No missing skills found</li>
+                                        <li>No missing skills</li>
                                     </template>
                                 </ul>
                             </div>
@@ -120,19 +100,16 @@
                         
                         <!-- Additional Skills -->
                         <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-3">
-                            <div class="slds-box slds-box_small slds-theme_info-container">
-                                <h3 class="slds-text-heading_small slds-m-bottom_small">Additional Skills</h3>
-                                <ul class="slds-has-dividers_bottom-space">
+                            <div class="slds-m-bottom_medium">
+                                <h3 class="slds-text-heading_small slds-m-bottom_x-small">ADDITIONAL SKILLS</h3>
+                                <ul class="slds-list_dotted">
                                     <template if:true={additionalSkills.length}>
                                         <template for:each={additionalSkills} for:item="skill">
-                                            <li key={skill} class="slds-item slds-text-color_default">
-                                                <lightning-icon icon-name="utility:add" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                                                {skill}
-                                            </li>
+                                            <li key={skill} class="slds-m-bottom_x-small">{skill}</li>
                                         </template>
                                     </template>
                                     <template if:false={additionalSkills.length}>
-                                        <li class="slds-item">No additional skills found</li>
+                                        <li>No additional skills</li>
                                     </template>
                                 </ul>
                             </div>
@@ -140,22 +117,19 @@
                     </div>
                     
                     <!-- Key Highlights and Potential Concerns -->
-                    <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_medium">
+                    <div class="slds-grid slds-gutters slds-wrap slds-m-top_medium">
                         <!-- Key Highlights -->
                         <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
-                            <div class="slds-box slds-box_small slds-theme_success-container">
-                                <h3 class="slds-text-heading_small slds-m-bottom_small">Key Highlights</h3>
-                                <ul class="slds-has-dividers_bottom-space">
+                            <div class="slds-m-bottom_medium">
+                                <h3 class="slds-text-heading_small slds-m-bottom_x-small">KEY HIGHLIGHTS</h3>
+                                <ul class="slds-list_dotted slds-theme_success-container slds-p-around_medium">
                                     <template if:true={keyHighlights.length}>
                                         <template for:each={keyHighlights} for:item="highlight">
-                                            <li key={highlight} class="slds-item">
-                                                <lightning-icon icon-name="utility:success" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                                                {highlight}
-                                            </li>
+                                            <li key={highlight} class="slds-m-bottom_x-small">{highlight}</li>
                                         </template>
                                     </template>
                                     <template if:false={keyHighlights.length}>
-                                        <li class="slds-item">No key highlights found</li>
+                                        <li>No key highlights found</li>
                                     </template>
                                 </ul>
                             </div>
@@ -163,19 +137,16 @@
                         
                         <!-- Potential Concerns -->
                         <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
-                            <div class="slds-box slds-box_small slds-theme_warning-container">
-                                <h3 class="slds-text-heading_small slds-m-bottom_small">Potential Concerns</h3>
-                                <ul class="slds-has-dividers_bottom-space">
+                            <div class="slds-m-bottom_medium">
+                                <h3 class="slds-text-heading_small slds-m-bottom_x-small">POTENTIAL CONCERNS</h3>
+                                <ul class="slds-list_dotted slds-theme_warning-container slds-p-around_medium">
                                     <template if:true={potentialConcerns.length}>
                                         <template for:each={potentialConcerns} for:item="concern">
-                                            <li key={concern} class="slds-item">
-                                                <lightning-icon icon-name="utility:warning" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                                                {concern}
-                                            </li>
+                                            <li key={concern} class="slds-m-bottom_x-small">{concern}</li>
                                         </template>
                                     </template>
                                     <template if:false={potentialConcerns.length}>
-                                        <li class="slds-item">No potential concerns found</li>
+                                        <li>No potential concerns found</li>
                                     </template>
                                 </ul>
                             </div>
@@ -183,50 +154,43 @@
                     </div>
                     
                     <!-- Related Records -->
-                    <div class="slds-box slds-box_small slds-m-bottom_medium">
-                        <h3 class="slds-text-heading_small slds-m-bottom_small">Related Records</h3>
-                        <div class="slds-grid slds-gutters slds-wrap">
+                    <div class="slds-grid slds-grid_align-center slds-m-top_medium">
+                        <lightning-button-group>
                             <template if:true={candidateId}>
-                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_small">
-                                    <lightning-button 
-                                        label="View Candidate" 
-                                        icon-name="standard:people" 
-                                        variant="neutral" 
-                                        data-id={candidateId}
-                                        onclick={navigateToRecord}>
-                                    </lightning-button>
-                                </div>
+                                <lightning-button 
+                                    label="View Candidate" 
+                                    icon-name="standard:people" 
+                                    variant="neutral" 
+                                    data-id={candidateId}
+                                    onclick={navigateToRecord}>
+                                </lightning-button>
                             </template>
                             <template if:true={positionId}>
-                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_small">
-                                    <lightning-button 
-                                        label="View Position" 
-                                        icon-name="standard:job_position" 
-                                        variant="neutral" 
-                                        data-id={positionId}
-                                        onclick={navigateToRecord}>
-                                    </lightning-button>
-                                </div>
+                                <lightning-button 
+                                    label="View Position" 
+                                    icon-name="standard:job_position" 
+                                    variant="neutral" 
+                                    data-id={positionId}
+                                    onclick={navigateToRecord}>
+                                </lightning-button>
                             </template>
                             <template if:true={jobApplicationId}>
-                                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-m-bottom_small">
-                                    <lightning-button 
-                                        label="View Job Application" 
-                                        icon-name="standard:job_profile" 
-                                        variant="neutral" 
-                                        data-id={jobApplicationId}
-                                        onclick={navigateToRecord}>
-                                    </lightning-button>
-                                </div>
+                                <lightning-button 
+                                    label="View Job Application" 
+                                    icon-name="standard:job_profile" 
+                                    variant="neutral" 
+                                    data-id={jobApplicationId}
+                                    onclick={navigateToRecord}>
+                                </lightning-button>
                             </template>
-                        </div>
+                        </lightning-button-group>
                     </div>
                     
                     <!-- Raw Analysis Results -->
                     <template if:true={showRawResults}>
-                        <div class="slds-box slds-box_small slds-m-bottom_medium">
-                            <h3 class="slds-text-heading_small slds-m-bottom_small">Raw Analysis Results</h3>
-                            <div class="slds-box slds-box_small slds-theme_shade">
+                        <div class="slds-m-top_medium slds-m-bottom_medium">
+                            <h3 class="slds-text-heading_small slds-m-bottom_x-small">RAW ANALYSIS RESULTS</h3>
+                            <div class="slds-box slds-theme_shade">
                                 <pre class="slds-text-longform">{rawAnalysisResults}</pre>
                             </div>
                         </div>
@@ -234,5 +198,5 @@
                 </template>
             </template>
         </div>
-    </div>
+    </lightning-card>
 </template>
