@@ -354,7 +354,9 @@ public with sharing class CVAnalysisHelper {
                        '6. Provide a recommendation level (Low, Medium, High) based on the match score.\n' +
                        '7. Provide a summary of the analysis, highlighting key strengths and areas of concern.\n' +
                        '8. Identify key highlights from the candidate\'s experience relevant to the position.\n' +
-                       '9. Identify potential concerns or gaps in the candidate\'s experience.\n\n' +
+                       '9. Identify potential concerns or gaps in the candidate\'s experience.\n' +
+                       '10. Pay special attention to sections titled "CERTIFICATION", "CERTIFICATIONS", "SKILLS", or similar\n' +
+                       '    and extract all certifications mentioned there, especially Salesforce certifications.\n\n' +
                        'Format your response as a JSON object with the following structure:\n' +
                        '{\n' +
                        '  "matchScore": number, // 0-100\n' +
@@ -364,14 +366,16 @@ public with sharing class CVAnalysisHelper {
                        '  "recommendationLevel": string, // "Low", "Medium", or "High"\n' +
                        '  "summary": string, // Summary of analysis\n' +
                        '  "keyHighlights": string[], // Key highlights from the candidate\'s experience\n' +
-                       '  "potentialConcerns": string[] // Potential concerns or gaps\n' +
+                       '  "potentialConcerns": string[], // Potential concerns or gaps\n' +
+                       '  "certification": string[] // All certifications found in the resume, especially from CERTIFICATION section\n' +
                        '}\n\n' +
                        'IMPORTANT NOTES:\n' +
                        '1. DO NOT invent or assume skills not explicitly mentioned in the resume.\n' +
                        '2. Only include in matchedSkills the skills that are EXPLICITLY mentioned in the resume AND in the required skills.\n' +
                        '3. Only include in missingSkills the skills from the required list that are NOT found in the resume.\n' +
                        '4. Include in additionalSkills any relevant skills mentioned in the resume but not in the required skills list.\n' +
-                       '5. Provide your analysis ONLY in the specified JSON format, with no additional text.';
+                       '5. If there is a dedicated CERTIFICATION or CERTIFICATIONS section, include ALL certifications listed there in the "certification" array.\n' +
+                       '6. Provide your analysis ONLY in the specified JSON format, with no additional text.';
         
         return prompt;
     }

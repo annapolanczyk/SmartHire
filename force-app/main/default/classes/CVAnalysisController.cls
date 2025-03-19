@@ -786,6 +786,75 @@ public with sharing class CVAnalysisController {
                 }
             }
             
+            // Sprawdź, czy certyfikaty nie znajdują się w sekcji CERTIFICATION
+            if (!foundCertifications && containsKeyCaseInsensitive(results, 'certification')) {
+                Object certificationObj = getValueCaseInsensitive(results, 'certification');
+                System.debug(LoggingLevel.INFO, 'Sprawdzam sekcję CERTIFICATION, typ: ' + getObjectType(certificationObj));
+                
+                List<String> certList = new List<String>();
+                
+                if (certificationObj instanceof List<Object>) {
+                    List<Object> certsList = (List<Object>)certificationObj;
+                    
+                    for (Object cert : certsList) {
+                        if (cert instanceof String) {
+                            String certStr = (String)cert;
+                            certList.add(certStr.trim());
+                            System.debug(LoggingLevel.INFO, 'Znaleziono certyfikat w sekcji CERTIFICATION: ' + certStr);
+                        }
+                    }
+                    
+                    if (!certList.isEmpty()) {
+                        standardized.put('certifications', certList);
+                        System.debug(LoggingLevel.INFO, 'Znaleziono certyfikaty w sekcji CERTIFICATION: ' + certList);
+                        foundCertifications = true;
+                    }
+                } else if (certificationObj instanceof String) {
+                    String certsStr = (String)certificationObj;
+                    
+                    if (certsStr.contains(',')) {
+                        for (String cert : certsStr.split(',')) {
+                            certList.add(cert.trim());
+                        }
+                    } else if (certsStr.contains('\n')) {
+                        for (String cert : certsStr.split('\n')) {
+                            certList.add(cert.trim());
+                        }
+                    } else {
+                        certList.add(certsStr.trim());
+                    }
+                    
+                    if (!certList.isEmpty()) {
+                        standardized.put('certifications', certList);
+                        System.debug(LoggingLevel.INFO, 'Znaleziono certyfikaty w sekcji CERTIFICATION (string): ' + certList);
+                        foundCertifications = true;
+                    }
+                } else if (certificationObj instanceof Map<String, Object>) {
+                    Map<String, Object> certMap = (Map<String, Object>)certificationObj;
+                    
+                    for (String key : certMap.keySet()) {
+                        Object value = certMap.get(key);
+                        if (value instanceof String) {
+                            certList.add(key + ': ' + (String)value);
+                        } else if (value instanceof List<Object>) {
+                            // Jeśli wartość to lista, dodaj każdy element
+                            List<Object> valueList = (List<Object>)value;
+                            for (Object item : valueList) {
+                                certList.add(key + ': ' + String.valueOf(item));
+                            }
+                        } else {
+                            certList.add(key + ': ' + String.valueOf(value));
+                        }
+                    }
+                    
+                    if (!certList.isEmpty()) {
+                        standardized.put('certifications', certList);
+                        System.debug(LoggingLevel.INFO, 'Znaleziono certyfikaty w mapie CERTIFICATION: ' + certList);
+                        foundCertifications = true;
+                    }
+                }
+            }
+            
             // Jeśli ciągle nie znaleziono certyfikatów, ustaw jako pustą tablicę
             if (!foundCertifications) {
                 standardized.put('certifications', new List<String>());
