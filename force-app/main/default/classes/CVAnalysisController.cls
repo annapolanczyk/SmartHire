@@ -388,8 +388,11 @@ public with sharing class CVAnalysisController {
                 }
             }
             
-            // Store raw analysis results
-            result.RawAnalysisResults__c = JSON.serialize(results);
+            // Sanitize raw analysis results - remove any personal information that might have been captured
+            Map<String, Object> sanitizedResults = new Map<String, Object>(results);
+            
+            // Store raw analysis results after sanitization
+            result.RawAnalysisResults__c = JSON.serialize(sanitizedResults);
             
             // Map standard fields from standardized results
             if (standardizedResults.containsKey('matchScore')) {
@@ -402,194 +405,75 @@ public with sharing class CVAnalysisController {
                     try {
                         result.MatchScore__c = Decimal.valueOf((String)matchScoreObj);
                     } catch (Exception e) {
-                        System.debug(LoggingLevel.ERROR, 'Could not convert matchScore to Decimal: ' + e.getMessage());
+                        System.debug(LoggingLevel.ERROR, 'Error parsing matchScore: ' + e.getMessage());
                     }
                 }
             }
             
-            // Handle matched skills
-            if (standardizedResults.containsKey('matchedSkills')) {
-                Object matchedSkillsObj = standardizedResults.get('matchedSkills');
-                if (matchedSkillsObj instanceof List<Object>) {
-                    List<Object> matchedSkillsList = (List<Object>)matchedSkillsObj;
-                    List<String> skillStrings = new List<String>();
-                    
-                    for (Object skill : matchedSkillsList) {
-                        if (skill instanceof String) {
-                            skillStrings.add((String)skill);
-                    }
-                    }
-                    
-                    result.MatchingSkills__c = String.join(skillStrings, ', ');
+            // Handle yearsOfExperience if available
+            if (standardizedResults.containsKey('yearsOfExperience')) {
+                Object yearsObj = standardizedResults.get('yearsOfExperience');
+                String yearsText = '';
+                
+                if (yearsObj instanceof Decimal) {
+                    yearsText = String.valueOf((Decimal)yearsObj) + ' years';
+                } else if (yearsObj instanceof Integer) {
+                    yearsText = String.valueOf((Integer)yearsObj) + ' years';
+                } else if (yearsObj instanceof String) {
+                    yearsText = (String)yearsObj;
                 }
-            }
-            
-            // Handle additional skills
-            if (standardizedResults.containsKey('additionalSkills')) {
-                Object additionalSkillsObj = standardizedResults.get('additionalSkills');
-                if (additionalSkillsObj instanceof List<Object>) {
-                    List<Object> additionalSkillsList = (List<Object>)additionalSkillsObj;
-                    List<String> skillStrings = new List<String>();
-                    
-                    for (Object skill : additionalSkillsList) {
-                        if (skill instanceof String) {
-                            skillStrings.add((String)skill);
-                    }
-                    }
-                    
-                    result.AdditionalSkills__c = String.join(skillStrings, ', ');
-                }
-            }
-            
-            // Handle missing skills
-            if (standardizedResults.containsKey('missingSkills')) {
-                Object missingSkillsObj = standardizedResults.get('missingSkills');
-                if (missingSkillsObj instanceof List<Object>) {
-                    List<Object> missingSkillsList = (List<Object>)missingSkillsObj;
-                    List<String> skillStrings = new List<String>();
-                    
-                    for (Object skill : missingSkillsList) {
-                        if (skill instanceof String) {
-                            skillStrings.add((String)skill);
-                        }
-                    }
-                    
-                    result.MissingSkills__c = String.join(skillStrings, ', ');
-                }
-            }
-            
-            // Handle certifications - new field
-            if (standardizedResults.containsKey('certifications')) {
-                Object certificationsObj = standardizedResults.get('certifications');
-                if (certificationsObj instanceof List<Object>) {
-                    List<Object> certificationsList = (List<Object>)certificationsObj;
-                    List<String> certStrings = new List<String>();
-                    
-                    // Logowanie do debugowania
-                    System.debug(LoggingLevel.INFO, 'Found certifications list with ' + certificationsList.size() + ' items');
-                    
-                    for (Object cert : certificationsList) {
-                        if (cert instanceof String) {
-                            certStrings.add((String)cert);
-                            System.debug(LoggingLevel.INFO, 'Added certification (String): ' + (String)cert);
-                        } else {
-                            String certStr = String.valueOf(cert);
-                            certStrings.add(certStr);
-                            System.debug(LoggingLevel.INFO, 'Added certification (converted to String): ' + certStr);
-                        }
-                    }
-                    
-                    // Zapisujemy wszystkie certyfikaty rozdzielone nową linią
-                    result.Certifications__c = String.join(certStrings, '\n');
-                    System.debug(LoggingLevel.INFO, 'Set Certifications__c field to: ' + result.Certifications__c);
-                } else if (certificationsObj instanceof String) {
-                    // Jeśli to pojedynczy string, sprawdź czy zawiera separatory
-                    String certStr = (String)certificationsObj;
-                    
-                    // Logowanie do debugowania
-                    System.debug(LoggingLevel.INFO, 'Found certifications as a String: ' + certStr);
-                    
-                    if (certStr.contains(',')) {
-                        // Jeśli zawiera przecinki, rozdziel i połącz nową linią
-                        List<String> certList = new List<String>();
-                        for (String cert : certStr.split(',')) {
-                            String trimmedCert = cert.trim();
-                            if (String.isNotBlank(trimmedCert)) {
-                                certList.add(trimmedCert);
-                                System.debug(LoggingLevel.INFO, 'Split certification by comma: ' + trimmedCert);
-                            }
-                        }
-                        result.Certifications__c = String.join(certList, '\n');
-                    } else if (certStr.contains(';')) {
-                        // Jeśli zawiera średniki, rozdziel i połącz nową linią
-                        List<String> certList = new List<String>();
-                        for (String cert : certStr.split(';')) {
-                            String trimmedCert = cert.trim();
-                            if (String.isNotBlank(trimmedCert)) {
-                                certList.add(trimmedCert);
-                                System.debug(LoggingLevel.INFO, 'Split certification by semicolon: ' + trimmedCert);
-                            }
-                        }
-                        result.Certifications__c = String.join(certList, '\n');
+                
+                if (String.isNotBlank(yearsText)) {
+                    // Store in a custom field if available, or add to analysis summary
+                    if (result.AnalysisSummary__c == null) {
+                        result.AnalysisSummary__c = 'Years of Experience: ' + yearsText;
                     } else {
-                        // Jeśli to pojedynczy string bez separatorów
-                        result.Certifications__c = certStr;
-                        System.debug(LoggingLevel.INFO, 'Set Certifications__c field to single string: ' + certStr);
+                        result.AnalysisSummary__c = 'Years of Experience: ' + yearsText + '\n\n' + result.AnalysisSummary__c;
                     }
-                } else if (certificationsObj != null) {
-                    // Dla wszystkich innych typów, konwertuj na string
-                    String certStr = String.valueOf(certificationsObj);
-                    result.Certifications__c = certStr;
-                    System.debug(LoggingLevel.INFO, 'Set Certifications__c field to converted string: ' + certStr);
                 }
             }
             
-            // Handle recommendation level
+            // Map array fields
+            result.MatchingSkills__c = JSONToStringList(standardizedResults, 'matchedSkills');
+            result.MissingSkills__c = JSONToStringList(standardizedResults, 'missingSkills');
+            result.AdditionalSkills__c = JSONToStringList(standardizedResults, 'additionalSkills');
+            result.KeyHighlights__c = JSONToStringList(standardizedResults, 'keyHighlights');
+            result.PotentialConcerns__c = JSONToStringList(standardizedResults, 'potentialConcerns');
+            result.Certifications__c = JSONToStringList(standardizedResults, 'certifications');
+            
+            // Map text fields
+            if (standardizedResults.containsKey('analysisSummary')) {
+                Object summaryObj = standardizedResults.get('analysisSummary');
+                if (summaryObj instanceof String) {
+                    if (result.AnalysisSummary__c == null) {
+                        result.AnalysisSummary__c = (String)summaryObj;
+                    } else {
+                        result.AnalysisSummary__c += '\n\n' + (String)summaryObj;
+                    }
+                }
+            }
+            
+            // Map recommendation level
             if (standardizedResults.containsKey('recommendationLevel')) {
                 Object recLevelObj = standardizedResults.get('recommendationLevel');
                 if (recLevelObj instanceof String) {
-                    String recLevel = (String)recLevelObj;
-                    result.RecommendationLevel__c = recLevel;
-                }
-            }
-            
-            // Handle analysis summary
-            if (standardizedResults.containsKey('analysisSummary') || standardizedResults.containsKey('summary')) {
-                Object summaryObj = standardizedResults.containsKey('analysisSummary') ? 
-                    standardizedResults.get('analysisSummary') : standardizedResults.get('summary');
-                
-                if (summaryObj instanceof String) {
-                    result.AnalysisSummary__c = (String)summaryObj;
-                }
-            }
-            
-            // Handle key highlights
-            if (standardizedResults.containsKey('keyHighlights')) {
-                Object highlightsObj = standardizedResults.get('keyHighlights');
-                if (highlightsObj instanceof List<Object>) {
-                    List<Object> highlightsList = (List<Object>)highlightsObj;
-                    List<String> highlightStrings = new List<String>();
+                    String recLevel = ((String)recLevelObj).toLowerCase().trim();
                     
-                    for (Object highlight : highlightsList) {
-                        if (highlight instanceof String) {
-                            highlightStrings.add((String)highlight);
-                        }
+                    if (recLevel == 'high' || recLevel == 'medium' || recLevel == 'low') {
+                        result.RecommendationLevel__c = recLevel.substring(0, 1).toUpperCase() + recLevel.substring(1);
                     }
-                    
-                    result.KeyHighlights__c = String.join(highlightStrings, '\n');
-                } else if (highlightsObj instanceof String) {
-                    result.KeyHighlights__c = (String)highlightsObj;
-                }
-            }
-            
-            // Handle potential concerns
-            if (standardizedResults.containsKey('potentialConcerns')) {
-                Object concernsObj = standardizedResults.get('potentialConcerns');
-                if (concernsObj instanceof List<Object>) {
-                    List<Object> concernsList = (List<Object>)concernsObj;
-                    List<String> concernStrings = new List<String>();
-                    
-                    for (Object concern : concernsList) {
-                        if (concern instanceof String) {
-                            concernStrings.add((String)concern);
-                        }
-                    }
-                    
-                    result.PotentialConcerns__c = String.join(concernStrings, '\n');
-                } else if (concernsObj instanceof String) {
-                    result.PotentialConcerns__c = (String)concernsObj;
                 }
             }
             
             // Insert record
-                insert result;
+            insert result;
             
-                return result.Id;
-            } catch (Exception e) {
+            return result.Id;
+        } catch (Exception e) {
             String errorMessage = 'Error creating AiAnalysisResult__c: ' + e.getMessage();
             Logger.error('CVAnalysisController', 'createAiAnalysisResult', errorMessage, e);
             System.debug(LoggingLevel.ERROR, 'Error in createAiAnalysisResult: ' + errorMessage);
-                System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
+            System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
             throw new AuraHandledException(errorMessage);
         } finally {
             System.debug(LoggingLevel.ERROR, '=== createAiAnalysisResult - END ===');
@@ -917,6 +801,95 @@ public with sharing class CVAnalysisController {
         }
         
         return standardized;
+    }
+    
+    /**
+     * Konwertuje pole JSON o podanej nazwie na ciąg znaków rozdzielony separatorem
+     * @param jsonMap Mapa zawierająca dane JSON
+     * @param fieldName Nazwa pola do konwersji
+     * @param separator Separator do łączenia elementów (domyślnie przecinek)
+     * @return Ciąg znaków powstały z połączenia elementów listy
+     */
+    private static String JSONToStringList(Map<String, Object> jsonMap, String fieldName, String separator) {
+        if (jsonMap == null || !jsonMap.containsKey(fieldName)) {
+            return null;
+        }
+        
+        Object fieldObj = jsonMap.get(fieldName);
+        List<String> stringList = new List<String>();
+        
+        // Jeśli to lista obiektów
+        if (fieldObj instanceof List<Object>) {
+            List<Object> objList = (List<Object>)fieldObj;
+            
+            for (Object item : objList) {
+                if (item instanceof String) {
+                    stringList.add((String)item);
+                } else if (item != null) {
+                    stringList.add(String.valueOf(item));
+                }
+            }
+        } 
+        // Jeśli to pojedynczy string, sprawdź czy zawiera separatory
+        else if (fieldObj instanceof String) {
+            String fieldStr = (String)fieldObj;
+            
+            if (fieldStr.contains(',')) {
+                // Jeśli zawiera przecinki
+                for (String item : fieldStr.split(',')) {
+                    String trimmedItem = item.trim();
+                    if (String.isNotBlank(trimmedItem)) {
+                        stringList.add(trimmedItem);
+                    }
+                }
+            } else if (fieldStr.contains(';')) {
+                // Jeśli zawiera średniki
+                for (String item : fieldStr.split(';')) {
+                    String trimmedItem = item.trim();
+                    if (String.isNotBlank(trimmedItem)) {
+                        stringList.add(trimmedItem);
+                    }
+                }
+            } else if (fieldStr.contains('\n')) {
+                // Jeśli zawiera znaki nowej linii
+                for (String item : fieldStr.split('\n')) {
+                    String trimmedItem = item.trim();
+                    if (String.isNotBlank(trimmedItem)) {
+                        stringList.add(trimmedItem);
+                    }
+                }
+            } else {
+                // Jeśli to pojedynczy string bez separatorów
+                if (String.isNotBlank(fieldStr)) {
+                    stringList.add(fieldStr);
+                }
+            }
+        }
+        
+        // Określenie separatora wyjściowego na podstawie typu pola
+        String outputSeparator = separator;
+        
+        // Dla niektórych typów pól możemy chcieć użyć innych separatorów
+        if (fieldName.equals('keyHighlights') || fieldName.equals('potentialConcerns')) {
+            // Dla list punktowanych używamy znaków nowej linii jako separatora
+            outputSeparator = '\n';
+        } else if (fieldName.equals('certifications')) {
+            // Dla certyfikatów również używamy znaków nowej linii
+            outputSeparator = '\n';
+        }
+        
+        return String.isNotBlank(String.join(stringList, outputSeparator)) ? 
+            String.join(stringList, outputSeparator) : null;
+    }
+    
+    /**
+     * Konwertuje pole JSON o podanej nazwie na ciąg znaków rozdzielony przecinkami
+     * @param jsonMap Mapa zawierająca dane JSON
+     * @param fieldName Nazwa pola do konwersji
+     * @return Ciąg znaków powstały z połączenia elementów listy
+     */
+    private static String JSONToStringList(Map<String, Object> jsonMap, String fieldName) {
+        return JSONToStringList(jsonMap, fieldName, ', ');
     }
     
     /**

@@ -186,35 +186,35 @@ public with sharing class CVAnalysisHelper {
             + '... and any other Salesforce certifications mentioned\n\n'
             + 'IMPORTANT: Carefully identify ALL certifications mentioned in the resume. List them ONLY in the "certifications" field of the response JSON. DO NOT place Salesforce certifications in the "missingSkills" field even if they appear in the job requirements. Certifications should only be treated as skills if they are explicitly mentioned as skills (not as certifications).\n\n'
             + 'Parse years of experience only if numeric values are explicitly mentioned (e.g., "5 years of Apex experience", "worked with Salesforce for 3 years"). Do not infer years of experience from employment periods unless explicitly stated.\n\n'
+            + 'IMPORTANT: FOR DATA PRIVACY REASONS, DO NOT EXTRACT OR INCLUDE ANY PERSONAL INFORMATION such as names, email addresses, phone numbers, or specific company names. We are only interested in skills, experience levels, and certifications - not personal or identifying information.\n\n'
             + 'Extract the following information in JSON format:\n'
-            + '1. personalData (name, surname, email, phone). If any of these fields are missing, return them as null.\n'
-            + '2. education (degree, field, university, graduation year)\n'
-            + '3. workExperience (list of positions, companies, employment periods, responsibilities)\n'
-            + '4. technicalSkills (list, ONLY include skills that are EXPLICITLY mentioned in the resume)\n'
-            + '5. languages (list with proficiency level)\n'
-            + '6. certifications (list, with special attention to Salesforce certifications - make sure ALL certifications are included here, not in missingSkills)\n'
-            + '7. matchScore (percentage match score from 0 to 100, even without position data provide an estimated skill level score)\n';
+            + '1. yearsOfExperience (general professional experience in years if explicitly mentioned)\n'
+            + '2. education (only degree level and field of study, NO school names or graduation years)\n'
+            + '3. technicalSkills (list, ONLY include skills that are EXPLICITLY mentioned in the resume)\n'
+            + '4. languages (list with proficiency level)\n'
+            + '5. certifications (list, with special attention to Salesforce certifications - make sure ALL certifications are included here, not in missingSkills)\n'
+            + '6. matchScore (percentage match score from 0 to 100, even without position data provide an estimated skill level score)\n';
             
         // Modify the prompt to emphasize matching skills based on position description
         if (context.hasPositionDetails()) {
-            prompt += '8. matchedSkills (array of skills that are EXPLICITLY mentioned in BOTH the resume AND the position description. DO NOT include any skills that are not explicitly mentioned in the resume, even if they appear in the position description. For matchedSkills, prioritize ordering based on importance from the job description.)\n';
+            prompt += '7. matchedSkills (array of skills that are EXPLICITLY mentioned in BOTH the resume AND the position description. DO NOT include any skills that are not explicitly mentioned in the resume, even if they appear in the position description. For matchedSkills, prioritize ordering based on importance from the job description.)\n';
         } else {
-            prompt += '8. matchedSkills (array of skills EXPLICITLY mentioned in the resume that are relevant to Salesforce development. DO NOT include assumed or inferred skills)\n';
+            prompt += '7. matchedSkills (array of skills EXPLICITLY mentioned in the resume that are relevant to Salesforce development. DO NOT include assumed or inferred skills)\n';
         }
             
-        prompt += '9. additionalSkills (array of supplementary skills that are EXPLICITLY mentioned in the resume)\n'
-            + '10. analysisSummary (concise summary of candidate\'s profile, 2-3 sentences max, based ONLY on information explicitly stated in the resume)\n'
-            + '11. keyHighlights (bullet points of 3-5 most important strengths that are EXPLICITLY mentioned in the resume, DO NOT end with periods)\n'
-            + '12. potentialConcerns (areas where the candidate might lack experience based on information in the resume, DO NOT end with periods)\n';
+        prompt += '8. additionalSkills (array of supplementary skills that are EXPLICITLY mentioned in the resume)\n'
+            + '9. analysisSummary (concise summary of candidate\'s profile, 2-3 sentences max, based ONLY on information explicitly stated in the resume, WITHOUT mentioning specific company names or personal details)\n'
+            + '10. keyHighlights (bullet points of 3-5 most important strengths that are EXPLICITLY mentioned in the resume, DO NOT end with periods, DO NOT include company names or personal details)\n'
+            + '11. potentialConcerns (areas where the candidate might lack experience based on information in the resume, DO NOT end with periods)\n';
             
         // Modify the prompt to emphasize missing skills based on position description
         if (context.hasPositionDetails()) {
-            prompt += '13. missingSkills (ONLY include skills that are EXPLICITLY mentioned in the position description text but are NOT found in the resume. DO NOT list any skills that are not clearly mentioned in the position description. IMPORTANT: Do NOT include common Salesforce skills like Apex, LWC, Visualforce, SOQL, Flow, etc. unless they are EXPLICITLY mentioned in the position description. Do NOT include Salesforce certifications here - they should ONLY be listed in the certifications field)\n';
+            prompt += '12. missingSkills (ONLY include skills that are EXPLICITLY mentioned in the position description text but are NOT found in the resume. DO NOT list any skills that are not clearly mentioned in the position description. IMPORTANT: Do NOT include common Salesforce skills like Apex, LWC, Visualforce, SOQL, Flow, etc. unless they are EXPLICITLY mentioned in the position description. Do NOT include Salesforce certifications here - they should ONLY be listed in the certifications field)\n';
         } else {
-            prompt += '13. missingSkills (this should be an empty array [] since there is no position description to compare against. DO NOT include any common Salesforce skills here if they are not from a position description)\n';
+            prompt += '12. missingSkills (this should be an empty array [] since there is no position description to compare against. DO NOT include any common Salesforce skills here if they are not from a position description)\n';
         }
             
-        prompt += '14. recommendationLevel (string value, one of: "High", "Medium", "Low")\n\n'
+        prompt += '13. recommendationLevel (string value, one of: "High", "Medium", "Low")\n\n'
             + 'Handle incomplete data gracefully. If certain information is missing from the resume, include null values or empty arrays for those fields in the JSON but do not make assumptions about the missing data.\n\n';
         
         // Add position information if available
@@ -237,7 +237,7 @@ public with sharing class CVAnalysisHelper {
         
         // Add resume content
         prompt += 'Resume text:\n"""\n' + context.resumeText + '\n"""\n\n'
-            + 'Validate JSON output before completion. If invalid, retry until you can produce a valid, well-formed JSON.';
+            + 'Validate JSON output before completion. If invalid, retry until you can produce a valid, well-formed JSON. REMEMBER, DO NOT INCLUDE ANY PERSONAL INFORMATION OR COMPANY NAMES IN YOUR RESPONSE.';
         
         return prompt;
     }
