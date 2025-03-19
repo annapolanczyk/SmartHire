@@ -136,7 +136,39 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
     }
     
     get recommendationLevel() {
-        return this.analysisRecord.data ? getFieldValue(this.analysisRecord.data, RECOMMENDATION_LEVEL_FIELD) : null;
+        console.log('Getting recommendationLevel');
+        if (this.analysisRecord && this.analysisRecord.data) {
+            return this.analysisRecord.data.RecommendationLevel__c || 'None';
+        }
+        return 'None';
+    }
+    
+    get recommendationScoreValue() {
+        const level = this.recommendationLevel.toLowerCase();
+        switch (level) {
+            case 'high':
+                return 90;
+            case 'medium':
+                return 60;
+            case 'low':
+                return 30;
+            default:
+                return 0;
+        }
+    }
+    
+    get recommendationProgressVariant() {
+        const level = this.recommendationLevel.toLowerCase();
+        switch (level) {
+            case 'high':
+                return 'success';
+            case 'medium':
+                return 'warning';
+            case 'low':
+                return 'error';
+            default:
+                return 'base';
+        }
     }
     
     get recommendationLevelClass() {

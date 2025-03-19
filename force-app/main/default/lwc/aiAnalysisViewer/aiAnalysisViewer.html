@@ -141,6 +141,14 @@
                                             {recommendationLevel}
                                         </p>
                                     </div>
+                                    <!-- Dodany pasek postępu dla wizualizacji wyniku -->
+                                    <div class="slds-m-top_small">
+                                        <lightning-progress-bar 
+                                            value={recommendationScoreValue} 
+                                            size="large" 
+                                            variant={recommendationProgressVariant}>
+                                        </lightning-progress-bar>
+                                    </div>
                                 </div>
                                 
                                 <!-- Rekomendacje -->
@@ -160,7 +168,10 @@
                                             <ul class="slds-list">
                                                 <template if:true={matchingSkills.length}>
                                                     <template for:each={matchingSkills} for:item="skill">
-                                                        <li key={skill} class="slds-m-bottom_x-small slds-text-color_success">{skill}</li>
+                                                        <li key={skill} class="slds-m-bottom_x-small slds-text-color_success">
+                                                            <lightning-icon icon-name="utility:check" size="x-small" alternative-text="Matched skill" class="slds-m-right_x-small"></lightning-icon>
+                                                            {skill}
+                                                        </li>
                                                     </template>
                                                 </template>
                                                 <template if:false={matchingSkills.length}>
@@ -177,7 +188,10 @@
                                             <ul class="slds-list">
                                                 <template if:true={missingSkills.length}>
                                                     <template for:each={missingSkills} for:item="skill">
-                                                        <li key={skill} class="slds-m-bottom_x-small slds-text-color_error">{skill}</li>
+                                                        <li key={skill} class="slds-m-bottom_x-small slds-text-color_error">
+                                                            <lightning-icon icon-name="utility:close" size="x-small" alternative-text="Missing skill" class="slds-m-right_x-small"></lightning-icon>
+                                                            {skill}
+                                                        </li>
                                                     </template>
                                                 </template>
                                                 <template if:false={missingSkills.length}>
@@ -240,7 +254,7 @@
                                             <lightning-button 
                                                 label="View Candidate" 
                                                 icon-name="standard:people" 
-                                                variant="neutral" 
+                                                variant="brand-outline" 
                                                 data-id={candidateId}
                                                 onclick={navigateToRecord}>
                                             </lightning-button>
@@ -249,7 +263,7 @@
                                             <lightning-button 
                                                 label="View Position" 
                                                 icon-name="standard:job_position" 
-                                                variant="neutral" 
+                                                variant="brand-outline" 
                                                 data-id={positionId}
                                                 onclick={navigateToRecord}>
                                             </lightning-button>
@@ -257,7 +271,7 @@
                                         <lightning-button 
                                             label="View Analysis Details" 
                                             icon-name="standard:report" 
-                                            variant="neutral" 
+                                            variant="brand" 
                                             data-id={analysisId}
                                             onclick={navigateToRecord}>
                                         </lightning-button>
