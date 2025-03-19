@@ -124,18 +124,26 @@ public with sharing class CVAnalysisHelper {
                 context.jobDescription = position.Job_Description__c != null ? position.Job_Description__c : '';
                 context.positionName = position.Name;
                 
-                // Priorytetowo pobierz umiejętności z pola Required_Skills__c
+                // Zbiór do przechowywania unikalnych umiejętności z obu źródeł
+                Set<String> allSkills = new Set<String>();
+                
+                // Pobierz umiejętności z Required_Skills__c, jeśli dostępne
                 if (String.isNotBlank(position.Required_Skills__c)) {
-                    context.requiredSkills = parseSkills(position.Required_Skills__c);
-                    System.debug(LoggingLevel.INFO, 'Pobrano wymagane umiejętności z Required_Skills__c: ' + context.requiredSkills);
+                    List<String> skillsFromField = parseSkills(position.Required_Skills__c);
+                    allSkills.addAll(skillsFromField);
+                    System.debug(LoggingLevel.INFO, 'Pobrano wymagane umiejętności z Required_Skills__c: ' + skillsFromField);
                 }
                 
-                // Jeśli Required_Skills__c jest puste, a Job_Description__c nie jest,
-                // spróbuj wydobyć umiejętności z opisu stanowiska
-                if (context.requiredSkills.isEmpty() && String.isNotBlank(position.Job_Description__c)) {
-                    context.requiredSkills = extractSkillsFromDescription(position.Job_Description__c);
-                    System.debug(LoggingLevel.INFO, 'Pobrano wymagane umiejętności z Job_Description__c: ' + context.requiredSkills);
+                // Zawsze próbuj wydobyć umiejętności z opisu stanowiska, jeśli jest dostępny
+                if (String.isNotBlank(position.Job_Description__c)) {
+                    List<String> skillsFromDescription = extractSkillsFromDescription(position.Job_Description__c);
+                    allSkills.addAll(skillsFromDescription);
+                    System.debug(LoggingLevel.INFO, 'Pobrano wymagane umiejętności z Job_Description__c: ' + skillsFromDescription);
                 }
+                
+                // Konwersja Set na List
+                context.requiredSkills = new List<String>(allSkills);
+                System.debug(LoggingLevel.INFO, 'Połączona lista wymaganych umiejętności: ' + context.requiredSkills);
             }
         }
         
@@ -303,81 +311,62 @@ public with sharing class CVAnalysisHelper {
     }
     
     /**
-     * @description Buduje prompt dla API OpenAI
-     * @param context Kontekst analizy zawierający dane CV i stanowiska
-     * @return Prompt dla API OpenAI
+     * @description Buduje prompt dla OpenAI na podstawie kontekstu analizy
+     * @param context Kontekst analizy CV
+     * @return Prompt dla OpenAI
      */
     private static String buildPrompt(AnalysisContext context) {
-        // Zaczynam od założenia, że Job_Description__c zawsze istnieje, ponieważ jest to pole wymagane
-        // Nie ma już potrzeby sprawdzać context.hasPositionDetails() i rozgałęziać kod
+        // Używamy tekstu CV, który jest już dostępny w kontekście
+        String resumeText = context.resumeText;
         
-        String prompt = 'Conduct a factual, evidence-based analysis of the following resume. Act as an experienced recruiter specializing in Salesforce technologies. '
-            + 'Identify ONLY skills, competencies, qualifications, and professional experience EXPLICITLY mentioned in the document. DO NOT INFER OR ASSUME ANY SKILLS THAT ARE NOT CLEARLY STATED.\n\n'
-            + 'Pay special attention to:\n'
-            + '1. Technical skills related to Salesforce that are EXPLICITLY mentioned (e.g., Apex, LWC, Visualforce, SOQL, Flow, etc.)\n'
-            + '2. Programming and integration skills that are EXPLICITLY mentioned (REST/SOAP API, JavaScript, HTML/CSS, etc.)\n'
-            + '3. Soft and interpersonal skills that are EXPLICITLY mentioned\n'
-            + '4. Certificates and qualifications, especially related to Salesforce, that are EXPLICITLY mentioned\n'
-            + '5. Level of professional experience that is EXPLICITLY mentioned\n'
-            + '6. ONLY list skills that are EXPLICITLY stated - DO NOT infer or assume skills that are not directly mentioned\n\n'
-            + 'Pay special attention to Salesforce certifications. Look for any mention of standard Salesforce certifications such as:\n'
-            + '- Salesforce Administrator\n'
-            + '- Advanced Administrator\n'
-            + '- Platform App Builder\n'
-            + '- Platform Developer I or II\n'
-            + '- Sales Cloud Consultant\n'
-            + '- Service Cloud Consultant\n'
-            + '- Experience Cloud Consultant\n'
-            + '- Marketing Cloud certifications\n'
-            + '- CPQ Specialist\n'
-            + '- Integration Architecture Designer\n'
-            + '... and any other Salesforce certifications mentioned\n\n'
-            + 'IMPORTANT: Carefully identify ALL certifications mentioned in the resume. List them ONLY in the "certifications" field of the response JSON. DO NOT place Salesforce certifications in the "missingSkills" field even if they appear in the job requirements. Certifications should only be treated as skills if they are explicitly mentioned as skills (not as certifications).\n\n'
-            + 'Parse years of experience only if numeric values are explicitly mentioned (e.g., "5 years of Apex experience", "worked with Salesforce for 3 years"). Do not infer years of experience from employment periods unless explicitly stated.\n\n'
-            + 'IMPORTANT: FOR DATA PRIVACY REASONS, DO NOT EXTRACT OR INCLUDE ANY PERSONAL INFORMATION such as names, email addresses, phone numbers, or specific company names. We are only interested in skills, experience levels, and certifications - not personal or identifying information.\n\n'
-            + 'Extract the following information in JSON format:\n'
-            + '1. yearsOfExperience (general professional experience in years if explicitly mentioned)\n'
-            + '2. education (only degree level and field of study, NO school names or graduation years)\n'
-            + '3. technicalSkills (list, ONLY include skills that are EXPLICITLY mentioned in the resume)\n'
-            + '4. languages (list with proficiency level)\n'
-            + '5. certifications (list, with special attention to Salesforce certifications - make sure ALL certifications are included here, not in missingSkills)\n'
-            + '6. matchScore (percentage match score from 0 to 100, comparing the candidate\'s skills with the required skills for the position)\n';
-            
-        // Dodaj informację o wymaganych umiejętnościach dla stanowiska
-        prompt += '7. matchedSkills (array of skills that are EXPLICITLY mentioned in the resume AND appear in the list of required skills below. DO NOT include any skills that are not explicitly mentioned in the resume.)\n'
-            + '8. additionalSkills (array of supplementary skills that are EXPLICITLY mentioned in the resume but are NOT in the required skills list below)\n'
-            + '9. analysisSummary (concise summary of candidate\'s profile, 2-3 sentences max, based ONLY on information explicitly stated in the resume, WITHOUT mentioning specific company names or personal details)\n'
-            + '10. keyHighlights (bullet points of 3-5 most important strengths that are EXPLICITLY mentioned in the resume, DO NOT end with periods, DO NOT include company names or personal details)\n'
-            + '11. potentialConcerns (areas where the candidate might lack experience based on information in the resume, DO NOT end with periods)\n'
-            + '12. missingSkills (skills from the required skills list below that are NOT found in the resume. IMPORTANT: ONLY include skills from the list below, DO NOT infer or add any other "expected" skills. Do NOT include Salesforce certifications here - they should ONLY be listed in the certifications field)\n'
-            + '13. recommendationLevel (string value, one of: "High", "Medium", "Low", based on how well the candidate\'s skills match the required skills)\n\n'
-            + 'Handle incomplete data gracefully. If certain information is missing from the resume, include null values or empty arrays for those fields in the JSON but do not make assumptions about the missing data.\n\n';
-            
-        // Dodaj listę wymaganych umiejętności
-        prompt += 'REQUIRED SKILLS FOR THE POSITION:\n';
-        if (!context.requiredSkills.isEmpty()) {
-            prompt += '[' + String.join(context.requiredSkills, ', ') + ']\n\n';
-        } else {
-            prompt += '[No specific skills listed for this position]\n\n';
+        String requiredSkillsList = '';
+        if (context.requiredSkills != null && !context.requiredSkills.isEmpty()) {
+            requiredSkillsList = String.join(context.requiredSkills, ', ');
         }
-            
-        // Dodaj opis stanowiska, jeśli istnieje
+        
+        String positionInfo = '';
+        if (String.isNotBlank(context.positionName)) {
+            positionInfo = '\nPOSITION NAME: ' + context.positionName;
+        }
+        
+        String jobDescriptionInfo = '';
         if (String.isNotBlank(context.jobDescription)) {
-            prompt += 'Additionally, evaluate the candidate\'s fit for the position "' + context.positionName + '" based ONLY on the skills and experience EXPLICITLY mentioned in their resume, compared with the description and required skills. '
-                + 'When evaluating the match, read the position description carefully and only match with skills that are EXPLICITLY mentioned in the candidate\'s resume.\n\n'
-                + 'Position description: ' + context.jobDescription + '\n\n';
+            jobDescriptionInfo = '\nJOB DESCRIPTION: ' + context.jobDescription;
         }
-            
-        prompt += 'Return the results in a single, valid JSON object with the sections described above. '
-            + 'IMPORTANT: Be 100% factual and only include skills that are EXPLICITLY mentioned in the resume. Do not exaggerate, infer, or assume skills that are not clearly stated in the resume. '
-            + 'If there are few or no Salesforce skills mentioned, that\'s okay - report accurately what is found. '
-            + 'matchedSkills should ONLY include skills that appear in BOTH the required skills list AND are explicitly mentioned in the candidate resume. '
-            + 'missingSkills should ONLY include skills from the required skills list that are not found in the resume. DO NOT list any "standard" or "expected" skills unless they are actually in the required skills list. '
-            + 'Remember that Salesforce certifications should ONLY be listed in the certifications field, not in missingSkills field.\n\n';
-            
-        // Add resume content
-        prompt += 'Resume text:\n"""\n' + context.resumeText + '\n"""\n\n'
-            + 'Validate JSON output before completion. If invalid, retry until you can produce a valid, well-formed JSON. REMEMBER, DO NOT INCLUDE ANY PERSONAL INFORMATION OR COMPANY NAMES IN YOUR RESPONSE.';
+        
+        String prompt = 'Analyze the following resume' + 
+                       ' against the position requirements.' +
+                       positionInfo +
+                       jobDescriptionInfo +
+                       '\nREQUIRED SKILLS FOR THE POSITION: ' + requiredSkillsList + '\n\n' +
+                       'RESUME TEXT:\n' + resumeText + '\n\n' +
+                       'Instructions:\n' +
+                       '1. Identify all skills and certifications EXPLICITLY mentioned in the resume.\n' +
+                       '2. Calculate a match score (0-100) based on how well the candidate\'s skills match the required skills.\n' +
+                       '3. Provide matched skills that are both in the resume AND in the required skills list.\n' +
+                       '4. Provide missing skills that are in the required skills list but NOT in the resume.\n' +
+                       '5. Provide additional skills that are in the resume but NOT in the required skills list.\n' +
+                       '6. Provide a recommendation level (Low, Medium, High) based on the match score.\n' +
+                       '7. Provide a summary of the analysis, highlighting key strengths and areas of concern.\n' +
+                       '8. Identify key highlights from the candidate\'s experience relevant to the position.\n' +
+                       '9. Identify potential concerns or gaps in the candidate\'s experience.\n\n' +
+                       'Format your response as a JSON object with the following structure:\n' +
+                       '{\n' +
+                       '  "matchScore": number, // 0-100\n' +
+                       '  "matchedSkills": string[], // Skills explicitly mentioned in the resume that match required skills\n' +
+                       '  "missingSkills": string[], // Required skills not found in the resume\n' +
+                       '  "additionalSkills": string[], // Skills in the resume but not in required skills\n' +
+                       '  "recommendationLevel": string, // "Low", "Medium", or "High"\n' +
+                       '  "summary": string, // Summary of analysis\n' +
+                       '  "keyHighlights": string[], // Key highlights from the candidate\'s experience\n' +
+                       '  "potentialConcerns": string[] // Potential concerns or gaps\n' +
+                       '}\n\n' +
+                       'IMPORTANT NOTES:\n' +
+                       '1. DO NOT invent or assume skills not explicitly mentioned in the resume.\n' +
+                       '2. Only include in matchedSkills the skills that are EXPLICITLY mentioned in the resume AND in the required skills.\n' +
+                       '3. Only include in missingSkills the skills from the required list that are NOT found in the resume.\n' +
+                       '4. Include in additionalSkills any relevant skills mentioned in the resume but not in the required skills list.\n' +
+                       '5. Provide your analysis ONLY in the specified JSON format, with no additional text.';
         
         return prompt;
     }
