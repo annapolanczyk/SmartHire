@@ -138,7 +138,9 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
     get recommendationLevel() {
         console.log('Getting recommendationLevel');
         if (this.analysisRecord && this.analysisRecord.data) {
-            return this.analysisRecord.data.RecommendationLevel__c || 'None';
+            const recommendationValue = getFieldValue(this.analysisRecord.data, RECOMMENDATION_LEVEL_FIELD);
+            console.log('Recommendation level value:', recommendationValue);
+            return recommendationValue || 'None';
         }
         return 'None';
     }
