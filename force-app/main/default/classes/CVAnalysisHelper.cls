@@ -163,56 +163,58 @@ public with sharing class CVAnalysisHelper {
      * @return Prompt dla API OpenAI
      */
     private static String buildPrompt(AnalysisContext context) {
-        String prompt = 'Conduct an advanced semantic analysis of the following resume. Act as an experienced recruiter specializing in Salesforce technologies. '
-            + 'Identify in detail all skills, competencies, qualifications, and professional experience mentioned in the document.\n\n'
+        String prompt = 'Conduct a factual, evidence-based analysis of the following resume. Act as an experienced recruiter specializing in Salesforce technologies. '
+            + 'Identify ONLY skills, competencies, qualifications, and professional experience EXPLICITLY mentioned in the document. DO NOT INFER OR ASSUME ANY SKILLS THAT ARE NOT CLEARLY STATED.\n\n'
             + 'Pay special attention to:\n'
-            + '1. Technical skills related to Salesforce (Apex, LWC, Visualforce, SOQL, Flow, etc.)\n'
-            + '2. Programming and integration skills (REST/SOAP API, JavaScript, HTML/CSS, etc.)\n'
-            + '3. Soft and interpersonal skills\n'
-            + '4. Certificates and qualifications, especially related to Salesforce\n'
-            + '5. Level of professional experience\n'
-            + '6. Indirect skills that are not explicitly mentioned but can be inferred from context\n\n'
+            + '1. Technical skills related to Salesforce that are EXPLICITLY mentioned (e.g., Apex, LWC, Visualforce, SOQL, Flow, etc.)\n'
+            + '2. Programming and integration skills that are EXPLICITLY mentioned (REST/SOAP API, JavaScript, HTML/CSS, etc.)\n'
+            + '3. Soft and interpersonal skills that are EXPLICITLY mentioned\n'
+            + '4. Certificates and qualifications, especially related to Salesforce, that are EXPLICITLY mentioned\n'
+            + '5. Level of professional experience that is EXPLICITLY mentioned\n'
+            + '6. ONLY list skills that are EXPLICITLY stated - DO NOT infer or assume skills that are not directly mentioned\n\n'
             + 'Extract the following information in JSON format:\n'
             + '1. personalData (name, surname, email, phone)\n'
             + '2. education (degree, field, university, graduation year)\n'
             + '3. workExperience (list of positions, companies, employment periods, responsibilities)\n'
-            + '4. technicalSkills (list, pay special attention to Salesforce technologies)\n'
+            + '4. technicalSkills (list, ONLY include skills that are EXPLICITLY mentioned in the resume)\n'
             + '5. languages (list with proficiency level)\n'
             + '6. certifications (list)\n'
             + '7. matchScore (percentage match score from 0 to 100, even without position data provide an estimated skill level score)\n';
             
         // Modify the prompt to emphasize matching skills based on position description
         if (context.hasPositionDetails()) {
-            prompt += '8. matchedSkills (array of skills from the CV that are explicitly mentioned or strongly implied in the position description. Be precise and only include skills that appear in both the position description and the resume)\n';
+            prompt += '8. matchedSkills (array of skills that are EXPLICITLY mentioned in BOTH the resume AND the position description. DO NOT include any skills that are not explicitly mentioned in the resume, even if they appear in the position description)\n';
         } else {
-            prompt += '8. matchedSkills (array of skills relevant to Salesforce development)\n';
+            prompt += '8. matchedSkills (array of skills EXPLICITLY mentioned in the resume that are relevant to Salesforce development. DO NOT include assumed or inferred skills)\n';
         }
             
-        prompt += '9. additionalSkills (array of supplementary skills that might be useful)\n'
-            + '10. analysisSummary (concise summary of candidate\'s profile, 2-3 sentences max)\n'
-            + '11. keyHighlights (bullet points of 3-5 most important strengths, DO NOT end with periods)\n'
-            + '12. potentialConcerns (areas where the candidate might lack experience, DO NOT end with periods)\n';
+        prompt += '9. additionalSkills (array of supplementary skills that are EXPLICITLY mentioned in the resume)\n'
+            + '10. analysisSummary (concise summary of candidate\'s profile, 2-3 sentences max, based ONLY on information explicitly stated in the resume)\n'
+            + '11. keyHighlights (bullet points of 3-5 most important strengths that are EXPLICITLY mentioned in the resume, DO NOT end with periods)\n'
+            + '12. potentialConcerns (areas where the candidate might lack experience based on information in the resume, DO NOT end with periods)\n';
             
         // Modify the prompt to emphasize missing skills based on position description
         if (context.hasPositionDetails()) {
-            prompt += '13. missingSkills (skills that are mentioned in the position description but are missing from the resume. Be precise and only include skills that appear in the position description but not in the resume)\n';
+            prompt += '13. missingSkills (skills that are EXPLICITLY mentioned in the position description but are NOT found in the resume. ONLY include skills that appear in the position description)\n';
         } else {
-            prompt += '13. missingSkills (skills that would be beneficial but are missing from the resume)\n';
+            prompt += '13. missingSkills (common Salesforce skills that are NOT mentioned in the resume)\n';
         }
             
         prompt += '14. recommendationLevel (string value, one of: "High", "Medium", "Low")\n\n';
         
         // Add position information if available
         if (context.hasPositionDetails()) {
-            prompt += 'Additionally, evaluate the candidate\'s fit for the position "' + context.positionName + '" based on the description and required skills below. '
-                + 'When evaluating the match, read the position description carefully and compare it with candidate\'s experience.\n\n'
+            prompt += 'Additionally, evaluate the candidate\'s fit for the position "' + context.positionName + '" based ONLY on the skills and experience EXPLICITLY mentioned in their resume, compared with the description and required skills below. '
+                + 'When evaluating the match, read the position description carefully and only match with skills that are EXPLICITLY mentioned in the candidate\'s resume.\n\n'
                 + 'Position description: ' + context.jobDescription + '\n\n'
                 + 'Return the results in a single, valid JSON object with the sections described above. '
-                + 'Make sure the matchedSkills are ONLY skills that appear in both the position description and the candidate resume. '
-                + 'Similarly, missingSkills should ONLY be skills mentioned in the position description but not found in the resume.\n\n';
+                + 'IMPORTANT: Be 100% factual and only include skills that are EXPLICITLY mentioned in the resume. Do not exaggerate, infer, or assume skills that are not clearly stated in the resume. '
+                + 'If there are few or no Salesforce skills mentioned, that\'s okay - report accurately what is found. '
+                + 'matchedSkills should ONLY include skills that appear in BOTH the position description AND are explicitly mentioned in the candidate resume. '
+                + 'missingSkills should ONLY include skills mentioned in the position description that are not found in the resume.\n\n';
         } else {
             prompt += 'Return the results in a single, valid JSON object with the sections described above. '
-                + 'Since there is no position specified, provide a general evaluation focused on Salesforce skills and experience.\n\n';
+                + 'IMPORTANT: Be 100% factual and only include skills that are EXPLICITLY mentioned in the resume. Do not exaggerate, infer, or assume skills that are not clearly stated.\n\n';
         }
         
         // Add resume content
