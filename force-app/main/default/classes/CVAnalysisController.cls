@@ -556,19 +556,29 @@ public with sharing class CVAnalysisController {
             }
         }
         
+        // Sprawdź czy JSON zawiera informacje o certyfikatach w różnych formatach
+        System.debug(LoggingLevel.INFO, '=== SZCZEGÓŁOWE SPRAWDZANIE CERTYFIKATÓW ===');
+        System.debug(LoggingLevel.INFO, 'Szukam certyfikatów w danych: ' + JSON.serialize(results).left(500));
+        
         // Specjalnie obsługujemy "certifications" - zapewniamy, że zawsze istnieje w wyniku
         if (!containsKeyCaseInsensitive(standardized, 'certifications')) {
             // Sprawdź czy certyfikaty są wymienione w innym miejscu
-            List<String> possibleCertKeysExact = new List<String>{'certifications', 'certificates', 'certification', 'certificate'};
-            List<String> possibleCertKeysPartial = new List<String>{'cert', 'certs', 'certyf', 'certif'};
+            List<String> possibleCertKeysExact = new List<String>{
+                'certifications', 'certificates', 'certification', 'certificate', 
+                'salesforce certifications', 'salesforce certificates'
+            };
+            List<String> possibleCertKeysPartial = new List<String>{
+                'cert', 'certs', 'certyf', 'certif', 'salesforce cert', 'admin cert'
+            };
             
             Boolean foundCertifications = false;
             
             // Najpierw sprawdź dokładne nazwy kluczy
             for (String certKey : possibleCertKeysExact) {
                 if (containsKeyCaseInsensitive(results, certKey)) {
-                    standardized.put('certifications', getValueCaseInsensitive(results, certKey));
-                    System.debug(LoggingLevel.DEBUG, 'Found certifications under key: ' + certKey);
+                    Object certsValue = getValueCaseInsensitive(results, certKey);
+                    standardized.put('certifications', certsValue);
+                    System.debug(LoggingLevel.INFO, 'Znaleziono certyfikaty pod kluczem: ' + certKey + ' - wartość: ' + certsValue);
                     foundCertifications = true;
                     break;
                 }
@@ -580,8 +590,9 @@ public with sharing class CVAnalysisController {
                     String lowercaseKey = key.toLowerCase();
                     for (String partialKey : possibleCertKeysPartial) {
                         if (lowercaseKey.contains(partialKey.toLowerCase())) {
-                            standardized.put('certifications', results.get(key));
-                            System.debug(LoggingLevel.DEBUG, 'Found certifications with partial key match: ' + key);
+                            Object certsValue = results.get(key);
+                            standardized.put('certifications', certsValue);
+                            System.debug(LoggingLevel.INFO, 'Znaleziono certyfikaty z częściowym dopasowaniem klucza: ' + key + ' - wartość: ' + certsValue);
                             foundCertifications = true;
                             break;
                         }
@@ -590,15 +601,35 @@ public with sharing class CVAnalysisController {
                 }
             }
             
+            // Sprawdź wartości w polach typu String dla zawartości "Admin" lub "Certificate"
+            if (!foundCertifications) {
+                for (String key : results.keySet()) {
+                    Object value = results.get(key);
+                    if (value instanceof String) {
+                        String strValue = (String)value;
+                        if ((strValue.containsIgnoreCase('Admin') && strValue.containsIgnoreCase('Certified')) || 
+                            (strValue.containsIgnoreCase('Certificate') && strValue.length() < 200)) {
+                            standardized.put('certifications', new List<String>{strValue});
+                            System.debug(LoggingLevel.INFO, 'Znaleziono certyfikat w polu tekstowym: ' + key + ' - wartość: ' + strValue);
+                            foundCertifications = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
             // Sprawdź, czy certyfikaty nie znajdują się w personalData
             if (!foundCertifications && containsKeyCaseInsensitive(results, 'personalData')) {
                 Object personalDataObj = getValueCaseInsensitive(results, 'personalData');
                 if (personalDataObj instanceof Map<String, Object>) {
                     Map<String, Object> personalData = (Map<String, Object>)personalDataObj;
+                    System.debug(LoggingLevel.INFO, 'Sprawdzam certyfikaty w personalData, klucze: ' + personalData.keySet());
+                    
                     for (String certKey : possibleCertKeysExact) {
                         if (containsKeyCaseInsensitive(personalData, certKey)) {
-                            standardized.put('certifications', getValueCaseInsensitive(personalData, certKey));
-                            System.debug(LoggingLevel.DEBUG, 'Found certifications in personalData: ' + certKey);
+                            Object certsValue = getValueCaseInsensitive(personalData, certKey);
+                            standardized.put('certifications', certsValue);
+                            System.debug(LoggingLevel.INFO, 'Znaleziono certyfikaty w personalData: ' + certKey + ' - wartość: ' + certsValue);
                             foundCertifications = true;
                             break;
                         }
@@ -609,8 +640,9 @@ public with sharing class CVAnalysisController {
                             String lowercaseKey = key.toLowerCase();
                             for (String partialKey : possibleCertKeysPartial) {
                                 if (lowercaseKey.contains(partialKey.toLowerCase())) {
-                                    standardized.put('certifications', personalData.get(key));
-                                    System.debug(LoggingLevel.DEBUG, 'Found certifications in personalData with partial key match: ' + key);
+                                    Object certsValue = personalData.get(key);
+                                    standardized.put('certifications', certsValue);
+                                    System.debug(LoggingLevel.INFO, 'Znaleziono certyfikaty w personalData z częściowym dopasowaniem: ' + key + ' - wartość: ' + certsValue);
                                     foundCertifications = true;
                                     break;
                                 }
@@ -618,15 +650,87 @@ public with sharing class CVAnalysisController {
                             if (foundCertifications) break;
                         }
                     }
+                    
+                    // Sprawdź wartości w personalData dla zawartości "Admin" lub "Certificate"
+                    if (!foundCertifications) {
+                        for (String key : personalData.keySet()) {
+                            Object value = personalData.get(key);
+                            if (value instanceof String) {
+                                String strValue = (String)value;
+                                if ((strValue.containsIgnoreCase('Admin') && strValue.containsIgnoreCase('Certified')) || 
+                                    (strValue.containsIgnoreCase('Certificate') && strValue.length() < 200)) {
+                                    standardized.put('certifications', new List<String>{strValue});
+                                    System.debug(LoggingLevel.INFO, 'Znaleziono certyfikat w personalData w polu tekstowym: ' + key + ' - wartość: ' + strValue);
+                                    foundCertifications = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Sprawdź w education
+            if (!foundCertifications && containsKeyCaseInsensitive(results, 'education')) {
+                Object educationObj = getValueCaseInsensitive(results, 'education');
+                System.debug(LoggingLevel.INFO, 'Sprawdzam certyfikaty w education, typ: ' + getObjectType(educationObj));
+                
+                if (educationObj instanceof String) {
+                    String educationStr = (String)educationObj;
+                    if (educationStr.containsIgnoreCase('Administrator') || 
+                        educationStr.containsIgnoreCase('Certificate') || 
+                        educationStr.containsIgnoreCase('Certified')) {
+                        
+                        List<String> certList = new List<String>();
+                        
+                        // Próbuj podzielić na linie i znaleźć certyfikaty
+                        for (String line : educationStr.split('\\n')) {
+                            if (line.containsIgnoreCase('Admin') || 
+                                line.containsIgnoreCase('Certificate') || 
+                                line.containsIgnoreCase('Certified')) {
+                                certList.add(line.trim());
+                            }
+                        }
+                        
+                        if (!certList.isEmpty()) {
+                            standardized.put('certifications', certList);
+                            System.debug(LoggingLevel.INFO, 'Znaleziono certyfikaty w polu education: ' + certList);
+                            foundCertifications = true;
+                        }
+                    }
+                } else if (educationObj instanceof List<Object>) {
+                    List<Object> educationList = (List<Object>)educationObj;
+                    List<String> certList = new List<String>();
+                    
+                    for (Object edu : educationList) {
+                        if (edu instanceof String) {
+                            String eduStr = (String)edu;
+                            if (eduStr.containsIgnoreCase('Admin') || 
+                                eduStr.containsIgnoreCase('Certificate') || 
+                                eduStr.containsIgnoreCase('Certified')) {
+                                certList.add(eduStr);
+                            }
+                        }
+                    }
+                    
+                    if (!certList.isEmpty()) {
+                        standardized.put('certifications', certList);
+                        System.debug(LoggingLevel.INFO, 'Znaleziono certyfikaty w liście education: ' + certList);
+                        foundCertifications = true;
+                    }
                 }
             }
             
             // Jeśli ciągle nie znaleziono certyfikatów, ustaw jako pustą tablicę
             if (!foundCertifications) {
                 standardized.put('certifications', new List<String>());
-                System.debug(LoggingLevel.DEBUG, 'No certifications found, using empty list');
+                System.debug(LoggingLevel.INFO, 'Nie znaleziono certyfikatów, używam pustej listy');
             }
+        } else {
+            System.debug(LoggingLevel.INFO, 'Certyfikaty już istnieją w standardized pod kluczem: certifications');
         }
+        
+        System.debug(LoggingLevel.INFO, '=== KONIEC SPRAWDZANIA CERTYFIKATÓW ===');
         
         // Zapewnij, że certifications jest zawsze listą
         Object certObj = standardized.get('certifications');
@@ -653,12 +757,12 @@ public with sharing class CVAnalysisController {
                 }
                 
                 standardized.put('certifications', certList);
-                System.debug(LoggingLevel.DEBUG, 'Converted certifications from string to list: ' + certList);
+                System.debug(LoggingLevel.DEBUG, 'Przekonwertowano certifications ze string na listę: ' + certList);
             } else if (!(certObj instanceof List<Object>)) {
                 // Jeśli to nie jest ani String, ani List, konwertuj na String i dodaj jako pojedynczy element listy
                 List<String> certList = new List<String>{String.valueOf(certObj)};
                 standardized.put('certifications', certList);
-                System.debug(LoggingLevel.DEBUG, 'Converted non-list certifications to list: ' + certList);
+                System.debug(LoggingLevel.DEBUG, 'Przekonwertowano certifications z typu innego niż lista na listę: ' + certList);
             }
         }
         
