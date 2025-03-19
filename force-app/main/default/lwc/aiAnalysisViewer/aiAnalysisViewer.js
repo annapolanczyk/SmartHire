@@ -102,7 +102,21 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
     
     get matchingSkills() {
         const skills = this.analysisRecord.data ? getFieldValue(this.analysisRecord.data, MATCHING_SKILLS_FIELD) : null;
-        return skills ? skills.split(',').map(skill => skill.trim()) : [];
+        console.log('Raw matchingSkills value:', skills);
+        
+        if (!skills) return [];
+        
+        // Przekształć ciąg znaków na tablicę i usuń białe znaki oraz kropki na końcu
+        const skillsArray = skills.split(',')
+            .map(skill => {
+                // Usuń białe znaki z początku i końca, a następnie usuń kropkę jeśli występuje na końcu
+                let trimmedSkill = skill.trim();
+                return trimmedSkill.endsWith('.') ? trimmedSkill.substring(0, trimmedSkill.length - 1) : trimmedSkill;
+            })
+            .filter(skill => skill.length > 0); // Filtruj puste elementy
+        
+        console.log('Processed matchingSkills:', skillsArray);
+        return skillsArray;
     }
     
     get missingSkills() {
@@ -133,12 +147,40 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
     
     get keyHighlights() {
         const highlights = this.analysisRecord.data ? getFieldValue(this.analysisRecord.data, KEY_HIGHLIGHTS_FIELD) : null;
-        return highlights ? highlights.split('\n').filter(h => h.trim() !== '') : [];
+        console.log('Raw keyHighlights value:', highlights);
+        
+        if (!highlights) return [];
+        
+        // Podziel na linie, usuń białe znaki oraz kropki na końcu każdego punktu
+        const highlightsArray = highlights.split('\n')
+            .map(highlight => {
+                // Usuń białe znaki z początku i końca, a następnie usuń kropkę jeśli występuje na końcu
+                let trimmedHighlight = highlight.trim();
+                return trimmedHighlight.endsWith('.') ? trimmedHighlight.substring(0, trimmedHighlight.length - 1) : trimmedHighlight;
+            })
+            .filter(highlight => highlight.length > 0); // Filtruj puste elementy
+        
+        console.log('Processed keyHighlights:', highlightsArray);
+        return highlightsArray;
     }
     
     get potentialConcerns() {
         const concerns = this.analysisRecord.data ? getFieldValue(this.analysisRecord.data, POTENTIAL_CONCERNS_FIELD) : null;
-        return concerns ? concerns.split('\n').filter(c => c.trim() !== '') : [];
+        console.log('Raw potentialConcerns value:', concerns);
+        
+        if (!concerns) return [];
+        
+        // Podziel na linie, usuń białe znaki oraz kropki na końcu każdego punktu
+        const concernsArray = concerns.split('\n')
+            .map(concern => {
+                // Usuń białe znaki z początku i końca, a następnie usuń kropkę jeśli występuje na końcu
+                let trimmedConcern = concern.trim();
+                return trimmedConcern.endsWith('.') ? trimmedConcern.substring(0, trimmedConcern.length - 1) : trimmedConcern;
+            })
+            .filter(concern => concern.length > 0); // Filtruj puste elementy
+        
+        console.log('Processed potentialConcerns:', concernsArray);
+        return concernsArray;
     }
     
     get recommendations() {

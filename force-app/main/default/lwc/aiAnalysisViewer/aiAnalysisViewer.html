@@ -157,7 +157,7 @@
                                     <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2">
                                         <div class="slds-m-bottom_medium">
                                             <h3 class="slds-text-heading_small slds-m-bottom_x-small">MATCHED SKILLS</h3>
-                                            <ul class="slds-list_dotted">
+                                            <ul class="slds-list">
                                                 <template if:true={matchingSkills.length}>
                                                     <template for:each={matchingSkills} for:item="skill">
                                                         <li key={skill} class="slds-m-bottom_x-small slds-text-color_success">{skill}</li>
@@ -174,7 +174,7 @@
                                     <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2">
                                         <div class="slds-m-bottom_medium">
                                             <h3 class="slds-text-heading_small slds-m-bottom_x-small">MISSING SKILLS</h3>
-                                            <ul class="slds-list_dotted">
+                                            <ul class="slds-list">
                                                 <template if:true={missingSkills.length}>
                                                     <template for:each={missingSkills} for:item="skill">
                                                         <li key={skill} class="slds-m-bottom_x-small slds-text-color_error">{skill}</li>
@@ -202,7 +202,7 @@
                                     <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
                                         <div class="slds-m-bottom_medium">
                                             <h3 class="slds-text-heading_small slds-m-bottom_x-small">KEY HIGHLIGHTS</h3>
-                                            <ul class="slds-list_dotted slds-theme_success-container slds-p-around_medium">
+                                            <ul class="slds-list slds-theme_success-container slds-p-around_medium">
                                                 <template if:true={keyHighlights.length}>
                                                     <template for:each={keyHighlights} for:item="highlight">
                                                         <li key={highlight} class="slds-m-bottom_x-small">{highlight}</li>
@@ -219,7 +219,7 @@
                                     <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2">
                                         <div class="slds-m-bottom_medium">
                                             <h3 class="slds-text-heading_small slds-m-bottom_x-small">POTENTIAL CONCERNS</h3>
-                                            <ul class="slds-list_dotted slds-theme_warning-container slds-p-around_medium">
+                                            <ul class="slds-list slds-theme_warning-container slds-p-around_medium">
                                                 <template if:true={potentialConcerns.length}>
                                                     <template for:each={potentialConcerns} for:item="concern">
                                                         <li key={concern} class="slds-m-bottom_x-small">{concern}</li>
