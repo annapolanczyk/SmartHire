@@ -233,7 +233,7 @@ public with sharing class CVAnalysisController {
         try {
             // Użyj bezpiecznego podejścia z listą zamiast bezpośredniego przypisania
             List<Position__c> positions = [
-                SELECT Id, Job_Description__c 
+                SELECT Id, Job_Description__c, Required_Skills__c
                 FROM Position__c 
                 WHERE Id = :positionId 
                 LIMIT 1
@@ -242,12 +242,25 @@ public with sharing class CVAnalysisController {
             if (!positions.isEmpty()) {
                 Position__c position = positions[0];
                 
+                // Zbiór do przechowywania unikalnych umiejętności z obu źródeł
+                Set<String> allSkills = new Set<String>();
+                
+                // Najpierw sprawdź Required_Skills__c (priorytet)
+                if (String.isNotBlank(position.Required_Skills__c)) {
+                    List<String> skillsFromField = position.Required_Skills__c.split(',');
+                    for (String skill : skillsFromField) {
+                        if (String.isNotBlank(skill)) {
+                            // Standaryzacja nazwy umiejętności
+                            String standardizedSkill = standardizeSkillName(skill.trim());
+                            allSkills.add(standardizedSkill);
+                        }
+                    }
+                    System.debug(LoggingLevel.INFO, 'Pobrano wymagane umiejętności z Required_Skills__c: ' + allSkills);
+                }
+                
+                // Następnie sprawdź Job_Description__c
                 if (String.isNotBlank(position.Job_Description__c)) {
                     // Use position description as a source of skills
-                    // In a real scenario, you might use more advanced logic
-                    // to extract skills from the description
-                    
-                    // Simple implementation example - split description into words and filter
                     String description = position.Job_Description__c.toLowerCase();
                     
                     // List of common technical skills to search for in the description
@@ -270,24 +283,25 @@ public with sharing class CVAnalysisController {
                     // Przekształć opis stanowiska na małe litery dla ujednoliconego porównania
                     String lcDescription = description.toLowerCase();
                     
-                    // Dodaj zarówno małe jak i duże litery dla kluczowych technologii Salesforce
-                    Set<String> foundSkills = new Set<String>();
-                    
                     for (String skill : commonSkills) {
                         if (lcDescription.contains(skill.toLowerCase())) {
                             // Zachowaj standaryzowany format dla umiejętności
                             String standardizedSkill = standardizeSkillName(skill);
-                            foundSkills.add(standardizedSkill);
+                            allSkills.add(standardizedSkill);
                         }
                     }
                     
                     // Specjalne sprawdzenie dla Flow/flow
                     if (lcDescription.contains('flow') || lcDescription.contains('flows')) {
-                        foundSkills.add('Flow');
+                        allSkills.add('Flow');
                     }
                     
-                    requiredSkills = new List<String>(foundSkills);
+                    System.debug(LoggingLevel.INFO, 'Pobrano wymagane umiejętności z Job_Description__c: ' + allSkills);
                 }
+                
+                // Konwersja Set na List
+                requiredSkills = new List<String>(allSkills);
+                System.debug(LoggingLevel.INFO, 'Połączona lista wymaganych umiejętności: ' + requiredSkills);
             } else {
                 System.debug(LoggingLevel.WARN, 'Nie znaleziono stanowiska o ID: ' + positionId);
             }
@@ -321,7 +335,10 @@ public with sharing class CVAnalysisController {
             'trigger' => 'Apex Triggers',
             'triggers' => 'Apex Triggers',
             'batch' => 'Batch Apex',
-            'batch apex' => 'Batch Apex'
+            'batch apex' => 'Batch Apex',
+            'sales cloud' => 'Sales Cloud',
+            'service' => 'Service Cloud',
+            'service cloud' => 'Service Cloud'
         };
         
         String lcSkill = skill.toLowerCase();
