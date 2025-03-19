@@ -296,7 +296,7 @@ public with sharing class CVAnalysisController {
      * @param skill Nazwa umiejętności
      * @return Standaryzowana nazwa umiejętności
      */
-    private static String standardizeSkillName(String skill) {
+    public static String standardizeSkillName(String skill) {
         Map<String, String> standardNames = new Map<String, String>{
             'flow' => 'Flow',
             'flows' => 'Flow',

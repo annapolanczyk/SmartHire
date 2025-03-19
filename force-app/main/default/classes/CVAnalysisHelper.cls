@@ -111,20 +111,83 @@ public with sharing class CVAnalysisHelper {
         
         // Pobierz dane stanowiska jeśli podano ID
         if (positionId != null) {
-            Position__c position = getPosition(positionId);
+            // Pobierz zarówno Job_Description__c jak i Required_Skills__c
+            Position__c position = [
+                SELECT Id, Name, Job_Description__c, Required_Skills__c 
+                FROM Position__c 
+                WHERE Id = :positionId 
+                LIMIT 1
+            ];
+            
             if (position != null) {
-                // Pole Job_Description__c jest wymagane, więc zawsze będzie miało wartość
-                context.jobDescription = position.Job_Description__c;
+                // Ustaw opis stanowiska - może być pusty
+                context.jobDescription = position.Job_Description__c != null ? position.Job_Description__c : '';
                 context.positionName = position.Name;
                 
-                // Sprawdzenie Required_Skills__c, które może być puste
-                context.requiredSkills = String.isNotBlank(position.Required_Skills__c) 
-                    ? parseSkills(position.Required_Skills__c) 
-                    : new List<String>();
+                // Priorytetowo pobierz umiejętności z pola Required_Skills__c
+                if (String.isNotBlank(position.Required_Skills__c)) {
+                    context.requiredSkills = parseSkills(position.Required_Skills__c);
+                    System.debug(LoggingLevel.INFO, 'Pobrano wymagane umiejętności z Required_Skills__c: ' + context.requiredSkills);
+                }
+                
+                // Jeśli Required_Skills__c jest puste, a Job_Description__c nie jest,
+                // spróbuj wydobyć umiejętności z opisu stanowiska
+                if (context.requiredSkills.isEmpty() && String.isNotBlank(position.Job_Description__c)) {
+                    context.requiredSkills = extractSkillsFromDescription(position.Job_Description__c);
+                    System.debug(LoggingLevel.INFO, 'Pobrano wymagane umiejętności z Job_Description__c: ' + context.requiredSkills);
+                }
             }
         }
         
         return context;
+    }
+    
+    /**
+     * @description Ekstrahuje umiejętności z opisu stanowiska
+     * @param description Opis stanowiska
+     * @return Lista wydobytych umiejętności
+     */
+    private static List<String> extractSkillsFromDescription(String description) {
+        Set<String> foundSkills = new Set<String>();
+        
+        if (String.isBlank(description)) {
+            return new List<String>();
+        }
+        
+        // Przekształć opis stanowiska na małe litery
+        String lcDescription = description.toLowerCase();
+        
+        // Lista popularnych umiejętności Salesforce do wyszukania
+        List<String> commonSkills = new List<String>{
+            'java', 'javascript', 'js', 'python', 'c#', 'c++', 'ruby', 'php', 'html', 'css',
+            'sql', 'nosql', 'react', 'angular', 'vue', 'node', 'express', 'django', 'flask',
+            'spring', 'hibernate', 'docker', 'kubernetes', 'aws', 'azure', 'gcp', 'git',
+            'ci/cd', 'agile', 'scrum', 'kanban', 'rest', 'soap', 'api', 'microservices',
+            'salesforce', 'apex', 'visualforce', 'lightning', 'aura', 'lwc', 'soql', 'sosl',
+            'flow', 'flows', 'flow builder', 'process builder', 'formula', 'formulas',
+            'validation rule', 'validation rules', 'workflow', 'workflows', 'approval process',
+            'data loader', 'dataloader', 'integration', 'integrations', 'trigger', 'triggers',
+            'batch', 'batch apex', 'test', 'test class', 'unit test', 'custom object',
+            'custom field', 'permission set', 'profile', 'layouts', 'page layout',
+            'lightning component', 'lightning web component', 'experience cloud', 'community cloud',
+            'heroku', 'mulesoft', 'einstein', 'ai', 'analytics', 'reports', 'dashboards',
+            'cpq', 'pardot', 'marketing cloud', 'commerce cloud', 'service cloud', 'sales cloud'
+        };
+        
+        for (String skill : commonSkills) {
+            if (lcDescription.contains(skill.toLowerCase())) {
+                // Używamy istniejącej implementacji standardizeSkillName
+                String standardizedSkill = CVAnalysisController.standardizeSkillName(skill);
+                foundSkills.add(standardizedSkill);
+            }
+        }
+        
+        // Specjalne sprawdzenie dla Flow/flow
+        if (lcDescription.contains('flow') || lcDescription.contains('flows')) {
+            foundSkills.add('Flow');
+        }
+        
+        return new List<String>(foundSkills);
     }
     
     /**
@@ -200,26 +263,38 @@ public with sharing class CVAnalysisHelper {
             + '3. technicalSkills (list, ONLY include skills that are EXPLICITLY mentioned in the resume)\n'
             + '4. languages (list with proficiency level)\n'
             + '5. certifications (list, with special attention to Salesforce certifications - make sure ALL certifications are included here, not in missingSkills)\n'
-            + '6. matchScore (percentage match score from 0 to 100, provide an estimated skill level score based on the job description)\n'
-            // Definiuję pola dla matchedSkills i additionalSkills w jednakowy sposób, bez względu na context.hasPositionDetails()
-            + '7. matchedSkills (array of skills that are EXPLICITLY mentioned in BOTH the resume AND the position description. DO NOT include any skills that are not explicitly mentioned in the resume, even if they appear in the position description. For matchedSkills, prioritize ordering based on importance from the job description.)\n'
-            + '8. additionalSkills (array of supplementary skills that are EXPLICITLY mentioned in the resume)\n'
+            + '6. matchScore (percentage match score from 0 to 100, comparing the candidate\'s skills with the required skills for the position)\n';
+            
+        // Dodaj informację o wymaganych umiejętnościach dla stanowiska
+        prompt += '7. matchedSkills (array of skills that are EXPLICITLY mentioned in the resume AND appear in the list of required skills below. DO NOT include any skills that are not explicitly mentioned in the resume.)\n'
+            + '8. additionalSkills (array of supplementary skills that are EXPLICITLY mentioned in the resume but are NOT in the required skills list below)\n'
             + '9. analysisSummary (concise summary of candidate\'s profile, 2-3 sentences max, based ONLY on information explicitly stated in the resume, WITHOUT mentioning specific company names or personal details)\n'
             + '10. keyHighlights (bullet points of 3-5 most important strengths that are EXPLICITLY mentioned in the resume, DO NOT end with periods, DO NOT include company names or personal details)\n'
             + '11. potentialConcerns (areas where the candidate might lack experience based on information in the resume, DO NOT end with periods)\n'
-            // Definiuję pole missingSkills w jednakowy sposób, bez względu na context.hasPositionDetails()
-            + '12. missingSkills (ONLY include skills that are EXPLICITLY mentioned in the position description text but are NOT found in the resume. DO NOT list any skills that are not clearly mentioned in the position description. IMPORTANT: Do NOT include common Salesforce skills like Apex, LWC, Visualforce, SOQL, Flow, etc. unless they are EXPLICITLY mentioned in the position description. Do NOT include Salesforce certifications here - they should ONLY be listed in the certifications field)\n'
-            + '13. recommendationLevel (string value, one of: "High", "Medium", "Low")\n\n'
-            + 'Handle incomplete data gracefully. If certain information is missing from the resume, include null values or empty arrays for those fields in the JSON but do not make assumptions about the missing data.\n\n'
-            // Zawsze załączam informacje o stanowisku
-            + 'Additionally, evaluate the candidate\'s fit for the position "' + context.positionName + '" based ONLY on the skills and experience EXPLICITLY mentioned in their resume, compared with the description and required skills below. '
-            + 'When evaluating the match, read the position description carefully and only match with skills that are EXPLICITLY mentioned in the candidate\'s resume.\n\n'
-            + 'Position description: ' + context.jobDescription + '\n\n'
-            + 'Return the results in a single, valid JSON object with the sections described above. '
+            + '12. missingSkills (skills from the required skills list below that are NOT found in the resume. IMPORTANT: ONLY include skills from the list below, DO NOT infer or add any other "expected" skills. Do NOT include Salesforce certifications here - they should ONLY be listed in the certifications field)\n'
+            + '13. recommendationLevel (string value, one of: "High", "Medium", "Low", based on how well the candidate\'s skills match the required skills)\n\n'
+            + 'Handle incomplete data gracefully. If certain information is missing from the resume, include null values or empty arrays for those fields in the JSON but do not make assumptions about the missing data.\n\n';
+            
+        // Dodaj listę wymaganych umiejętności
+        prompt += 'REQUIRED SKILLS FOR THE POSITION:\n';
+        if (!context.requiredSkills.isEmpty()) {
+            prompt += '[' + String.join(context.requiredSkills, ', ') + ']\n\n';
+        } else {
+            prompt += '[No specific skills listed for this position]\n\n';
+        }
+            
+        // Dodaj opis stanowiska, jeśli istnieje
+        if (String.isNotBlank(context.jobDescription)) {
+            prompt += 'Additionally, evaluate the candidate\'s fit for the position "' + context.positionName + '" based ONLY on the skills and experience EXPLICITLY mentioned in their resume, compared with the description and required skills. '
+                + 'When evaluating the match, read the position description carefully and only match with skills that are EXPLICITLY mentioned in the candidate\'s resume.\n\n'
+                + 'Position description: ' + context.jobDescription + '\n\n';
+        }
+            
+        prompt += 'Return the results in a single, valid JSON object with the sections described above. '
             + 'IMPORTANT: Be 100% factual and only include skills that are EXPLICITLY mentioned in the resume. Do not exaggerate, infer, or assume skills that are not clearly stated in the resume. '
             + 'If there are few or no Salesforce skills mentioned, that\'s okay - report accurately what is found. '
-            + 'matchedSkills should ONLY include skills that appear in BOTH the position description AND are explicitly mentioned in the candidate resume. '
-            + 'missingSkills should ONLY include skills mentioned in the position description that are not found in the resume. DO NOT list any "standard" or "expected" skills unless they are actually mentioned in the position description. '
+            + 'matchedSkills should ONLY include skills that appear in BOTH the required skills list AND are explicitly mentioned in the candidate resume. '
+            + 'missingSkills should ONLY include skills from the required skills list that are not found in the resume. DO NOT list any "standard" or "expected" skills unless they are actually in the required skills list. '
             + 'Remember that Salesforce certifications should ONLY be listed in the certifications field, not in missingSkills field.\n\n';
             
         // Add resume content
