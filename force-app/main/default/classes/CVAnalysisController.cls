@@ -248,14 +248,38 @@ public with sharing class CVAnalysisController {
                     'sql', 'nosql', 'react', 'angular', 'vue', 'node', 'express', 'django', 'flask',
                     'spring', 'hibernate', 'docker', 'kubernetes', 'aws', 'azure', 'gcp', 'git',
                     'ci/cd', 'agile', 'scrum', 'kanban', 'rest', 'soap', 'api', 'microservices',
-                    'salesforce', 'apex', 'visualforce', 'lightning', 'aura', 'lwc', 'soql', 'sosl'
+                    'salesforce', 'apex', 'visualforce', 'lightning', 'aura', 'lwc', 'soql', 'sosl',
+                    'flow', 'flows', 'flow builder', 'process builder', 'formula', 'formulas',
+                    'validation rule', 'validation rules', 'workflow', 'workflows', 'approval process',
+                    'data loader', 'dataloader', 'integration', 'integrations', 'trigger', 'triggers',
+                    'batch', 'batch apex', 'test', 'test class', 'unit test', 'custom object',
+                    'custom field', 'permission set', 'profile', 'layouts', 'page layout',
+                    'lightning component', 'lightning web component', 'experience cloud', 'community cloud',
+                    'heroku', 'mulesoft', 'einstein', 'ai', 'analytics', 'reports', 'dashboards',
+                    'cpq', 'pardot', 'marketing cloud', 'commerce cloud', 'service cloud', 'sales cloud'
                 };
                 
+                // Przekształć opis stanowiska na małe litery dla ujednoliconego porównania
+                String lcDescription = description.toLowerCase();
+                
+                // Dodaj zarówno małe jak i duże litery dla kluczowych technologii Salesforce
+                Set<String> foundSkills = new Set<String>();
+                
                 for (String skill : commonSkills) {
-                    if (description.contains(skill)) {
-                        requiredSkills.add(skill);
+                    if (lcDescription.contains(skill.toLowerCase())) {
+                        // Zachowaj standaryzowany format dla umiejętności
+                        String standardizedSkill = standardizeSkillName(skill);
+                        foundSkills.add(standardizedSkill);
                     }
                 }
+                
+                // Specjalne sprawdzenie dla Flow/flow
+                if (lcDescription.contains('flow') || lcDescription.contains('flows')) {
+                    foundSkills.add('Flow');
+                }
+                
+                // Konwersja Set na List, aby uniknąć duplikatów
+                requiredSkills = new List<String>(foundSkills);
                 
                 System.debug(LoggingLevel.INFO, 'Found ' + requiredSkills.size() + ' skills in position description: ' + requiredSkills);
             }
@@ -265,6 +289,46 @@ public with sharing class CVAnalysisController {
         }
         
         return requiredSkills;
+    }
+    
+    /**
+     * @description Standaryzuje nazwę umiejętności do jednolitego formatu
+     * @param skill Nazwa umiejętności
+     * @return Standaryzowana nazwa umiejętności
+     */
+    private static String standardizeSkillName(String skill) {
+        Map<String, String> standardNames = new Map<String, String>{
+            'flow' => 'Flow',
+            'flows' => 'Flow',
+            'flow builder' => 'Flow Builder',
+            'apex' => 'Apex',
+            'lwc' => 'Lightning Web Components',
+            'lightning web component' => 'Lightning Web Components',
+            'lightning web components' => 'Lightning Web Components',
+            'visualforce' => 'Visualforce',
+            'vf' => 'Visualforce',
+            'soql' => 'SOQL',
+            'sosl' => 'SOSL',
+            'rest' => 'REST API',
+            'soap' => 'SOAP API',
+            'trigger' => 'Apex Triggers',
+            'triggers' => 'Apex Triggers',
+            'batch' => 'Batch Apex',
+            'batch apex' => 'Batch Apex'
+        };
+        
+        String lcSkill = skill.toLowerCase();
+        if (standardNames.containsKey(lcSkill)) {
+            return standardNames.get(lcSkill);
+        }
+        
+        // Konwencja: pierwsza litera wielka dla większości umiejętności
+        if (skill.length() > 0) {
+            return skill.substring(0, 1).toUpperCase() + 
+                  (skill.length() > 1 ? skill.substring(1).toLowerCase() : '');
+        }
+        
+        return skill;
     }
     
     /**
@@ -353,7 +417,7 @@ public with sharing class CVAnalysisController {
                     for (Object skill : matchedSkillsList) {
                         if (skill instanceof String) {
                             skillStrings.add((String)skill);
-                        }
+                    }
                     }
                     
                     result.MatchingSkills__c = String.join(skillStrings, ', ');
@@ -370,7 +434,7 @@ public with sharing class CVAnalysisController {
                     for (Object skill : additionalSkillsList) {
                         if (skill instanceof String) {
                             skillStrings.add((String)skill);
-                        }
+                    }
                     }
                     
                     result.AdditionalSkills__c = String.join(skillStrings, ', ');
@@ -518,14 +582,14 @@ public with sharing class CVAnalysisController {
             }
             
             // Insert record
-            insert result;
+                insert result;
             
-            return result.Id;
-        } catch (Exception e) {
+                return result.Id;
+            } catch (Exception e) {
             String errorMessage = 'Error creating AiAnalysisResult__c: ' + e.getMessage();
             Logger.error('CVAnalysisController', 'createAiAnalysisResult', errorMessage, e);
             System.debug(LoggingLevel.ERROR, 'Error in createAiAnalysisResult: ' + errorMessage);
-            System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
+                System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
             throw new AuraHandledException(errorMessage);
         } finally {
             System.debug(LoggingLevel.ERROR, '=== createAiAnalysisResult - END ===');
@@ -545,6 +609,10 @@ public with sharing class CVAnalysisController {
         
         // Copy all original keys
         for (String key : results.keySet()) {
+            // Standaryzuj klucz do małych liter dla wewnętrznego użytku mapowania
+            String lowercaseKey = key.toLowerCase();
+            
+            // Zachowaj oryginalny klucz w danych wyjściowych
             standardized.put(key, results.get(key));
             
             // Log data type for each key
@@ -557,10 +625,11 @@ public with sharing class CVAnalysisController {
                 System.debug(LoggingLevel.DEBUG, '  Nested keys for ' + key + ': ' + nestedMap.keySet());
                 
                 // Sprawdź, czy certyfikaty nie znajdują się w zagnieżdżonym obiekcie
-                if ((key.equalsIgnoreCase('resume') || key.equalsIgnoreCase('candidate') || 
-                     key.equalsIgnoreCase('analysis') || key.equalsIgnoreCase('result')) && 
-                    nestedMap.containsKey('certifications') && !standardized.containsKey('certifications')) {
-                    standardized.put('certifications', nestedMap.get('certifications'));
+                if ((lowercaseKey.equals('resume') || lowercaseKey.equals('candidate') || 
+                     lowercaseKey.equals('analysis') || lowercaseKey.equals('result')) && 
+                    containsKeyCaseInsensitive(nestedMap, 'certifications') && 
+                    !containsKeyCaseInsensitive(standardized, 'certifications')) {
+                    standardized.put('certifications', getValueCaseInsensitive(nestedMap, 'certifications'));
                     System.debug(LoggingLevel.DEBUG, 'Found certifications in nested object: ' + key);
                 }
             }
@@ -580,7 +649,7 @@ public with sharing class CVAnalysisController {
         }
         
         // Specjalnie obsługujemy "certifications" - zapewniamy, że zawsze istnieje w wyniku
-        if (!standardized.containsKey('certifications')) {
+        if (!containsKeyCaseInsensitive(standardized, 'certifications')) {
             // Sprawdź czy certyfikaty są wymienione w innym miejscu
             List<String> possibleCertKeysExact = new List<String>{'certifications', 'certificates', 'certification', 'certificate'};
             List<String> possibleCertKeysPartial = new List<String>{'cert', 'certs', 'certyf', 'certif'};
@@ -589,8 +658,8 @@ public with sharing class CVAnalysisController {
             
             // Najpierw sprawdź dokładne nazwy kluczy
             for (String certKey : possibleCertKeysExact) {
-                if (results.containsKey(certKey)) {
-                    standardized.put('certifications', results.get(certKey));
+                if (containsKeyCaseInsensitive(results, certKey)) {
+                    standardized.put('certifications', getValueCaseInsensitive(results, certKey));
                     System.debug(LoggingLevel.DEBUG, 'Found certifications under key: ' + certKey);
                     foundCertifications = true;
                     break;
@@ -600,8 +669,9 @@ public with sharing class CVAnalysisController {
             // Jeśli nie znaleziono, sprawdź częściowe dopasowania
             if (!foundCertifications) {
                 for (String key : results.keySet()) {
+                    String lowercaseKey = key.toLowerCase();
                     for (String partialKey : possibleCertKeysPartial) {
-                        if (key.containsIgnoreCase(partialKey)) {
+                        if (lowercaseKey.contains(partialKey.toLowerCase())) {
                             standardized.put('certifications', results.get(key));
                             System.debug(LoggingLevel.DEBUG, 'Found certifications with partial key match: ' + key);
                             foundCertifications = true;
@@ -613,13 +683,13 @@ public with sharing class CVAnalysisController {
             }
             
             // Sprawdź, czy certyfikaty nie znajdują się w personalData
-            if (!foundCertifications && results.containsKey('personalData')) {
-                Object personalDataObj = results.get('personalData');
+            if (!foundCertifications && containsKeyCaseInsensitive(results, 'personalData')) {
+                Object personalDataObj = getValueCaseInsensitive(results, 'personalData');
                 if (personalDataObj instanceof Map<String, Object>) {
                     Map<String, Object> personalData = (Map<String, Object>)personalDataObj;
                     for (String certKey : possibleCertKeysExact) {
-                        if (personalData.containsKey(certKey)) {
-                            standardized.put('certifications', personalData.get(certKey));
+                        if (containsKeyCaseInsensitive(personalData, certKey)) {
+                            standardized.put('certifications', getValueCaseInsensitive(personalData, certKey));
                             System.debug(LoggingLevel.DEBUG, 'Found certifications in personalData: ' + certKey);
                             foundCertifications = true;
                             break;
@@ -628,8 +698,9 @@ public with sharing class CVAnalysisController {
                     
                     if (!foundCertifications) {
                         for (String key : personalData.keySet()) {
+                            String lowercaseKey = key.toLowerCase();
                             for (String partialKey : possibleCertKeysPartial) {
-                                if (key.containsIgnoreCase(partialKey)) {
+                                if (lowercaseKey.contains(partialKey.toLowerCase())) {
                                     standardized.put('certifications', personalData.get(key));
                                     System.debug(LoggingLevel.DEBUG, 'Found certifications in personalData with partial key match: ' + key);
                                     foundCertifications = true;
@@ -682,7 +753,7 @@ public with sharing class CVAnalysisController {
                 System.debug(LoggingLevel.DEBUG, 'Converted non-list certifications to list: ' + certList);
             }
         }
-
+        
         // Handle "technicalSkills" key (English version)
         if (results.containsKey('technicalSkills')) {
             Object techSkillsObj = results.get('technicalSkills');
@@ -1017,5 +1088,41 @@ public with sharing class CVAnalysisController {
         } else {
             return 'Unknown type: ' + obj.toString();
         }
+    }
+
+    /**
+     * Sprawdza, czy mapa zawiera klucz, ignorując wielkość liter
+     * @param dataMap Mapa do sprawdzenia
+     * @param key Klucz do znalezienia (case-insensitive)
+     * @return true jeśli klucz istnieje (w dowolnej wielkości liter), false w przeciwnym razie
+     */
+    private static Boolean containsKeyCaseInsensitive(Map<String, Object> dataMap, String key) {
+        if (dataMap == null || key == null) return false;
+        
+        String lowercaseKey = key.toLowerCase();
+        for (String mapKey : dataMap.keySet()) {
+            if (mapKey.toLowerCase() == lowercaseKey) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Pobiera wartość z mapy na podstawie klucza, ignorując wielkość liter
+     * @param dataMap Mapa, z której pobierane są dane
+     * @param key Klucz do znalezienia (case-insensitive)
+     * @return Obiekt odpowiadający kluczowi lub null, jeśli nie znaleziono
+     */
+    private static Object getValueCaseInsensitive(Map<String, Object> dataMap, String key) {
+        if (dataMap == null || key == null) return null;
+        
+        String lowercaseKey = key.toLowerCase();
+        for (String mapKey : dataMap.keySet()) {
+            if (mapKey.toLowerCase() == lowercaseKey) {
+                return dataMap.get(mapKey);
+            }
+        }
+        return null;
     }
 }
