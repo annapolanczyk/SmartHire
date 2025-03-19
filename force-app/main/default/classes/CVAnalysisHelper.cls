@@ -184,6 +184,7 @@ public with sharing class CVAnalysisHelper {
             + '- CPQ Specialist\n'
             + '- Integration Architecture Designer\n'
             + '... and any other Salesforce certifications mentioned\n\n'
+            + 'IMPORTANT: Carefully identify ALL certifications mentioned in the resume. List them ONLY in the "certifications" field of the response JSON. DO NOT place Salesforce certifications in the "missingSkills" field even if they appear in the job requirements. Certifications should only be treated as skills if they are explicitly mentioned as skills (not as certifications).\n\n'
             + 'Parse years of experience only if numeric values are explicitly mentioned (e.g., "5 years of Apex experience", "worked with Salesforce for 3 years"). Do not infer years of experience from employment periods unless explicitly stated.\n\n'
             + 'Extract the following information in JSON format:\n'
             + '1. personalData (name, surname, email, phone). If any of these fields are missing, return them as null.\n'
@@ -191,7 +192,7 @@ public with sharing class CVAnalysisHelper {
             + '3. workExperience (list of positions, companies, employment periods, responsibilities)\n'
             + '4. technicalSkills (list, ONLY include skills that are EXPLICITLY mentioned in the resume)\n'
             + '5. languages (list with proficiency level)\n'
-            + '6. certifications (list, with special attention to Salesforce certifications)\n'
+            + '6. certifications (list, with special attention to Salesforce certifications - make sure ALL certifications are included here, not in missingSkills)\n'
             + '7. matchScore (percentage match score from 0 to 100, even without position data provide an estimated skill level score)\n';
             
         // Modify the prompt to emphasize matching skills based on position description
@@ -208,9 +209,9 @@ public with sharing class CVAnalysisHelper {
             
         // Modify the prompt to emphasize missing skills based on position description
         if (context.hasPositionDetails()) {
-            prompt += '13. missingSkills (skills that are EXPLICITLY mentioned in the position description but are NOT found in the resume. ONLY include skills that appear in the position description)\n';
+            prompt += '13. missingSkills (skills that are EXPLICITLY mentioned in the position description but are NOT found in the resume. IMPORTANT: Do NOT include Salesforce certifications here - they should ONLY be listed in the certifications field)\n';
         } else {
-            prompt += '13. missingSkills (common Salesforce skills that are NOT mentioned in the resume)\n';
+            prompt += '13. missingSkills (common Salesforce skills that are NOT mentioned in the resume, but DO NOT include Salesforce certifications here)\n';
         }
             
         prompt += '14. recommendationLevel (string value, one of: "High", "Medium", "Low")\n\n'
@@ -225,10 +226,12 @@ public with sharing class CVAnalysisHelper {
                 + 'IMPORTANT: Be 100% factual and only include skills that are EXPLICITLY mentioned in the resume. Do not exaggerate, infer, or assume skills that are not clearly stated in the resume. '
                 + 'If there are few or no Salesforce skills mentioned, that\'s okay - report accurately what is found. '
                 + 'matchedSkills should ONLY include skills that appear in BOTH the position description AND are explicitly mentioned in the candidate resume. '
-                + 'missingSkills should ONLY include skills mentioned in the position description that are not found in the resume.\n\n';
+                + 'missingSkills should ONLY include skills mentioned in the position description that are not found in the resume. '
+                + 'Remember that Salesforce certifications should ONLY be listed in the certifications field, not in missingSkills field.\n\n';
         } else {
             prompt += 'Return the results in a single, valid JSON object with the sections described above. '
-                + 'IMPORTANT: Be 100% factual and only include skills that are EXPLICITLY mentioned in the resume. Do not exaggerate, infer, or assume skills that are not clearly stated.\n\n';
+                + 'IMPORTANT: Be 100% factual and only include skills that are EXPLICITLY mentioned in the resume. Do not exaggerate, infer, or assume skills that are not clearly stated. '
+                + 'Remember to list ALL certifications in the certifications field, not in missingSkills field.\n\n';
         }
         
         // Add resume content

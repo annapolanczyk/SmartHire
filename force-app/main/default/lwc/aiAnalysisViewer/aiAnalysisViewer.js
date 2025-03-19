@@ -214,17 +214,46 @@ export default class AiAnalysisViewer extends NavigationMixin(LightningElement) 
         
         if (!certifications) return [];
         
-        // Podziel na linie, usuń białe znaki oraz kropki na końcu każdego certyfikatu
-        const certificationsArray = certifications.split('\n')
+        let certificationsArray = [];
+        
+        // Obsługa różnych formatów danych
+        if (typeof certifications === 'string') {
+            // Jeśli to ciąg znaków, rozdziel na linie
+            // Sprawdzamy różne separatory: nowa linia, przecinek, średnik
+            if (certifications.includes('\n')) {
+                certificationsArray = certifications.split('\n');
+            } else if (certifications.includes(',')) {
+                certificationsArray = certifications.split(',');
+            } else if (certifications.includes(';')) {
+                certificationsArray = certifications.split(';');
+            } else {
+                // Jeśli nie ma separatorów, traktuj jako pojedynczy certyfikat
+                certificationsArray = [certifications];
+            }
+        } else if (Array.isArray(certifications)) {
+            // Jeśli to już tablica, użyj jej bezpośrednio
+            certificationsArray = certifications.map(cert => typeof cert === 'string' ? cert : String(cert));
+        }
+        
+        // Przetwórz każdy element: przytnij białe znaki, usuń kropki na końcu, usuń puste elementy
+        const processedCerts = certificationsArray
             .map(cert => {
-                // Usuń białe znaki z początku i końca, a następnie usuń kropkę jeśli występuje na końcu
+                if (typeof cert !== 'string') return String(cert).trim();
+                
+                // Usuń białe znaki z początku i końca
                 let trimmedCert = cert.trim();
-                return trimmedCert.endsWith('.') ? trimmedCert.substring(0, trimmedCert.length - 1) : trimmedCert;
+                
+                // Usuń kropkę jeśli występuje na końcu
+                while (trimmedCert.endsWith('.')) {
+                    trimmedCert = trimmedCert.substring(0, trimmedCert.length - 1).trim();
+                }
+                
+                return trimmedCert;
             })
             .filter(cert => cert.length > 0); // Filtruj puste elementy
         
-        console.log('Processed certifications:', certificationsArray);
-        return certificationsArray;
+        console.log('Processed certifications:', processedCerts);
+        return processedCerts;
     }
     
     // Lifecycle hooks

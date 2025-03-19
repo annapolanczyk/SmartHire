@@ -506,6 +506,14 @@ public with sharing class CVAnalysisController {
             if (value instanceof Map<String, Object>) {
                 Map<String, Object> nestedMap = (Map<String, Object>)value;
                 System.debug(LoggingLevel.DEBUG, '  Nested keys for ' + key + ': ' + nestedMap.keySet());
+                
+                // Sprawdź, czy certyfikaty nie znajdują się w zagnieżdżonym obiekcie
+                if ((key.equalsIgnoreCase('resume') || key.equalsIgnoreCase('candidate') || 
+                     key.equalsIgnoreCase('analysis') || key.equalsIgnoreCase('result')) && 
+                    nestedMap.containsKey('certifications') && !standardized.containsKey('certifications')) {
+                    standardized.put('certifications', nestedMap.get('certifications'));
+                    System.debug(LoggingLevel.DEBUG, 'Found certifications in nested object: ' + key);
+                }
             }
             // If it's a list, log its size and a few first elements
             else if (value instanceof List<Object>) {
@@ -522,6 +530,110 @@ public with sharing class CVAnalysisController {
             }
         }
         
+        // Specjalnie obsługujemy "certifications" - zapewniamy, że zawsze istnieje w wyniku
+        if (!standardized.containsKey('certifications')) {
+            // Sprawdź czy certyfikaty są wymienione w innym miejscu
+            List<String> possibleCertKeysExact = new List<String>{'certifications', 'certificates', 'certification', 'certificate'};
+            List<String> possibleCertKeysPartial = new List<String>{'cert', 'certs', 'certyf', 'certif'};
+            
+            Boolean foundCertifications = false;
+            
+            // Najpierw sprawdź dokładne nazwy kluczy
+            for (String certKey : possibleCertKeysExact) {
+                if (results.containsKey(certKey)) {
+                    standardized.put('certifications', results.get(certKey));
+                    System.debug(LoggingLevel.DEBUG, 'Found certifications under key: ' + certKey);
+                    foundCertifications = true;
+                    break;
+                }
+            }
+            
+            // Jeśli nie znaleziono, sprawdź częściowe dopasowania
+            if (!foundCertifications) {
+                for (String key : results.keySet()) {
+                    for (String partialKey : possibleCertKeysPartial) {
+                        if (key.containsIgnoreCase(partialKey)) {
+                            standardized.put('certifications', results.get(key));
+                            System.debug(LoggingLevel.DEBUG, 'Found certifications with partial key match: ' + key);
+                            foundCertifications = true;
+                            break;
+                        }
+                    }
+                    if (foundCertifications) break;
+                }
+            }
+            
+            // Sprawdź, czy certyfikaty nie znajdują się w personalData
+            if (!foundCertifications && results.containsKey('personalData')) {
+                Object personalDataObj = results.get('personalData');
+                if (personalDataObj instanceof Map<String, Object>) {
+                    Map<String, Object> personalData = (Map<String, Object>)personalDataObj;
+                    for (String certKey : possibleCertKeysExact) {
+                        if (personalData.containsKey(certKey)) {
+                            standardized.put('certifications', personalData.get(certKey));
+                            System.debug(LoggingLevel.DEBUG, 'Found certifications in personalData: ' + certKey);
+                            foundCertifications = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!foundCertifications) {
+                        for (String key : personalData.keySet()) {
+                            for (String partialKey : possibleCertKeysPartial) {
+                                if (key.containsIgnoreCase(partialKey)) {
+                                    standardized.put('certifications', personalData.get(key));
+                                    System.debug(LoggingLevel.DEBUG, 'Found certifications in personalData with partial key match: ' + key);
+                                    foundCertifications = true;
+                                    break;
+                                }
+                            }
+                            if (foundCertifications) break;
+                        }
+                    }
+                }
+            }
+            
+            // Jeśli ciągle nie znaleziono certyfikatów, ustaw jako pustą tablicę
+            if (!foundCertifications) {
+                standardized.put('certifications', new List<String>());
+                System.debug(LoggingLevel.DEBUG, 'No certifications found, using empty list');
+            }
+        }
+        
+        // Zapewnij, że certifications jest zawsze listą
+        Object certObj = standardized.get('certifications');
+        if (certObj != null) {
+            if (certObj instanceof String) {
+                String certStr = (String)certObj;
+                List<String> certList = new List<String>();
+                
+                // Obsłuż różne formaty separacji certyfikatów
+                if (certStr.contains(',')) {
+                    for (String cert : certStr.split(',')) {
+                        certList.add(cert.trim());
+                    }
+                } else if (certStr.contains('\n')) {
+                    for (String cert : certStr.split('\n')) {
+                        certList.add(cert.trim());
+                    }
+                } else if (certStr.contains(';')) {
+                    for (String cert : certStr.split(';')) {
+                        certList.add(cert.trim());
+                    }
+                } else {
+                    certList.add(certStr.trim());
+                }
+                
+                standardized.put('certifications', certList);
+                System.debug(LoggingLevel.DEBUG, 'Converted certifications from string to list: ' + certList);
+            } else if (!(certObj instanceof List<Object>)) {
+                // Jeśli to nie jest ani String, ani List, konwertuj na String i dodaj jako pojedynczy element listy
+                List<String> certList = new List<String>{String.valueOf(certObj)};
+                standardized.put('certifications', certList);
+                System.debug(LoggingLevel.DEBUG, 'Converted non-list certifications to list: ' + certList);
+            }
+        }
+
         // Handle "technicalSkills" key (English version)
         if (results.containsKey('technicalSkills')) {
             Object techSkillsObj = results.get('technicalSkills');
